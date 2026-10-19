@@ -24,7 +24,7 @@ jobs:
           python-version: '3.12'
       - name: Run regression tests
         run: python -m unittest discover -s tests -v
-      - name: Validate uploads and generate indexes (no JAR execution)
+      - name: Scan mods/*/*/metadata.json and generate indexes and README (no JAR execution)
         env:
           CATALOGUE_REPOSITORY: ${{ github.repository }}
         run: python scripts/catalogue.py --repository "$CATALOGUE_REPOSITORY"
@@ -42,7 +42,7 @@ jobs:
       - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
         with:
           python-version: '3.12'
-      - name: Generate and commit indexes, retrying concurrent uploads
+      - name: Generate and commit indexes and README, retrying concurrent uploads
         env:
           CATALOGUE_REPOSITORY: ${{ github.repository }}
           CATALOGUE_BRANCH: ${{ github.ref_name }}
@@ -57,7 +57,7 @@ jobs:
             # The branch may have advanced since validation. Revalidate the latest tree.
             python -m unittest discover -s tests -v
             python scripts/catalogue.py --repository "$CATALOGUE_REPOSITORY" --ref "$CATALOGUE_BRANCH"
-            git add --all -- catalogue/
+            git add --all -- ':(top,glob)*.json' README.md
             if git diff --cached --quiet; then
               echo 'Catalogue is already current.'
               exit 0

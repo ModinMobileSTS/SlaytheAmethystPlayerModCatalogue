@@ -9,6 +9,7 @@ from __future__ import annotations
 
 import argparse
 import hashlib
+import html
 import json
 import os
 from pathlib import Path, PurePosixPath
@@ -25,6 +26,9 @@ MAX_ENTRIES = 4096
 MAX_EXPANDED_BYTES = 512 * 1024 * 1024
 EMAIL = re.compile(r"[^\s<>@]+@[^\s<>@]+\.[^\s<>@]+\Z")
 WORKSHOP_ID = re.compile(r"[1-9][0-9]{0,19}\Z")
+MOD_LIST_START = "<!-- MOD_LIST_START -->"
+MOD_LIST_END = "<!-- MOD_LIST_END -->"
+README_INTRO = "# Slay the Amethyst Player Mod Catalogue\n\n玩家分享的 AI 补丁模组目录，供 Slay the Amethyst 浏览、下载和分享适用的模组补丁。\n"
 
 
 class CatalogueError(ValueError):
@@ -78,7 +82,7 @@ def validate_metadata(metadata: object) -> dict:
     require(EMAIL.fullmatch(email) is not None, "invalid author.email")
     target = object_fields(metadata["target"], {"modId", "workshopId", "versions"})
     path_segment(target["modId"], "target.modId")
-    require(target["modId"].casefold() != "index", "modId 'index' is reserved for catalogue/index.json")
+    require(target["modId"].casefold() != "index", "modId 'index' is reserved for root index.json")
     require(isinstance(target["workshopId"], str) and WORKSHOP_ID.fullmatch(target["workshopId"]) is not None,
             "workshopId must be a positive decimal string")
     versions = target["versions"]
@@ -87,7 +91,9 @@ def validate_metadata(metadata: object) -> dict:
         text(version, "target version")
     require(len(versions) == len(set(versions)), "duplicate target versions")
     require("*" not in versions or versions == ["*"], "wildcard must be the only target version")
-    require(metadata["jar"] == "patch.jar", "jar must be patch.jar")
+    jar_name = path_segment(metadata["jar"], "jar")
+    require(jar_name.lower().endswith(".jar"), "jar must be a .jar filename")
+    require(len(jar_name.encode("utf-8")) <= 240, "jar filename exceeds 240 UTF-8 bytes")
     require("example" not in metadata or type(metadata["example"]) is bool, "example must be a boolean")
     patch_directory(metadata)
     return metadata
@@ -176,57 +182,63 @@ def raw_url(repository: str, ref: str, path: str) -> str:
     return f"https://raw.githubusercontent.com/{repository}/{quote(ref, safe='')}/{quote(path, safe='/')}"
 
 
-def collect(root: Path, repository: str, ref: str) -> tuple[dict[str, bytes], int]:
-    mods_root = root / "mods"
+def discover_metadata(mods_root: Path) -> list[Path]:
+    """Discover uploads from their colocated metadata, not a separate registry.
+
+    Only mods/<modid>/<name>-<author>/metadata.json defines an entry. JSON files
+    inside src/ are source resources, never additional catalogue entries.
+    """
     require(mods_root.is_dir() and not mods_root.is_symlink(), "mods/ must be a real directory")
     # Reject symlinks anywhere, including extra source/doc files; never read outside the checkout.
     for directory, directories, files in os.walk(mods_root, followlinks=False):
         for name in directories + files:
             require(not (Path(directory) / name).is_symlink(), "symlinks under mods/ are unsupported")
-    grouped: dict[str, list[dict]] = {}
-    workshop_by_mod: dict[str, str] = {}
-    casefold_paths: set[str] = set()
     for mod_dir in sorted(mods_root.iterdir()):
         require(mod_dir.is_dir(), f"unexpected file under mods/: {mod_dir.name}")
         for patch_dir in sorted(mod_dir.iterdir()):
             require(patch_dir.is_dir(), f"unexpected file under {mod_dir}")
             metadata_path = patch_dir / "metadata.json"
             require(metadata_path.is_file(), f"missing metadata: {metadata_path}")
-            require(metadata_path.stat().st_size <= MAX_JSON_BYTES, f"metadata exceeds {MAX_JSON_BYTES} bytes")
-            metadata = validate_metadata(parse_json(metadata_path.read_bytes(), str(metadata_path)))
-            relative = patch_dir.relative_to(root)
-            require(relative == patch_directory(metadata), f"directory does not match metadata: {relative}")
-            identity = unicodedata.normalize("NFC", relative.as_posix()).casefold()
-            require(identity not in casefold_paths, f"case-insensitive path collision: {relative}")
-            casefold_paths.add(identity)
-            mod_id = metadata["target"]["modId"]
-            workshop_id = metadata["target"]["workshopId"]
-            require(workshop_by_mod.get(mod_id, workshop_id) == workshop_id, f"conflicting Workshop IDs for {mod_id}")
-            workshop_by_mod[mod_id] = workshop_id
-            jar_info = validate_jar(patch_dir / "patch.jar", metadata)
-            jar_path = (relative / "patch.jar").as_posix()
-            entry = {
-                **metadata,
-                "id": relative.as_posix(),
-                "patchModId": jar_info.pop("patchModId"),
-                "metadataUrl": raw_url(repository, ref, metadata_path.relative_to(root).as_posix()),
-                "download": {"path": jar_path, "url": raw_url(repository, ref, jar_path), **jar_info},
-            }
-            grouped.setdefault(mod_id, []).append(entry)
+    return sorted(mods_root.glob("*/*/metadata.json"))
+
+
+def collect(root: Path, repository: str, ref: str) -> tuple[dict[str, bytes], int]:
+    grouped: dict[str, list[dict]] = {}
+    workshop_by_mod: dict[str, str] = {}
+    casefold_paths: set[str] = set()
+    for metadata_path in discover_metadata(root / "mods"):
+        patch_dir = metadata_path.parent
+        require(metadata_path.stat().st_size <= MAX_JSON_BYTES, f"metadata exceeds {MAX_JSON_BYTES} bytes")
+        metadata = validate_metadata(parse_json(metadata_path.read_bytes(), str(metadata_path)))
+        relative = patch_dir.relative_to(root)
+        require(relative == patch_directory(metadata), f"directory does not match metadata: {relative}")
+        identity = unicodedata.normalize("NFC", relative.as_posix()).casefold()
+        require(identity not in casefold_paths, f"case-insensitive path collision: {relative}")
+        casefold_paths.add(identity)
+        mod_id = metadata["target"]["modId"]
+        workshop_id = metadata["target"]["workshopId"]
+        require(workshop_by_mod.get(mod_id, workshop_id) == workshop_id, f"conflicting Workshop IDs for {mod_id}")
+        workshop_by_mod[mod_id] = workshop_id
+        jar_info = validate_jar(patch_dir / metadata["jar"], metadata)
+        jar_path = (relative / metadata["jar"]).as_posix()
+        entry = {
+            **metadata,
+            "patchModId": jar_info.pop("patchModId"),
+            "download_url": raw_url(repository, ref, jar_path),
+            **jar_info,
+        }
+        grouped.setdefault(mod_id, []).append(entry)
     require(len({mod_id.casefold() for mod_id in grouped}) == len(grouped), "modIds differ only by case")
     output = {}
-    summaries = []
+    all_entries = []
     for mod_id, entries in sorted(grouped.items()):
-        entries.sort(key=lambda entry: entry["id"])
-        index_path = f"catalogue/{mod_id}.json"
+        entries.sort(key=lambda entry: (entry["name"], entry["author"]["name"]))
         output[f"{mod_id}.json"] = encode_json({
             "schemaVersion": 1, "modId": mod_id, "workshopId": workshop_by_mod[mod_id],
             "count": len(entries), "patches": entries,
         })
-        summaries.append({"modId": mod_id, "workshopId": workshop_by_mod[mod_id], "count": len(entries),
-                          "path": index_path, "url": raw_url(repository, ref, index_path)})
-    output["index.json"] = encode_json({"schemaVersion": 1, "count": sum(map(len, grouped.values())), "mods": summaries})
-    # Avoid a mod named 'index' replacing the global index.
+        all_entries.extend(entries)
+    output["index.json"] = encode_json({"schemaVersion": 1, "count": len(all_entries), "mods": all_entries})
     return output, sum(map(len, grouped.values()))
 
 
@@ -234,25 +246,91 @@ def encode_json(value: object) -> bytes:
     return (json.dumps(value, ensure_ascii=False, indent=2, allow_nan=False) + "\n").encode("utf-8")
 
 
+def read_generated_indexes(root: Path, output: dict[str, bytes]) -> dict[str, bytes]:
+    """Own only root index.json and files it lists, never arbitrary root JSON.
+
+    Validate both old and new destinations before deleting/writing anything.
+    A malformed manifest must not permit path traversal or erase unrelated data.
+    """
+    previous_paths = {"index.json"}
+    index_path = root / "index.json"
+    if index_path.exists() or index_path.is_symlink():
+        require(index_path.is_file() and not index_path.is_symlink(), "index.json must be a real file")
+        index = json.loads(index_path.read_bytes(), object_pairs_hook=unique_object)
+        require(isinstance(index, dict) and set(index) == {"schemaVersion", "count", "mods"}
+                and index["schemaVersion"] == 1 and isinstance(index["mods"], list), "invalid generated index.json")
+        for entry in index["mods"]:
+            require(isinstance(entry, dict) and isinstance(entry.get("target"), dict), "invalid mod entry in index.json")
+            mod_id = path_segment(entry["target"].get("modId"), "indexed modId")
+            require(mod_id.casefold() != "index", "unsafe generated index path")
+            previous_paths.add(f"{mod_id}.json")
+    existing = {}
+    for name in sorted(previous_paths | output.keys()):
+        path = root / name
+        if not path.exists() and not path.is_symlink():
+            continue
+        require(path.is_file() and not path.is_symlink(), f"generated index must be a real file: {name}")
+        data = path.read_bytes()
+        if name != "index.json":
+            document = json.loads(data, object_pairs_hook=unique_object)
+            require(isinstance(document, dict)
+                    and set(document) == {"schemaVersion", "modId", "workshopId", "count", "patches"}
+                    and document["schemaVersion"] == 1 and document["modId"] == name[:-5]
+                    and isinstance(document["patches"], list), f"refusing to overwrite unrelated root JSON: {name}")
+        existing[name] = data
+    return existing
+
+
+def markdown_cell(value: str) -> str:
+    """Treat player-provided table text as plain text, not Markdown or HTML."""
+    value = html.escape(value, quote=True)
+    value = re.sub(r"([\\`*_{}\[\]()#+.!|~])", r"\\\1", value)
+    return value.replace("\n", "<br>").replace("\t", " ")
+
+
+def render_readme(root: Path, entries: list[dict]) -> bytes:
+    readme = root / "README.md"
+    require(not readme.is_symlink(), "README.md cannot be a symlink")
+    if readme.exists():
+        require(readme.is_file(), "README.md must be a real file")
+        document = readme.read_text(encoding="utf-8")
+    else:
+        document = f"{README_INTRO}\n{MOD_LIST_START}\n{MOD_LIST_END}\n"
+    require(document.count(MOD_LIST_START) == 1 and document.count(MOD_LIST_END) == 1,
+            "README.md must contain one MOD_LIST_START/MOD_LIST_END marker pair")
+    before, rest = document.split(MOD_LIST_START)
+    _, after = rest.split(MOD_LIST_END)
+    lines = ["", "## 模组列表", ""]
+    if entries:
+        lines.extend(["| 补丁 | 简介 | 作者 | 适用 modid | 适用版本 | 下载 |",
+                      "| --- | --- | --- | --- | --- | --- |"])
+        for entry in entries:
+            name = f"{entry['name']} {entry['version']}" + ("（示例）" if entry.get("example") else "")
+            cells = [name, entry["description"], entry["author"]["name"], entry["target"]["modId"],
+                     ", ".join(entry["target"]["versions"])]
+            lines.append("| " + " | ".join(map(markdown_cell, cells)) + f" | [下载]({entry['download_url']}) |")
+    else:
+        lines.append("暂无模组。")
+    lines.append("")
+    return (before + MOD_LIST_START + "\n".join(lines) + MOD_LIST_END + after).encode("utf-8")
+
+
 def generate(root: Path, repository: str = REPOSITORY, ref: str = "main", check: bool = False) -> int:
     require(re.fullmatch(r"[A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+", repository) is not None, "invalid repository")
     text(ref, "ref", 255)
     output, count = collect(root, repository, ref)  # Validate everything before touching existing indexes.
-    catalogue = root / "catalogue"
-    require(not catalogue.is_symlink(), "catalogue/ cannot be a symlink")
-    if catalogue.exists():
-        require(catalogue.is_dir(), "catalogue/ must be a directory")
-        require(all(p.is_file() and not p.is_symlink() and p.suffix == ".json" for p in catalogue.iterdir()),
-                "catalogue/ may contain only generated JSON files")
-    existing = {p.name: p.read_bytes() for p in catalogue.glob("*.json")}
+    existing = read_generated_indexes(root, output)
+    readme_path = root / "README.md"
+    readme = render_readme(root, json.loads(output["index.json"])["mods"])
     if check:
         require(existing == output, "catalogue is stale; run python3 scripts/catalogue.py")
+        require(readme_path.is_file() and readme_path.read_bytes() == readme, "README mod list is stale; run python3 scripts/catalogue.py")
     else:
-        catalogue.mkdir(exist_ok=True)
         for name in existing.keys() - output.keys():
-            (catalogue / name).unlink()
+            (root / name).unlink()
         for name, data in output.items():
-            (catalogue / name).write_bytes(data)
+            (root / name).write_bytes(data)
+        readme_path.write_bytes(readme)
     return count
 
 
@@ -265,7 +343,7 @@ def main() -> int:
     args = parser.parse_args()
     try:
         count = generate(args.root.resolve(), args.repository, args.ref, args.check)
-    except (CatalogueError, OSError) as error:
+    except (ValueError, OSError) as error:
         print(f"catalogue: {error}", file=sys.stderr)
         return 1
     print(f"catalogue: {count} patch(es) validated; indexes {'checked' if args.check else 'generated'}")

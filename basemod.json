@@ -20,17 +20,12 @@
           "5.56.0"
         ]
       },
-      "jar": "patch.jar",
+      "jar": "CatalogueExample.jar",
       "example": true,
-      "id": "mods/basemod/Catalogue Example-ModinMobileSTS",
       "patchModId": "amethyst_agent_basemod_catalogue_example",
-      "metadataUrl": "https://raw.githubusercontent.com/ModinMobileSTS/SlaytheAmethystPlayerModCatalogue/main/mods/basemod/Catalogue%20Example-ModinMobileSTS/metadata.json",
-      "download": {
-        "path": "mods/basemod/Catalogue Example-ModinMobileSTS/patch.jar",
-        "url": "https://raw.githubusercontent.com/ModinMobileSTS/SlaytheAmethystPlayerModCatalogue/main/mods/basemod/Catalogue%20Example-ModinMobileSTS/patch.jar",
-        "size": 1703,
-        "sha256": "5cbff2c62e4eae598c4d6dd75d5ee8d7a2c3dfdff98bb5ab8a9ea5e2cd9d1a93"
-      }
+      "download_url": "https://raw.githubusercontent.com/ModinMobileSTS/SlaytheAmethystPlayerModCatalogue/main/mods/basemod/Catalogue%20Example-ModinMobileSTS/CatalogueExample.jar",
+      "size": 1703,
+      "sha256": "5cbff2c62e4eae598c4d6dd75d5ee8d7a2c3dfdff98bb5ab8a9ea5e2cd9d1a93"
     }
   ]
 }

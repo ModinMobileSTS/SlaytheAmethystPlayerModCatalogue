@@ -12,6 +12,6 @@
     "workshopId": "1605833019",
     "versions": ["5.56.0"]
   },
-  "jar": "patch.jar",
+  "jar": "CatalogueExample.jar",
   "example": true
 }

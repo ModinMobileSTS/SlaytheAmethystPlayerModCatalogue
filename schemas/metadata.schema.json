@@ -35,8 +35,8 @@
         }
       }
     },
-    "jar": {"const": "patch.jar"},
+    "jar": {"type": "string", "minLength": 5, "maxLength": 120, "pattern": "^[^/\\\\<>:\"|?*\\u0000-\\u001f]+\\.[jJ][aA][rR]$"},
     "example": {"type": "boolean", "default": false}
   },
-  "$comment": "The generator also validates NFC, safe path segments, exact directory naming, wildcard semantics, Workshop ID mapping and the JAR/ModTheSpire.json. See README.md."
+  "$comment": "The generator also validates NFC, safe path segments, exact directory naming, wildcard semantics, Workshop ID mapping and the JAR/ModTheSpire.json. See docs/catalogue.md."
 }
