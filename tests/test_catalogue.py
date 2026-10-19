@@ -60,7 +60,8 @@ class CatalogueTests(unittest.TestCase):
         return catalogue.generate(self.root, **kwargs)
 
     def index(self, name="basemod"):
-        return json.loads((self.root / f"{name}.json").read_bytes())
+        path = "index.json" if name == "index" else f"mods/{name}/index.json"
+        return json.loads((self.root / path).read_bytes())
 
     def test_real_example_jar_and_java8_class(self):
         result = catalogue.validate_jar(EXAMPLE_JAR, self.metadata)
@@ -87,7 +88,12 @@ class CatalogueTests(unittest.TestCase):
         self.assertEqual(entry["sha256"], hashlib.sha256((destination / self.metadata["jar"]).read_bytes()).hexdigest())
         self.assertEqual(entry["size"], (destination / self.metadata["jar"]).stat().st_size)
         self.assertIn("Catalogue%20Example", entry["download_url"])
-        self.assertEqual(self.index("index")["mods"][0], entry)
+        self.assertEqual(self.index("index")["schemaVersion"], 2)
+        summary = self.index("index")["mods"]["basemod"]
+        self.assertEqual(summary["count"], 1)
+        self.assertEqual(summary["versions"], {})  # The shipped example does not light up a badge.
+        self.assertEqual(summary["sha256"], hashlib.sha256((self.root / "mods/basemod/index.json").read_bytes()).hexdigest())
+        self.assertFalse((self.root / "basemod.json").exists())
 
     def test_multiple_mods_grouped_and_sorted(self):
         self.add_patch()
@@ -98,7 +104,11 @@ class CatalogueTests(unittest.TestCase):
         self.add_patch(other)
         self.assertEqual(self.generate(), 3)
         self.assertEqual(self.index("AnotherMod")["count"], 2)
-        self.assertEqual([m["target"]["modId"] for m in self.index("index")["mods"]], ["AnotherMod", "AnotherMod", "basemod"])
+        groups = self.index("index")["mods"]
+        self.assertEqual(list(groups), ["AnotherMod", "basemod"])
+        self.assertEqual(groups["AnotherMod"]["count"], 2)
+        self.assertEqual([entry["name"] for entry in self.index("AnotherMod")["patches"]], ["Another Patch", "Catalogue Example"])
+        self.assertEqual(groups["basemod"]["count"], 1)
 
     def test_unicode_names_preserve_case_and_encode_url(self):
         self.metadata["name"] = "中文补丁"
@@ -113,9 +123,9 @@ class CatalogueTests(unittest.TestCase):
     def test_repeated_generation_is_byte_identical(self):
         self.add_patch()
         self.generate()
-        before = {p.name: p.read_bytes() for p in self.root.glob("*.json")}
+        before = {p.relative_to(self.root): p.read_bytes() for p in self.root.rglob("*.json")}
         self.generate()
-        self.assertEqual(before, {p.name: p.read_bytes() for p in self.root.glob("*.json")})
+        self.assertEqual(before, {p.relative_to(self.root): p.read_bytes() for p in self.root.rglob("*.json")})
         self.assertEqual(self.generate(check=True), 1)
 
     def test_same_name_and_author_overwrite_one_entry(self):
@@ -140,8 +150,8 @@ class CatalogueTests(unittest.TestCase):
         self.generate()
         shutil.rmtree(destination)
         self.assertEqual(self.generate(), 0)
-        self.assertFalse((self.root / "basemod.json").exists())
-        self.assertEqual(self.index("index"), {"schemaVersion": 1, "count": 0, "mods": []})
+        self.assertFalse((self.root / "mods/basemod/index.json").exists())
+        self.assertEqual(self.index("index"), {"schemaVersion": 2, "count": 0, "mods": {}})
 
     def test_stale_check_fails_without_writing(self):
         self.add_patch()
@@ -152,11 +162,11 @@ class CatalogueTests(unittest.TestCase):
     def test_invalid_upload_does_not_modify_old_catalogue(self):
         destination = self.add_patch()
         self.generate()
-        previous = (self.root / "basemod.json").read_bytes()
+        previous = (self.root / "mods/basemod/index.json").read_bytes()
         (destination / self.metadata["jar"]).write_bytes(b"broken upload")
         with self.assertRaises(catalogue.CatalogueError):
             self.generate()
-        self.assertEqual(previous, (self.root / "basemod.json").read_bytes())
+        self.assertEqual(previous, (self.root / "mods/basemod/index.json").read_bytes())
 
     def test_missing_required_fields_and_unknown_fields(self):
         for field in self.metadata:
@@ -366,7 +376,7 @@ class CatalogueTests(unittest.TestCase):
         (destination / "src/metadata.json").write_text('{"not":"catalogue metadata"}')
         self.assertEqual(catalogue.discover_metadata(self.root / "mods"), [destination / "metadata.json"])
         self.assertEqual(self.generate(), 1)
-        entry = self.index("index")["mods"][0]
+        entry = self.index()["patches"][0]
         self.assertEqual(entry["jar"], "我的补丁 2.0.JAR")
         self.assertTrue(unquote(entry["download_url"]).endswith("/我的补丁 2.0.JAR"))
 
@@ -382,12 +392,12 @@ class CatalogueTests(unittest.TestCase):
         self.metadata["jar"] = "UpdatedPatch.jar"
         self.add_patch()
         self.assertEqual(self.generate(), 1)
-        self.assertTrue(self.index("index")["mods"][0]["download_url"].endswith("/UpdatedPatch.jar"))
+        self.assertTrue(self.index()["patches"][0]["download_url"].endswith("/UpdatedPatch.jar"))
 
-    def test_index_includes_description_without_legacy_path_or_url_fields(self):
+    def test_detail_index_includes_description_without_legacy_path_or_url_fields(self):
         self.add_patch()
         self.generate()
-        entry = self.index("index")["mods"][0]
+        entry = self.index()["patches"][0]
         self.assertEqual(entry["description"], self.metadata["description"])
         self.assertIn("download_url", entry)
         for key in ("path", "url", "download", "metadataUrl", "id"):
@@ -403,7 +413,7 @@ class CatalogueTests(unittest.TestCase):
         self.assertTrue(document.startswith("# 简介\n\n自定义简介。\n\n"))
         self.assertIn(self.metadata["description"], document)
         self.assertIn("Catalogue Example 1\\.0\\.0（示例）", document)
-        self.assertIn(self.index("index")["mods"][0]["download_url"], document)
+        self.assertIn(self.index()["patches"][0]["download_url"], document)
         self.assertNotIn("旧列表", document)
         self.generate(check=True)
         self.generate()
@@ -464,13 +474,13 @@ class CatalogueTests(unittest.TestCase):
         shutil.rmtree(destination)
         self.generate()
         self.assertEqual(unrelated.read_text(), '{"custom":"settings"}')
-        self.assertFalse((self.root / "basemod.json").exists())
+        self.assertFalse((self.root / "mods/basemod/index.json").exists())
 
-    def test_unrelated_root_json_collision_is_rejected_before_writes(self):
+    def test_unrelated_mod_index_collision_is_rejected_before_writes(self):
         self.add_patch()
-        collision = self.root / "basemod.json"
+        collision = self.root / "mods/basemod/index.json"
         collision.write_text('{"custom":"data"}')
-        with self.assertRaisesRegex(catalogue.CatalogueError, "unrelated root JSON"):
+        with self.assertRaisesRegex(catalogue.CatalogueError, "unrelated JSON"):
             self.generate()
         self.assertEqual(collision.read_text(), '{"custom":"data"}')
         self.assertFalse((self.root / "index.json").exists())
@@ -481,7 +491,121 @@ class CatalogueTests(unittest.TestCase):
         (self.root / "index.json").write_bytes(catalogue.encode_json(previous))
         with self.assertRaises(catalogue.CatalogueError):
             self.generate()
+        self.assertFalse((self.root / "mods/basemod/index.json").exists())
+
+    def test_migration_removes_only_legacy_root_indexes(self):
+        self.add_patch()
+        self.generate()
+        group = self.index()
+        legacy = {"schemaVersion": 1, "count": 1, "mods": group["patches"]}
+        (self.root / "index.json").write_bytes(catalogue.encode_json(legacy))
+        (self.root / "basemod.json").write_bytes(catalogue.encode_json(group))
+        unrelated = self.root / "settings.json"
+        unrelated.write_text('{"custom":"settings"}')
+        self.generate()
         self.assertFalse((self.root / "basemod.json").exists())
+        self.assertEqual(self.index(), group)
+        self.assertEqual(self.index("index")["schemaVersion"], 2)
+        self.assertEqual(unrelated.read_text(), '{"custom":"settings"}')
+        self.generate(check=True)
+
+    def test_unrelated_root_modid_json_is_preserved(self):
+        self.add_patch()
+        unrelated = self.root / "basemod.json"
+        unrelated.write_text('{"custom":"data"}')
+        self.generate()
+        self.assertEqual(unrelated.read_text(), '{"custom":"data"}')
+        self.generate(check=True)
+
+    def test_mod_index_download_does_not_contain_other_mods(self):
+        self.add_patch()
+        other = copy.deepcopy(self.metadata)
+        other["target"].update(modId="AnotherMod", workshopId="123456789")
+        self.add_patch(other)
+        self.generate()
+        document = self.index()
+        self.assertEqual(document["count"], 1)
+        self.assertTrue(all(entry["target"]["modId"] == "basemod" for entry in document["patches"]))
+        self.assertEqual(self.index("index")["count"], 2)
+        self.assertNotIn("AnotherMod", json.dumps(document))
+
+    def test_mod_index_failure_does_not_update_root_or_readme(self):
+        self.add_patch()
+        self.generate()
+        index_before = (self.root / "index.json").read_bytes()
+        readme_before = (self.root / "README.md").read_bytes()
+        self.metadata["version"] = "2.0.0"
+        self.add_patch()
+        (self.root / "mods/basemod/index.json").write_bytes(b'{"custom":true}')
+        with self.assertRaisesRegex(catalogue.CatalogueError, "unrelated JSON"):
+            self.generate()
+        self.assertEqual((self.root / "index.json").read_bytes(), index_before)
+        self.assertEqual((self.root / "README.md").read_bytes(), readme_before)
+
+    def test_v2_previous_index_cannot_escape_root_when_cleaning(self):
+        self.add_patch()
+        previous = {"schemaVersion": 2, "count": 0, "mods": {"../outside": {}}}
+        (self.root / "index.json").write_bytes(catalogue.encode_json(previous))
+        with self.assertRaises(catalogue.CatalogueError):
+            self.generate()
+        self.assertFalse((self.root / "mods/basemod/index.json").exists())
+
+    def test_badge_index_counts_exact_wildcard_and_hidden_example_versions(self):
+        self.metadata["example"] = False
+        self.metadata["target"]["versions"] = ["1.0", "2.0"]
+        self.add_patch()
+        wildcard = copy.deepcopy(self.metadata)
+        wildcard["name"] = "All Versions"
+        wildcard["target"]["versions"] = ["*"]
+        self.add_patch(wildcard)
+        hidden = copy.deepcopy(self.metadata)
+        hidden.update(name="Hidden Example", example=True)
+        self.add_patch(hidden)
+        other = copy.deepcopy(self.metadata)
+        other["target"].update(modId="OtherMod", workshopId="12345", versions=["3.0"])
+        self.add_patch(other)
+        self.generate()
+        groups = self.index("index")["mods"]
+        summary = groups["basemod"]
+        self.assertEqual(summary["count"], 3)  # All records, including examples.
+        self.assertEqual(summary["versions"], {"*": 1, "1.0": 1, "2.0": 1})
+        self.assertEqual(groups["OtherMod"]["versions"], {"3.0": 1})
+        for version, expected in (("1.0", 2), ("2.0", 2), ("3.0", 1)):
+            counts = summary["versions"]
+            self.assertEqual(counts.get(version, 0) + counts.get("*", 0), expected)
+        self.assertNotIn("BaseMod", groups)
+        self.assertNotIn("NotInCatalogue", groups)
+
+    def test_example_only_group_has_no_badge(self):
+        self.metadata["target"]["versions"] = ["*"]
+        self.add_patch()
+        self.generate()
+        self.assertEqual(self.index("index")["mods"]["basemod"]["versions"], {})
+        self.assertTrue(self.index()["patches"][0]["example"])
+
+    def test_badge_index_does_not_duplicate_patch_details(self):
+        self.add_patch()
+        self.generate()
+        group = self.index("index")["mods"]["basemod"]
+        self.assertEqual(set(group), {"workshopId", "count", "versions", "sha256"})
+        self.assertNotIn(self.metadata["description"], (self.root / "index.json").read_text(encoding="utf-8"))
+        self.assertEqual(self.index()["patches"][0]["description"], self.metadata["description"])
+        self.assertIn("download_url", self.index()["patches"][0])
+
+    def test_detail_hash_changes_even_when_badge_counts_are_unchanged(self):
+        self.metadata["example"] = False
+        self.add_patch()
+        self.generate()
+        before = self.index("index")["mods"]["basemod"]
+        self.metadata["description"] = "更新后的补丁简介。"
+        self.add_patch()
+        self.generate()
+        after = self.index("index")["mods"]["basemod"]
+        self.assertEqual(before["count"], after["count"])
+        self.assertEqual(before["versions"], after["versions"])
+        self.assertNotEqual(before["sha256"], after["sha256"])
+        self.assertEqual(after["sha256"], hashlib.sha256((self.root / "mods/basemod/index.json").read_bytes()).hexdigest())
+        self.generate(check=True)
 
 
 if __name__ == "__main__":

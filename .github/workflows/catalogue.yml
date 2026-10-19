@@ -57,7 +57,11 @@ jobs:
             # The branch may have advanced since validation. Revalidate the latest tree.
             python -m unittest discover -s tests -v
             python scripts/catalogue.py --repository "$CATALOGUE_REPOSITORY" --ref "$CATALOGUE_BRANCH"
-            git add --all -- ':(top,glob)*.json' README.md
+            git add --all -- index.json ':(top,glob)mods/*/index.json' README.md
+            # Stage only deleted legacy root indexes; do not publish unrelated root JSON files.
+            while IFS= read -r -d '' deleted; do
+              git add -- "$deleted"
+            done < <(git diff --name-only --diff-filter=D -z -- ':(top,glob)*.json')
             if git diff --cached --quiet; then
               echo 'Catalogue is already current.'
               exit 0

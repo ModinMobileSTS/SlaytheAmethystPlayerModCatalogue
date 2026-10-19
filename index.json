@@ -1,29 +1,12 @@
 {
-  "schemaVersion": 1,
+  "schemaVersion": 2,
   "count": 1,
-  "mods": [
-    {
-      "schemaVersion": 1,
-      "name": "Catalogue Example",
-      "description": "目录示例：加载时输出一条日志，不修改 BaseMod 或游戏行为。仅用于验证 AI 补丁的上传、索引和下载流程。",
-      "version": "1.0.0",
-      "author": {
-        "name": "ModinMobileSTS",
-        "email": "catalogue-example@example.com"
-      },
-      "target": {
-        "modId": "basemod",
-        "workshopId": "1605833019",
-        "versions": [
-          "5.56.0"
-        ]
-      },
-      "jar": "CatalogueExample.jar",
-      "example": true,
-      "patchModId": "amethyst_agent_basemod_catalogue_example",
-      "download_url": "https://raw.githubusercontent.com/ModinMobileSTS/SlaytheAmethystPlayerModCatalogue/main/mods/basemod/Catalogue%20Example-ModinMobileSTS/CatalogueExample.jar",
-      "size": 1703,
-      "sha256": "5cbff2c62e4eae598c4d6dd75d5ee8d7a2c3dfdff98bb5ab8a9ea5e2cd9d1a93"
+  "mods": {
+    "basemod": {
+      "workshopId": "1605833019",
+      "count": 1,
+      "versions": {},
+      "sha256": "e10b975d0d448df44f2380ba5c0eef2eb9bab4f3a0f4ad150a1dad3736caa8ef"
     }
-  ]
+  }
 }

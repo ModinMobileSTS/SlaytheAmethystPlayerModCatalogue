@@ -10,13 +10,13 @@
 ```text
 mods/
   <modid>/
+    index.json               # Action 生成的该 modid 补丁列表，可单独下载
     <mod_name>-<mod-author>/
       src/                   # 可选：补丁源代码
       metadata.json          # 上传元数据，与 src/、JAR 同级
       xxxx.jar               # 上传的完整 AI 补丁 JAR，保留文件名
       README.md              # 可选：补丁简介
-index.json                   # 全部补丁的简介、元数据与下载地址
-<modid>.json                 # 该 modid 的所有补丁及下载信息
+index.json                   # 轻量徽标索引：按 modid / 版本查补丁数量和详情校验值
 README.md                    # 仓库简介 + Action 自动生成的模组列表
 schemas/metadata.schema.json # v1 元数据 JSON Schema
 scripts/catalogue.py         # 标准库实现的校验器与索引生成器
@@ -93,12 +93,14 @@ JAR 必须包含至少一个编译后的 `.class` 和根目录 `ModTheSpire.json
 
 1. 运行回归测试，每次完整扫描 `mods/*/*/metadata.json` 并校验其元数据和 `jar` 字段引用的同目录 JAR。
    不依赖集中注册表；`src/` 内的同名 JSON 只是源文件，不作为额外条目收录。
-2. 在仓库根目录生成 `<modid>.json` 分组列表和 `index.json` 完整补丁总目录，不创建索引文件夹。
+2. 在仓库根目录生成轻量 `index.json`，以 modid 为键，预计算各版本的可用补丁数；
+   每个模组的分组列表放在 `mods/<modid>/index.json`，不在根目录堆放 `<modid>.json`。
 3. 从同一份扫描结果生成 README 的模组列表，保留列表标记之外的简介。
-4. 自动提交有变更的根目录 JSON 和 README 至触发分支，提交信息为 `chores: regenerate mod catalogue`。
+4. 自动提交有变更的索引 JSON 和 README 至触发分支，提交信息为 `chores: regenerate mod catalogue`。
 5. 无内容变化不产生空提交；输出排序固定且没有当前时间字段，相同输入生成相同结果。
 6. 删除条目后重建 JSON 和 README 列表，删除最后一个条目后移除对应 modid 的旧索引。
-   旧分组索引从上一次 `index.json` 的 `target.modId` 推导，只清理生成文件，不删除无关的根目录 JSON。
+   旧分组索引从上一次 `index.json` 的 modid 键推导，只清理生成文件，不删除无关的 JSON。
+   生成器也能读取旧版平铺总目录，校验后迁移旧的根目录 `<modid>.json`。
 
 根 README 只保留简介和自动生成的模组列表。列表位于 `<!-- MOD_LIST_START -->` 与
 `<!-- MOD_LIST_END -->` 之间，Action 只替换该区域；保留这对标记，技术说明统一放 `docs/`。
@@ -124,13 +126,40 @@ https://raw.githubusercontent.com/ModinMobileSTS/SlaytheAmethystPlayerModCatalog
 BaseMod 补丁列表：
 
 ```text
-https://raw.githubusercontent.com/ModinMobileSTS/SlaytheAmethystPlayerModCatalogue/main/basemod.json
+https://raw.githubusercontent.com/ModinMobileSTS/SlaytheAmethystPlayerModCatalogue/main/mods/basemod/index.json
 ```
 
-根 `index.json` 包含 `schemaVersion`、`count` 和 `mods` 数组，**逐条列出补丁**，
-不是只列出 modid 分组链接。同一 modid 的多个补丁分别收录，均包含补丁简介。
-每个 modid 文件包含 `schemaVersion`、`modId`、`workshopId`、`count` 和 `patches` 数组。
-两种列表中每个条目复制完整上传元数据（含 `description`），并附加：
+根 `index.json` 使用 **`schemaVersion: 2`**，包含补丁总数 `count` 和 **`mods` 对象**。
+`mods` 的键为大小写精确匹配的目标 modid，每组包含：
+
+- `workshopId`：目标模组的 Workshop ID，字符串。
+- `count`：该模组的补丁总数，包含示例，不能直接作为兼容补丁徽标的数量。
+- `versions`：以版本字符串为键、**不含示例的可用补丁数**为值的对象；`*` 表示通配版本。
+  一条补丁声明多个版本时，分别计入对应版本；通配补丁仅计入 `*`，不复制到精确版本。
+- `sha256`：`mods/<modid>/index.json` 文件原始字节的 SHA-256。详情更新但数量不变时也会改变，
+  用来判断已缓存的补丁列表是否仍然有效。
+
+下面是有两个精确版本补丁、一个通配补丁的结构示例；真实校验值由生成器填写：
+
+```json
+{
+  "schemaVersion": 2,
+  "count": 3,
+  "mods": {
+    "basemod": {
+      "workshopId": "1605833019",
+      "count": 3,
+      "versions": {"*": 1, "5.56.0": 2},
+      "sha256": "<详情文件的 SHA-256>"
+    }
+  }
+}
+```
+
+根索引不重复携带补丁简介、作者和下载地址，避免每次刷新徽标下载全部详情。
+每个 `mods/<modid>/index.json` 包含 `schemaVersion: 1`、`modId`、`workshopId`、`count`
+和 `patches` 数组，其中保留完整补丁记录。上传元数据的 `schemaVersion` 仍为 1。
+详情列表中每个补丁条目复制完整上传元数据（含 `description`），并附加：
 
 - `patchModId`：从 JAR 读取的补丁 modid；
 - `download_url`：直接指向该条目 JAR 的下载地址（中文、空格等已进行 URL 编码）；
@@ -138,9 +167,43 @@ https://raw.githubusercontent.com/ModinMobileSTS/SlaytheAmethystPlayerModCatalog
 
 不输出 `path`、`url`、`metadataUrl`、嵌套 `download` 或路径式 `id` 字段。
 
-这些字段不能由上传者伪造，均由生成器计算。通过 `target.versions` 选择适用条目。
-Raw URL 默认跟随 `main`，覆盖上传后 GitHub CDN 可能暂时缓存旧内容；出现哈希不匹配应刷新索引重试，
-不能忽略校验。需要不可变快照时可指定 `--ref <commit-sha>` 或把所有请求固定至同一 Git 提交。
+这些附加字段均由生成器计算。通过 `target.versions` 选择适用条目。
+
+### 客户端卡片与徽标流程
+
+1. 每次刷新模组页面只请求一次根 `index.json`，用 ETag / `If-None-Match` 做条件请求。
+   收到 304 时复用缓存的解析结果；收到新内容才解析一次，将 `mods` 和 `versions` 存为哈希映射。
+   以一次不可变快照更新页面状态，网络与解析放在后台，避免每张卡片分别请求或重复解析。
+   请求失败时保留上次成功的数据，界面标明缓存状态，不把失败误当作“没有补丁”。
+2. 对每张卡片，按原模组的精确 `modid` 取 `mods[modId]`。
+   该组存在且 `versions` 非空时展示“有补丁”徽标，满足有正式补丁就标记的规则；
+   示例不会点亮徽标。需要展示兼容补丁数时，另算
+   `compatibleCount = versions[currentVersion] + versions["*"]`，不存在的键按 0 处理。
+   未知版本只计入 `*`，不把 `*` 当作实际版本相加两次。版本是原始字符串，
+   不自动小写、不推断 SemVer 范围；多个模组共用的版本字符串不会互相影响。
+3. 点击徽标才请求 `mods/<URL 编码的 modid>/index.json`，地址从固定布局构造。
+   如果已有该 modid 的详情缓存且 SHA-256 与当前根索引一致，直接复用；否则获取详情并校验原始字节。
+   同一 modid 的并发点击共用一个请求。后台解析后，只展示 `target.modId` 一致、
+   且 `example != true` 的记录；当前版本在 `target.versions` 中或该字段为 `["*"]`
+   的条目排在前面，其他条目仍展示并标明适用版本。详情文件包含示例以便其他视图使用，
+   默认列表不能直接展示未筛选的数组。
+4. 弹层从详情读取名称、`description`、作者和 `download_url`；玩家选择下载后再校验 JAR 的
+   `size` / `sha256`。根索引更新时，移除已删除模组的详情缓存，并只使 SHA-256 发生变化的详情缓存失效，
+   没有变化的模组可以继续用缓存。当前示例被标记为 `example: true`，因此默认不会点亮徽标。
+
+若根索引大小为 B、当前页面有 M 张模组卡片，首次解析为 **O(B)**，全部徽标匹配平均为
+**O(M)**，每张卡片仅做常数次哈希查找。点击详情后，只有该模组的 K 条补丁和每条至多 V 个
+支持版本参与筛选，为 **O(K × V)**。根索引体积随 modid 数量及不同支持版本数增长，
+不会重复下载每条补丁的长简介、邮箱和 JAR URL。首次解析整个 JSON 仍需要读取全部字节；
+对象结构提升的是解析后的查找效率。
+
+当前阶段仅实现仓库的生成协议；客户端按上述流程接入，不在本仓库增加 Android 代码。
+
+Raw URL 默认跟随 `main`，覆盖上传后 GitHub CDN 可能暂时缓存旧内容。
+详情文件与根索引的哈希不匹配时刷新根索引并重新获取详情，重试次数要有上限，
+仍不一致则显示“目录更新中”并稍后重试；不能混用不同快照的数据或忽略校验。
+JAR 哈希不匹配时同样刷新重试。需要不可变快照时可指定 `--ref <commit-sha>`
+或把所有请求固定至同一 Git 提交。
 
 ## 现有云函数的后续接入约定
 

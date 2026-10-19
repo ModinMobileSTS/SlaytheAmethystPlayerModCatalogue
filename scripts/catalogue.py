@@ -196,6 +196,8 @@ def discover_metadata(mods_root: Path) -> list[Path]:
     for mod_dir in sorted(mods_root.iterdir()):
         require(mod_dir.is_dir(), f"unexpected file under mods/: {mod_dir.name}")
         for patch_dir in sorted(mod_dir.iterdir()):
+            if patch_dir.name == "index.json" and patch_dir.is_file():
+                continue  # Generated per-mod index, validated before overwriting below.
             require(patch_dir.is_dir(), f"unexpected file under {mod_dir}")
             metadata_path = patch_dir / "metadata.json"
             require(metadata_path.is_file(), f"missing metadata: {metadata_path}")
@@ -230,16 +232,27 @@ def collect(root: Path, repository: str, ref: str) -> tuple[dict[str, bytes], in
         grouped.setdefault(mod_id, []).append(entry)
     require(len({mod_id.casefold() for mod_id in grouped}) == len(grouped), "modIds differ only by case")
     output = {}
-    all_entries = []
+    mod_groups = {}
     for mod_id, entries in sorted(grouped.items()):
         entries.sort(key=lambda entry: (entry["name"], entry["author"]["name"]))
-        output[f"{mod_id}.json"] = encode_json({
+        detail = encode_json({
             "schemaVersion": 1, "modId": mod_id, "workshopId": workshop_by_mod[mod_id],
             "count": len(entries), "patches": entries,
         })
-        all_entries.extend(entries)
-    output["index.json"] = encode_json({"schemaVersion": 1, "count": len(all_entries), "mods": all_entries})
-    return output, sum(map(len, grouped.values()))
+        output[f"mods/{mod_id}/index.json"] = detail
+        versions: dict[str, int] = {}
+        for entry in entries:
+            if entry.get("example", False):
+                continue
+            for version in entry["target"]["versions"]:
+                versions[version] = versions.get(version, 0) + 1
+        mod_groups[mod_id] = {
+            "workshopId": workshop_by_mod[mod_id], "count": len(entries),
+            "versions": dict(sorted(versions.items())), "sha256": hashlib.sha256(detail).hexdigest(),
+        }
+    count = sum(map(len, grouped.values()))
+    output["index.json"] = encode_json({"schemaVersion": 2, "count": count, "mods": mod_groups})
+    return output, count
 
 
 def encode_json(value: object) -> bytes:
@@ -247,10 +260,11 @@ def encode_json(value: object) -> bytes:
 
 
 def read_generated_indexes(root: Path, output: dict[str, bytes]) -> dict[str, bytes]:
-    """Own only root index.json and files it lists, never arbitrary root JSON.
+    """Own only root index.json and the per-mod indexes derived from it.
 
     Validate both old and new destinations before deleting/writing anything.
     A malformed manifest must not permit path traversal or erase unrelated data.
+    Read v1 once to migrate legacy root <modid>.json files to mods/<modid>/index.json.
     """
     previous_paths = {"index.json"}
     index_path = root / "index.json"
@@ -258,12 +272,20 @@ def read_generated_indexes(root: Path, output: dict[str, bytes]) -> dict[str, by
         require(index_path.is_file() and not index_path.is_symlink(), "index.json must be a real file")
         index = json.loads(index_path.read_bytes(), object_pairs_hook=unique_object)
         require(isinstance(index, dict) and set(index) == {"schemaVersion", "count", "mods"}
-                and index["schemaVersion"] == 1 and isinstance(index["mods"], list), "invalid generated index.json")
-        for entry in index["mods"]:
-            require(isinstance(entry, dict) and isinstance(entry.get("target"), dict), "invalid mod entry in index.json")
-            mod_id = path_segment(entry["target"].get("modId"), "indexed modId")
+                and type(index["schemaVersion"]) is int, "invalid generated index.json")
+        if index["schemaVersion"] == 1:
+            require(isinstance(index["mods"], list), "invalid legacy mods array in index.json")
+            mod_ids = []
+            for entry in index["mods"]:
+                require(isinstance(entry, dict) and isinstance(entry.get("target"), dict), "invalid mod entry in index.json")
+                mod_ids.append(entry["target"].get("modId"))
+        else:
+            require(index["schemaVersion"] == 2 and isinstance(index["mods"], dict), "invalid mods map in index.json")
+            mod_ids = index["mods"]
+        for value in mod_ids:
+            mod_id = path_segment(value, "indexed modId")
             require(mod_id.casefold() != "index", "unsafe generated index path")
-            previous_paths.add(f"{mod_id}.json")
+            previous_paths.add(f"{mod_id}.json" if index["schemaVersion"] == 1 else f"mods/{mod_id}/index.json")
     existing = {}
     for name in sorted(previous_paths | output.keys()):
         path = root / name
@@ -273,10 +295,12 @@ def read_generated_indexes(root: Path, output: dict[str, bytes]) -> dict[str, by
         data = path.read_bytes()
         if name != "index.json":
             document = json.loads(data, object_pairs_hook=unique_object)
+            mod_id = name.split("/")[1] if name.startswith("mods/") else name[:-5]
             require(isinstance(document, dict)
                     and set(document) == {"schemaVersion", "modId", "workshopId", "count", "patches"}
-                    and document["schemaVersion"] == 1 and document["modId"] == name[:-5]
-                    and isinstance(document["patches"], list), f"refusing to overwrite unrelated root JSON: {name}")
+                    and type(document["schemaVersion"]) is int and document["schemaVersion"] == 1
+                    and document["modId"] == mod_id
+                    and isinstance(document["patches"], list), f"refusing to overwrite unrelated JSON: {name}")
         existing[name] = data
     return existing
 
@@ -321,7 +345,9 @@ def generate(root: Path, repository: str = REPOSITORY, ref: str = "main", check:
     output, count = collect(root, repository, ref)  # Validate everything before touching existing indexes.
     existing = read_generated_indexes(root, output)
     readme_path = root / "README.md"
-    readme = render_readme(root, json.loads(output["index.json"])["mods"])
+    entries = [entry for name, data in sorted(output.items()) if name != "index.json"
+               for entry in json.loads(data)["patches"]]
+    readme = render_readme(root, entries)
     if check:
         require(existing == output, "catalogue is stale; run python3 scripts/catalogue.py")
         require(readme_path.is_file() and readme_path.read_bytes() == readme, "README mod list is stale; run python3 scripts/catalogue.py")
