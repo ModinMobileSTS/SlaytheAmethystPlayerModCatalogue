@@ -1,0 +1,72 @@
+name: Generate mod catalogue
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: catalogue-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5
+        with:
+          python-version: '3.12'
+      - name: Run regression tests
+        run: python -m unittest discover -s tests -v
+      - name: Validate uploads and generate indexes (no JAR execution)
+        env:
+          CATALOGUE_REPOSITORY: ${{ github.repository }}
+        run: python scripts/catalogue.py --repository "$CATALOGUE_REPOSITORY"
+
+  publish:
+    needs: validate
+    if: github.event_name != 'pull_request' && github.ref_type == 'branch'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          ref: ${{ github.ref }}
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5
+        with:
+          python-version: '3.12'
+      - name: Generate and commit indexes, retrying concurrent uploads
+        env:
+          CATALOGUE_REPOSITORY: ${{ github.repository }}
+          CATALOGUE_BRANCH: ${{ github.ref_name }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          for attempt in 1 2 3 4 5; do
+            git fetch origin "refs/heads/$CATALOGUE_BRANCH"
+            git switch --detach FETCH_HEAD
+            # The branch may have advanced since validation. Revalidate the latest tree.
+            python -m unittest discover -s tests -v
+            python scripts/catalogue.py --repository "$CATALOGUE_REPOSITORY" --ref "$CATALOGUE_BRANCH"
+            git add --all -- catalogue/
+            if git diff --cached --quiet; then
+              echo 'Catalogue is already current.'
+              exit 0
+            fi
+            git commit -m 'chores: regenerate mod catalogue'
+            if git push origin "HEAD:refs/heads/$CATALOGUE_BRANCH"; then
+              exit 0
+            fi
+            echo "Branch advanced or push rejected; retry $attempt/5."
+          done
+          echo 'Unable to publish catalogue after five attempts.' >&2
+          exit 1

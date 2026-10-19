@@ -1,0 +1,17 @@
+{
+  "schemaVersion": 1,
+  "name": "Catalogue Example",
+  "description": "目录示例：加载时输出一条日志，不修改 BaseMod 或游戏行为。仅用于验证 AI 补丁的上传、索引和下载流程。",
+  "version": "1.0.0",
+  "author": {
+    "name": "ModinMobileSTS",
+    "email": "catalogue-example@example.com"
+  },
+  "target": {
+    "modId": "basemod",
+    "workshopId": "1605833019",
+    "versions": ["5.56.0"]
+  },
+  "jar": "patch.jar",
+  "example": true
+}
