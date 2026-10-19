@@ -57,7 +57,9 @@ jobs:
             # The branch may have advanced since validation. Revalidate the latest tree.
             python -m unittest discover -s tests -v
             python scripts/catalogue.py --repository "$CATALOGUE_REPOSITORY" --ref "$CATALOGUE_BRANCH"
-            git add --all -- index.json ':(top,glob)mods/*/index.json' README.md
+            git add --all -- index.json README.md
+            git ls-files --cached --others --exclude-standard -z -- ':(top,glob)mods/*/index.json' |
+              xargs -0 --no-run-if-empty git add --all --
             # Stage only deleted legacy root indexes; do not publish unrelated root JSON files.
             while IFS= read -r -d '' deleted; do
               git add -- "$deleted"
