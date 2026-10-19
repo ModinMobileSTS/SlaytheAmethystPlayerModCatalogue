@@ -60,8 +60,13 @@ class CatalogueTests(unittest.TestCase):
         return catalogue.generate(self.root, **kwargs)
 
     def index(self, name="basemod"):
-        path = "index.json" if name == "index" else f"mods/{name}/index.json"
-        return json.loads((self.root / path).read_bytes())
+        index = json.loads((self.root / "index.json").read_bytes())
+        return index if name == "index" else index["mods"][name]
+
+    def legacy_detail(self, mod_id="basemod"):
+        group = self.index(mod_id)
+        return {"schemaVersion": 1, "modId": mod_id,
+                **{key: group[key] for key in ("workshopId", "count", "patches")}}
 
     def test_real_example_jar_and_java8_class(self):
         result = catalogue.validate_jar(EXAMPLE_JAR, self.metadata)
@@ -88,12 +93,14 @@ class CatalogueTests(unittest.TestCase):
         self.assertEqual(entry["sha256"], hashlib.sha256((destination / self.metadata["jar"]).read_bytes()).hexdigest())
         self.assertEqual(entry["size"], (destination / self.metadata["jar"]).stat().st_size)
         self.assertIn("Catalogue%20Example", entry["download_url"])
-        self.assertEqual(self.index("index")["schemaVersion"], 2)
+        self.assertEqual(self.index("index")["schemaVersion"], 3)
         summary = self.index("index")["mods"]["basemod"]
         self.assertEqual(summary["count"], 1)
         self.assertEqual(summary["versions"], {})  # The shipped example does not light up a badge.
-        self.assertEqual(summary["sha256"], hashlib.sha256((self.root / "mods/basemod/index.json").read_bytes()).hexdigest())
+        self.assertEqual(summary["patches"][0], entry)
+        self.assertNotIn("sha256", summary)  # Only JAR records need a download checksum.
         self.assertFalse((self.root / "basemod.json").exists())
+        self.assertFalse((self.root / "mods/basemod/index.json").exists())
 
     def test_multiple_mods_grouped_and_sorted(self):
         self.add_patch()
@@ -151,7 +158,7 @@ class CatalogueTests(unittest.TestCase):
         shutil.rmtree(destination)
         self.assertEqual(self.generate(), 0)
         self.assertFalse((self.root / "mods/basemod/index.json").exists())
-        self.assertEqual(self.index("index"), {"schemaVersion": 2, "count": 0, "mods": {}})
+        self.assertEqual(self.index("index"), {"schemaVersion": 3, "count": 0, "mods": {}})
 
     def test_stale_check_fails_without_writing(self):
         self.add_patch()
@@ -162,11 +169,11 @@ class CatalogueTests(unittest.TestCase):
     def test_invalid_upload_does_not_modify_old_catalogue(self):
         destination = self.add_patch()
         self.generate()
-        previous = (self.root / "mods/basemod/index.json").read_bytes()
+        previous = (self.root / "index.json").read_bytes()
         (destination / self.metadata["jar"]).write_bytes(b"broken upload")
         with self.assertRaises(catalogue.CatalogueError):
             self.generate()
-        self.assertEqual(previous, (self.root / "mods/basemod/index.json").read_bytes())
+        self.assertEqual(previous, (self.root / "index.json").read_bytes())
 
     def test_missing_required_fields_and_unknown_fields(self):
         for field in self.metadata:
@@ -394,7 +401,7 @@ class CatalogueTests(unittest.TestCase):
         self.assertEqual(self.generate(), 1)
         self.assertTrue(self.index()["patches"][0]["download_url"].endswith("/UpdatedPatch.jar"))
 
-    def test_detail_index_includes_description_without_legacy_path_or_url_fields(self):
+    def test_single_index_includes_description_without_legacy_path_or_url_fields(self):
         self.add_patch()
         self.generate()
         entry = self.index()["patches"][0]
@@ -498,14 +505,14 @@ class CatalogueTests(unittest.TestCase):
         self.generate()
         group = self.index()
         legacy = {"schemaVersion": 1, "count": 1, "mods": group["patches"]}
+        (self.root / "basemod.json").write_bytes(catalogue.encode_json(self.legacy_detail()))
         (self.root / "index.json").write_bytes(catalogue.encode_json(legacy))
-        (self.root / "basemod.json").write_bytes(catalogue.encode_json(group))
         unrelated = self.root / "settings.json"
         unrelated.write_text('{"custom":"settings"}')
         self.generate()
         self.assertFalse((self.root / "basemod.json").exists())
         self.assertEqual(self.index(), group)
-        self.assertEqual(self.index("index")["schemaVersion"], 2)
+        self.assertEqual(self.index("index")["schemaVersion"], 3)
         self.assertEqual(unrelated.read_text(), '{"custom":"settings"}')
         self.generate(check=True)
 
@@ -517,21 +524,29 @@ class CatalogueTests(unittest.TestCase):
         self.assertEqual(unrelated.read_text(), '{"custom":"data"}')
         self.generate(check=True)
 
-    def test_mod_index_download_does_not_contain_other_mods(self):
+    def test_single_index_serves_all_mod_badges_and_details_from_one_parse(self):
         self.add_patch()
         other = copy.deepcopy(self.metadata)
         other["target"].update(modId="AnotherMod", workshopId="123456789")
         self.add_patch(other)
         self.generate()
-        document = self.index()
-        self.assertEqual(document["count"], 1)
-        self.assertTrue(all(entry["target"]["modId"] == "basemod" for entry in document["patches"]))
-        self.assertEqual(self.index("index")["count"], 2)
-        self.assertNotIn("AnotherMod", json.dumps(document))
+        document = json.loads((self.root / "index.json").read_bytes())
+        self.assertEqual(document["count"], 2)
+        self.assertEqual(set(document["mods"]), {"basemod", "AnotherMod"})
+        for mod_id in document["mods"]:
+            group = document["mods"][mod_id]
+            self.assertEqual(group["count"], 1)
+            self.assertTrue(all(entry["target"]["modId"] == mod_id for entry in group["patches"]))
+            self.assertTrue(group["patches"][0]["description"])
+            self.assertIn("download_url", group["patches"][0])
+        self.assertEqual(list(self.root.rglob("index.json")), [self.root / "index.json"])
+        self.assertEqual(list(self.root.glob("*.json")), [self.root / "index.json"])
 
-    def test_mod_index_failure_does_not_update_root_or_readme(self):
+    def test_legacy_mod_index_failure_does_not_update_root_or_readme(self):
         self.add_patch()
         self.generate()
+        legacy = {"schemaVersion": 2, "count": 1, "mods": {"basemod": {}}}
+        (self.root / "index.json").write_bytes(catalogue.encode_json(legacy))
         index_before = (self.root / "index.json").read_bytes()
         readme_before = (self.root / "README.md").read_bytes()
         self.metadata["version"] = "2.0.0"
@@ -583,16 +598,17 @@ class CatalogueTests(unittest.TestCase):
         self.assertEqual(self.index("index")["mods"]["basemod"]["versions"], {})
         self.assertTrue(self.index()["patches"][0]["example"])
 
-    def test_badge_index_does_not_duplicate_patch_details(self):
+    def test_single_index_contains_full_patch_details_once(self):
         self.add_patch()
         self.generate()
         group = self.index("index")["mods"]["basemod"]
-        self.assertEqual(set(group), {"workshopId", "count", "versions", "sha256"})
-        self.assertNotIn(self.metadata["description"], (self.root / "index.json").read_text(encoding="utf-8"))
+        self.assertEqual(set(group), {"workshopId", "count", "versions", "patches"})
+        document = (self.root / "index.json").read_text(encoding="utf-8")
+        self.assertEqual(document.count(self.metadata["description"]), 1)
         self.assertEqual(self.index()["patches"][0]["description"], self.metadata["description"])
         self.assertIn("download_url", self.index()["patches"][0])
 
-    def test_detail_hash_changes_even_when_badge_counts_are_unchanged(self):
+    def test_single_index_updates_details_even_when_badge_counts_are_unchanged(self):
         self.metadata["example"] = False
         self.add_patch()
         self.generate()
@@ -603,8 +619,60 @@ class CatalogueTests(unittest.TestCase):
         after = self.index("index")["mods"]["basemod"]
         self.assertEqual(before["count"], after["count"])
         self.assertEqual(before["versions"], after["versions"])
-        self.assertNotEqual(before["sha256"], after["sha256"])
-        self.assertEqual(after["sha256"], hashlib.sha256((self.root / "mods/basemod/index.json").read_bytes()).hexdigest())
+        self.assertNotEqual(before["patches"][0]["description"], after["patches"][0]["description"])
+        self.assertEqual(after["patches"][0]["description"], self.metadata["description"])
+        self.generate(check=True)
+
+    def test_migration_removes_v2_side_indexes_and_keeps_full_details(self):
+        destination = self.add_patch()
+        self.generate()
+        group = self.index()
+        detail_path = self.root / "mods/basemod/index.json"
+        detail_path.write_bytes(catalogue.encode_json(self.legacy_detail()))
+        legacy = {"schemaVersion": 2, "count": 1, "mods": {"basemod": {
+            "workshopId": group["workshopId"], "count": 1, "versions": {},
+            "sha256": hashlib.sha256(detail_path.read_bytes()).hexdigest(),
+        }}}
+        (self.root / "index.json").write_bytes(catalogue.encode_json(legacy))
+        source_before = (destination / "metadata.json").read_bytes()
+        with self.assertRaisesRegex(catalogue.CatalogueError, "stale"):
+            self.generate(check=True)
+        self.assertTrue(detail_path.exists())
+        self.generate()
+        self.assertFalse(detail_path.exists())
+        self.assertEqual(self.index(), group)
+        self.assertEqual((destination / "metadata.json").read_bytes(), source_before)
+        self.assertEqual(list(self.root.rglob("index.json")), [self.root / "index.json"])
+        self.generate(check=True)
+
+    def test_index_is_compact_utf8_and_round_trips_full_metadata(self):
+        self.add_patch()
+        self.generate()
+        data = (self.root / "index.json").read_bytes()
+        self.assertEqual(len(data.splitlines()), 1)
+        document = json.loads(data)
+        self.assertLess(len(data), len(catalogue.encode_json(document)))
+        entry = document["mods"]["basemod"]["patches"][0]
+        for key, value in self.metadata.items():
+            self.assertEqual(entry[key], value)
+
+    def test_large_index_supports_direct_mod_and_version_lookup(self):
+        self.metadata["example"] = False
+        for number in range(100):
+            metadata = copy.deepcopy(self.metadata)
+            metadata["target"].update(modId=f"Mod{number:03d}", workshopId=str(number + 1), versions=["2.0"])
+            self.add_patch(metadata)
+        self.generate()
+        path = self.root / "index.json"
+        self.assertGreater(path.stat().st_size, catalogue.MAX_JSON_BYTES)
+        document = json.loads(path.read_bytes())
+        self.assertEqual(document["count"], 100)
+        for number in range(100):
+            mod_id = f"Mod{number:03d}"
+            group = document["mods"][mod_id]
+            self.assertEqual(group["versions"]["2.0"], 1)
+            self.assertEqual(group["patches"][0]["target"]["modId"], mod_id)
+        self.assertEqual(list(self.root.rglob("index.json")), [path])
         self.generate(check=True)
 
 

@@ -197,7 +197,7 @@ def discover_metadata(mods_root: Path) -> list[Path]:
         require(mod_dir.is_dir(), f"unexpected file under mods/: {mod_dir.name}")
         for patch_dir in sorted(mod_dir.iterdir()):
             if patch_dir.name == "index.json" and patch_dir.is_file():
-                continue  # Generated per-mod index, validated before overwriting below.
+                continue  # Legacy per-mod index, validated before migration cleanup.
             require(patch_dir.is_dir(), f"unexpected file under {mod_dir}")
             metadata_path = patch_dir / "metadata.json"
             require(metadata_path.is_file(), f"missing metadata: {metadata_path}")
@@ -231,15 +231,9 @@ def collect(root: Path, repository: str, ref: str) -> tuple[dict[str, bytes], in
         }
         grouped.setdefault(mod_id, []).append(entry)
     require(len({mod_id.casefold() for mod_id in grouped}) == len(grouped), "modIds differ only by case")
-    output = {}
     mod_groups = {}
     for mod_id, entries in sorted(grouped.items()):
         entries.sort(key=lambda entry: (entry["name"], entry["author"]["name"]))
-        detail = encode_json({
-            "schemaVersion": 1, "modId": mod_id, "workshopId": workshop_by_mod[mod_id],
-            "count": len(entries), "patches": entries,
-        })
-        output[f"mods/{mod_id}/index.json"] = detail
         versions: dict[str, int] = {}
         for entry in entries:
             if entry.get("example", False):
@@ -248,23 +242,24 @@ def collect(root: Path, repository: str, ref: str) -> tuple[dict[str, bytes], in
                 versions[version] = versions.get(version, 0) + 1
         mod_groups[mod_id] = {
             "workshopId": workshop_by_mod[mod_id], "count": len(entries),
-            "versions": dict(sorted(versions.items())), "sha256": hashlib.sha256(detail).hexdigest(),
+            "versions": dict(sorted(versions.items())), "patches": entries,
         }
     count = sum(map(len, grouped.values()))
-    output["index.json"] = encode_json({"schemaVersion": 2, "count": count, "mods": mod_groups})
-    return output, count
+    index = {"schemaVersion": 3, "count": count, "mods": mod_groups}
+    return {"index.json": encode_json(index, compact=True)}, count
 
 
-def encode_json(value: object) -> bytes:
-    return (json.dumps(value, ensure_ascii=False, indent=2, allow_nan=False) + "\n").encode("utf-8")
+def encode_json(value: object, *, compact: bool = False) -> bytes:
+    return (json.dumps(value, ensure_ascii=False, indent=None if compact else 2,
+                       separators=(",", ":") if compact else None, allow_nan=False) + "\n").encode("utf-8")
 
 
 def read_generated_indexes(root: Path, output: dict[str, bytes]) -> dict[str, bytes]:
-    """Own only root index.json and the per-mod indexes derived from it.
+    """Own root index.json and migrate validated legacy indexes to that one file.
 
     Validate both old and new destinations before deleting/writing anything.
     A malformed manifest must not permit path traversal or erase unrelated data.
-    Read v1 once to migrate legacy root <modid>.json files to mods/<modid>/index.json.
+    v1 owns root <modid>.json; v2 owns mods/<modid>/index.json; v3 owns no side indexes.
     """
     previous_paths = {"index.json"}
     index_path = root / "index.json"
@@ -280,12 +275,17 @@ def read_generated_indexes(root: Path, output: dict[str, bytes]) -> dict[str, by
                 require(isinstance(entry, dict) and isinstance(entry.get("target"), dict), "invalid mod entry in index.json")
                 mod_ids.append(entry["target"].get("modId"))
         else:
-            require(index["schemaVersion"] == 2 and isinstance(index["mods"], dict), "invalid mods map in index.json")
+            require(index["schemaVersion"] in {2, 3} and isinstance(index["mods"], dict), "invalid mods map in index.json")
             mod_ids = index["mods"]
         for value in mod_ids:
             mod_id = path_segment(value, "indexed modId")
             require(mod_id.casefold() != "index", "unsafe generated index path")
-            previous_paths.add(f"{mod_id}.json" if index["schemaVersion"] == 1 else f"mods/{mod_id}/index.json")
+            if index["schemaVersion"] == 1:
+                previous_paths.add(f"{mod_id}.json")
+            elif index["schemaVersion"] == 2:
+                previous_paths.add(f"mods/{mod_id}/index.json")
+    for path in (root / "mods").glob("*/index.json"):
+        require(path.relative_to(root).as_posix() in previous_paths, f"refusing to delete unrelated JSON: {path}")
     existing = {}
     for name in sorted(previous_paths | output.keys()):
         path = root / name
@@ -345,8 +345,8 @@ def generate(root: Path, repository: str = REPOSITORY, ref: str = "main", check:
     output, count = collect(root, repository, ref)  # Validate everything before touching existing indexes.
     existing = read_generated_indexes(root, output)
     readme_path = root / "README.md"
-    entries = [entry for name, data in sorted(output.items()) if name != "index.json"
-               for entry in json.loads(data)["patches"]]
+    groups = json.loads(output["index.json"])["mods"]
+    entries = [entry for group in groups.values() for entry in group["patches"]]
     readme = render_readme(root, entries)
     if check:
         require(existing == output, "catalogue is stale; run python3 scripts/catalogue.py")
