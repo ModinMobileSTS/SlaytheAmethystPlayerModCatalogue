@@ -1,0 +1,13 @@
+{
+  "schemaVersion": 1,
+  "count": 1,
+  "mods": [
+    {
+      "modId": "basemod",
+      "workshopId": "1605833019",
+      "count": 1,
+      "path": "catalogue/basemod.json",
+      "url": "https://raw.githubusercontent.com/ModinMobileSTS/SlaytheAmethystPlayerModCatalogue/main/catalogue/basemod.json"
+    }
+  ]
+}
