@@ -1,0 +1,18 @@
+{
+  "schemaVersion": 1,
+  "name": "Ascension Reborn 汉化补丁",
+  "description": "Ascension Reborn（进阶重制）简体中文汉化：补齐模组中仍为英文的自定义进阶界面按钮、短进阶/负进阶说明、遗物文本、重命名弹窗标题，并修复自定义模式\"纯净\"词条的翻译缺失。",
+  "version": "1.0.0",
+  "author": {
+    "name": "apricityx",
+    "email": "apricityx@qq.com"
+  },
+  "target": {
+    "modId": "ascensionmod",
+    "workshopId": "1635237252",
+    "versions": [
+      "2.9.0"
+    ]
+  },
+  "jar": "amethyst.ai.patch.ascensionmod.patch-1790097798138-0da4f824.jar"
+}
