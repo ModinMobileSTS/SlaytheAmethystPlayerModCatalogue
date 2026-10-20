@@ -1,0 +1,18 @@
+{
+  "schemaVersion": 1,
+  "name": "Bingo UI 溢出修复",
+  "description": "调整了 Bingo 的 UI，防止溢出，并调整 Bingo 遗物为左键触发。",
+  "version": "1.1.2",
+  "author": {
+    "name": "apricityx",
+    "email": "apricityx@qq.com"
+  },
+  "target": {
+    "modId": "invincible-one",
+    "workshopId": "3462425279",
+    "versions": [
+      "1.2.1"
+    ]
+  },
+  "jar": "amethyst.ai.patch.invincible-one.patch-1792491621264-07095165.jar"
+}
