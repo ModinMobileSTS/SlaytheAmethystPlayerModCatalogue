@@ -1,0 +1,18 @@
+{
+  "schemaVersion": 1,
+  "name": "添加主菜单技能树入口和左键拖动",
+  "description": "主菜单添加技能树入口并新增左键按住拖动平移技能树视图",
+  "version": "2.1.0",
+  "author": {
+    "name": "apricityx",
+    "email": "apricityx@qq.com"
+  },
+  "target": {
+    "modId": "slaytheperktree",
+    "workshopId": "3776032679",
+    "versions": [
+      "1.2.2"
+    ]
+  },
+  "jar": "amethyst.ai.patch.slaytheperktree.patch-1792835635529-438a3205.jar"
+}
