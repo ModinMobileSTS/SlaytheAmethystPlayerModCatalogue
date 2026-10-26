@@ -1,0 +1,18 @@
+{
+  "schemaVersion": 1,
+  "name": "铁甲战士能力牌特效补齐",
+  "description": "补齐 Ryoiki Tenkai 中只有映射、缺少实现的铁甲战士能力牌特效。「金属化」：改为严格贴合的剪影描边——渲染角色时用纯色剪影着色器把角色本体向 16 个方向各偏移数像素重复绘制，再由正常路径覆盖其上，只留最外圈，因此描边跟随骨骼形变、连续无断口；描边颜色由着色器直接输出（丢弃贴图 RGB、只取 alpha），避免深色部位发暗导致边不匀。描边宽度随层数增长，施放与回合末获得格挡时闪亮并溅出火星。「进化」：脚下平铺呼吸的魔法阵（三重圆环、七芒星阵、环上闪动刻符），亮度与半径同步起伏；呼吸每次进入上升相就从阵的外圈涌出一小簇 DNA 双链粒子，施放时扩散三圈并涌出更高的双链，抽到状态牌时扩散一圈并涌出双链。所有线条改用实心贴图绘制，解决了原先用径向渐变光斑拼接导致的线条断续问题。派生特效一律投入 effectsQueue，避免 ConcurrentModificationException。",
+  "version": "2.0.0",
+  "author": {
+    "name": "apricityx",
+    "email": "apricityx@qq.com"
+  },
+  "target": {
+    "modId": "RyoikiTenkai",
+    "workshopId": "3549855500",
+    "versions": [
+      "1.1.5"
+    ]
+  },
+  "jar": "amethyst.ai.patch.ryoikitenkai.patch-1792905380963-42a27a3a.jar"
+}
