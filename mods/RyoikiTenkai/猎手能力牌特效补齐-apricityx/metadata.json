@@ -1,0 +1,18 @@
+{
+  "schemaVersion": 1,
+  "name": "猎手能力牌特效补齐",
+  "description": "补齐父模组缺失的猎手能力牌特效：精准、无限刀刃、工具贸易、蓄势待发。施放时有卡牌轮廓闪光与光带，能力挂身期间有常驻表现（贴身绿色反光、绕身体盘旋的刀影、浮在身侧的绿色卡影），并在实际触发点播放反馈：使用小刀命中、回合开始获得小刀、回合开始抽一弃一、回合末保留手牌。全部使用原版贴图，派生特效统一走 effectsQueue。",
+  "version": "1.0.0",
+  "author": {
+    "name": "apricityx",
+    "email": "apricityx@qq.com"
+  },
+  "target": {
+    "modId": "RyoikiTenkai",
+    "workshopId": "3549855500",
+    "versions": [
+      "1.1.5"
+    ]
+  },
+  "jar": "amethyst.ai.patch.ryoikitenkai.patch-1793074330811-30586f74.jar"
+}
