@@ -1,0 +1,18 @@
+{
+  "schemaVersion": 1,
+  "name": "云函数连通性测试-20261029",
+  "description": "云函数上传链路测试，请勿用于正式发布。",
+  "version": "0.0.1-test",
+  "author": {
+    "name": "CloudFunctionTest",
+    "email": "cloud-function-test@example.com"
+  },
+  "target": {
+    "modId": "basemod",
+    "workshopId": "1605833019",
+    "versions": [
+      "5.56.0"
+    ]
+  },
+  "jar": "CloudFunctionTest.jar"
+}
