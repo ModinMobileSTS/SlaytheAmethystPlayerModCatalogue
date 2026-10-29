@@ -1,0 +1,18 @@
+{
+  "schemaVersion": 1,
+  "name": "观者能力牌特效补齐",
+  "description": "观者能力牌特效：洞悉现实改为专用的「校准刻印」——右侧身外的＋刻印，下方六道刻痕＝本场已升级的牌数；施放时演刻印成形与滑到栖位，触发时按新牌的真实去向落到手牌区／抽牌堆／弃牌堆。同时移除以手拒之（攻击牌）的全部特效与其设置开关。",
+  "version": "6.6.0",
+  "author": {
+    "name": "apricityx",
+    "email": "apricityx@qq.com"
+  },
+  "target": {
+    "modId": "RyoikiTenkai",
+    "workshopId": "3549855500",
+    "versions": [
+      "1.1.5"
+    ]
+  },
+  "jar": "amethyst.ai.patch.ryoikitenkai.patch-1793076375821-ac0e26c7.jar"
+}
