@@ -1,0 +1,18 @@
+{
+  "schemaVersion": 1,
+  "name": "加速卡牌失效修复",
+  "description": "StSLib 弹窗加速修复 \n修复加速模组（Superfastnnode 等倍增 deltaTime）下 StS Lib 弹窗选择类卡牌（如大金库）选择无效果的问题。",
+  "version": "1.0.5",
+  "author": {
+    "name": "24",
+    "email": "1547280872@qq.com"
+  },
+  "target": {
+    "modId": "aristocrat",
+    "workshopId": "3719013006",
+    "versions": [
+      "1.0.5"
+    ]
+  },
+  "jar": "amethyst.ai.patch.aristocrat.patch-1793315821082-9a3ddbe7.jar"
+}
