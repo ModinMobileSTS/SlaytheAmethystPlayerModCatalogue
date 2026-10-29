@@ -2,19 +2,29 @@ package sts.ryoikitenkai.compat.red;
 
 import com.evacipated.cardcrawl.modthespire.lib.SpirePatch2;
 import com.evacipated.cardcrawl.modthespire.lib.SpirePrefixPatch;
+import com.megacrit.cardcrawl.cards.AbstractCard;
 import com.megacrit.cardcrawl.cards.red.Metallicize;
 import com.megacrit.cardcrawl.characters.AbstractPlayer;
 
 /**
- * 打出「金属化」时：钢蓝色的卡片轮廓闪光 + 身上护甲合拢的反馈。
+ * 「金属化」施放：甲片逐片飞来、逐片锁上、接缝扫亮。
  * <p>
- * 用 Prefix（不替换原方法）：卡牌本身的结算照常，这里只插一段视觉。
- * 卡牌实例传下去是为了让 {@code CardFlashVfx} 能在卡牌自己的位置画那张背景剪影。
+ * 原版 {@code Metallicize.use()} 里只有一句 {@code ApplyPowerAction}，
+ * <b>没有任何 VFX</b>，所以这一段是补上的缺口。
+ * <p>
+ * <b>为什么必须把 card 传下去</b>：prefix 阶段能力还没挂上，
+ * {@code owner.getPower("Metallicize")} 一定返回 null，
+ * 甲片数只能从 {@code card.magicNumber} 读（原版 3 / 升级 4）。
+ * 这与观者那几张、以及本补丁的「进化」是同一处理。
+ * <p>
+ * 音效不在这里播：{@code MetallicizePower.playApplyPowerSfx()} 已经播
+ * {@code POWER_METALLICIZE}，再补一个会双响。
  */
 @SpirePatch2(
     cls = "com.megacrit.cardcrawl.cards.red.Metallicize",
     method = "use",
-    paramtypez = { com.megacrit.cardcrawl.characters.AbstractPlayer.class, com.megacrit.cardcrawl.monsters.AbstractMonster.class }
+    paramtypez = { AbstractPlayer.class,
+                   com.megacrit.cardcrawl.monsters.AbstractMonster.class }
 )
 public final class MetallicizeCastPatch {
     private MetallicizeCastPatch() {
@@ -22,6 +32,12 @@ public final class MetallicizeCastPatch {
 
     @SpirePrefixPatch
     public static void Prefix(Metallicize __instance, Object[] __args) {
-        RedEffectRegistry.castMetallicize((AbstractPlayer) __args[0], __instance);
+        AbstractPlayer p = __args[0] instanceof AbstractPlayer
+                ? (AbstractPlayer) __args[0] : null;
+        if (p == null) {
+            return;
+        }
+        AbstractCard card = __instance;
+        RedEffectRegistry.castMetallicize(p, card);
     }
 }
