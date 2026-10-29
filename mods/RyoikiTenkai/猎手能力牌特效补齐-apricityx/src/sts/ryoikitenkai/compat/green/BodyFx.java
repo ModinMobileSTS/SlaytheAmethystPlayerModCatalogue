@@ -1,38 +1,35 @@
 package sts.ryoikitenkai.compat.green;
 
-import basemod.ReflectionHacks;
 import com.badlogic.gdx.math.MathUtils;
-import com.badlogic.gdx.utils.Array;
-import com.esotericsoftware.spine.Bone;
-import com.esotericsoftware.spine.Skeleton;
 import com.megacrit.cardcrawl.core.AbstractCreature;
 import com.megacrit.cardcrawl.core.Settings;
 
 /**
- * 角色身体的几何与骨骼查询工具。
+ * 角色身体的几何工具。
  * <p>
- * 本补丁的特效都贴在角色身上，位置不能写死：角色会移动、会摆动、会切换动作。
- * 统一从 {@link AbstractCreature} 的 hitbox 取基准，并从 protected 的 skeleton 字段取骨骼，
- * 让粒子落在「身体上」而不是空中。
- * <p>
- * skeleton 是 protected 字段，只能通过 ReflectionHacks 读取（父模组也是这么取的）。
+ * <b>约束：不绑定骨骼</b>（规范 §1.1）。坐标只从 {@code owner.hb}（判定框）与地面推导：
+ * <ul>
+ *   <li>{@code hb.y} 就是脚底线（{@code refreshHitboxLocation} 里
+ *       {@code hb.cY = drawY + hb_y + hb_h / 2}）</li>
+ *   <li>身高、半宽都用 {@code hb} 的比例，不写死像素，否则窄体型角色上特效会挤成一团</li>
+ * </ul>
+ * 早先这里还有一组走 {@code ReflectionHacks} 读 spine {@code skeleton}、
+ * 再从里面挑骨头的工具（{@code skeleton()} / {@code randomBodyBone()}）。它们有两个问题：
+ * <ol>
+ *   <li>各角色、各换肤 mod 的骨头命名与数量都不一样，按世界坐标筛也会挑到会甩动的手臂骨，
+ *       特效跟着待机动画抖</li>
+ *   <li><b>已经没有任何调用点了</b> —— 本补丁所有特效都改成按 {@code hb} 比例采样，
+ *       留着只会让人以为还在用（《指引》§9：改版后要删掉被取代的代码）</li>
+ * </ol>
+ * 所以整组骨骼工具已删除，本类只剩纯几何。
  */
 final class BodyFx {
+    /** 没有 hitbox 时的兜底身体高度（已乘 scale）。 */
     private static final float FALLBACK_HEIGHT = 200.0f * Settings.scale;
+    /** 没有 hitbox 时的兜底身体半宽（已乘 scale）。 */
     private static final float FALLBACK_HALF_WIDTH = 60.0f * Settings.scale;
 
     private BodyFx() {
-    }
-
-    static Skeleton skeleton(AbstractCreature creature) {
-        if (creature == null) {
-            return null;
-        }
-        try {
-            return ReflectionHacks.getPrivate(creature, AbstractCreature.class, "skeleton");
-        } catch (Throwable t) {
-            return null;
-        }
     }
 
     /** 角色脚下中轴 X。 */
@@ -40,12 +37,12 @@ final class BodyFx {
         return creature != null ? creature.hb.cX : Settings.WIDTH * 0.25f;
     }
 
-    /** 角色脚底线 Y。hitbox 底边就是脚底。 */
+    /** 角色脚底线 Y。hitbox 底边就是脚底，用它才能把地面效果永远压在脚下。 */
     static float groundY(AbstractCreature creature) {
         return creature != null ? creature.hb.y : Settings.HEIGHT * 0.25f;
     }
 
-    /** 身体高度，带兜底值避免缩小分辨率下粒子贴地。 */
+    /** 身体高度，带兜底值，避免小分辨率下特效贴地。 */
     static float height(AbstractCreature creature) {
         if (creature == null) {
             return FALLBACK_HEIGHT;
@@ -77,37 +74,5 @@ final class BodyFx {
         float low = MathUtils.clamp(minFraction, 0.0f, 1.0f);
         float high = Math.max(low, MathUtils.clamp(maxFraction, 0.0f, 1.0f));
         return groundY(creature) + height(creature) * MathUtils.random(low, high);
-    }
-
-    /**
-     * 从骨架里随机挑一根「落在身体范围内」的骨头。
-     * <p>
-     * 不按名字挑：原版各角色、各种换肤 mod 的骨头命名都不一样，写死名字会失效；
-     * 按骨骼当前世界坐标是否落在 hitbox 内来筛，配合动画形变依旧成立。
-     */
-    static Bone randomBodyBone(Skeleton skeleton, AbstractCreature creature) {
-        if (skeleton == null || creature == null) {
-            return null;
-        }
-        Array<Bone> bones = skeleton.getBones();
-        if (bones == null || bones.size == 0) {
-            return null;
-        }
-        float minY = creature.hb.y + creature.hb.height * 0.12f;
-        float maxY = creature.hb.y + creature.hb.height * 0.95f;
-        float maxDx = Math.max(creature.hb.width * 0.75f, 40.0f * Settings.scale);
-        int start = MathUtils.random(bones.size - 1);
-        for (int i = 0; i < bones.size; ++i) {
-            Bone bone = bones.get((start + i) % bones.size);
-            if (bone == null) {
-                continue;
-            }
-            float wx = bone.getWorldX() + skeleton.getX();
-            float wy = bone.getWorldY() + skeleton.getY();
-            if (Math.abs(wx - creature.hb.cX) <= maxDx && wy >= minY && wy <= maxY) {
-                return bone;
-            }
-        }
-        return null;
     }
 }
