@@ -13,7 +13,8 @@ import zipfile
 from scripts import catalogue
 
 ROOT = Path(__file__).resolve().parents[1]
-EXAMPLE = ROOT / "mods/basemod/Catalogue Example-ModinMobileSTS"
+# Keep regression fixtures independent of the community's published entries.
+EXAMPLE = ROOT / "tests/fixtures/catalogue-example"
 EXAMPLE_JAR = EXAMPLE / json.loads((EXAMPLE / "metadata.json").read_text(encoding="utf-8"))["jar"]
 
 

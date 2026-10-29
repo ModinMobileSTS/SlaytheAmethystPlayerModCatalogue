@@ -1,0 +1,8 @@
+{
+  "parent_mod_id": "basemod",
+  "patch_id": "catalogue-example",
+  "patch_mod_id": "amethyst_agent_basemod_catalogue_example",
+  "name": "Catalogue Example",
+  "version": "1.0.0",
+  "description": "目录示例：加载时输出一条日志，不修改 BaseMod 或游戏行为。仅用于验证 AI 补丁的上传、索引和下载流程。"
+}
