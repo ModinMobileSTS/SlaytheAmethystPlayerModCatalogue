@@ -18,7 +18,7 @@ import javassist.CtBehavior;
  *
  * <p>BaseMod 自带的 {@code CNUniqueKeywords} 在中文描述里调用
  * {@code BaseMod.keywordIsUnique(word)} 时使用原始大小写，而关键字表里的键一律是
- * 作者书写的小写形式（例如 StSLib 的 {@code stslib:soulbound} / {@code stslib:purge} /
+ * 作者书写的形式（例如 StSLib 的 {@code stslib:soulbound} / {@code stslib:purge} /
  * {@code stslib:fleeting}）。因此 {@code stslib:Soulbound} 这类首字母大写的写法匹配失败，
  * 前缀不会被去掉，卡面上就会直接显示 {@code stslib:Soulbound} 这样的原始 ID。
  *
@@ -27,6 +27,9 @@ import javassist.CtBehavior;
  */
 @SpirePatch2(clz = AbstractCard.class, method = "initializeDescriptionCN", paramtypez = {})
 public final class CnKeywordPrefixFix {
+    /** 诊断用：实际去掉了多少次前缀。 */
+    public static int hits;
+
     private CnKeywordPrefixFix() {
     }
 
@@ -46,6 +49,7 @@ public final class CnKeywordPrefixFix {
         String lower = w.toLowerCase();
         if (BaseMod.keywordIsUnique(lower) || lower.startsWith("umapyoi:") || lower.startsWith("stslib:")) {
             word[0] = w.substring(idx + 1);
+            hits++;
         }
     }
 
