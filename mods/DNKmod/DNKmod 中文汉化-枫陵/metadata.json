@@ -1,0 +1,18 @@
+{
+  "schemaVersion": 1,
+  "name": "DNKmod 中文汉化",
+  "description": "将 DNKmod 界面上的英文文本替换为中文：模组配置面板的开关标签（初始生命值/初始金币/初始能量/药水槽上限/初始随机药水/初始随机遗物/手牌上限/启用随从/启用坦克随从）、主菜单模组徽章的悬停简介，以及随从名称（随从/坦克随从）与其技能提示（攻击、防御、嘲讽及对应说明）。只替换显示文本，不改变任何数值和逻辑。",
+  "version": "1.0.0",
+  "author": {
+    "name": "枫陵",
+    "email": "368664198@qq.com1"
+  },
+  "target": {
+    "modId": "DNKmod",
+    "workshopId": "1867424482",
+    "versions": [
+      "2.3.0"
+    ]
+  },
+  "jar": "amethyst.ai.patch.dnkmod.patch-1793374002735-342aafcd.jar"
+}
