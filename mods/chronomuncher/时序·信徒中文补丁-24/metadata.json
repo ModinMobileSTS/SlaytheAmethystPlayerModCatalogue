@@ -1,0 +1,18 @@
+{
+  "schemaVersion": 1,
+  "name": "时序·信徒中文补丁",
+  "description": "为 The Disciple 提供全量中文本地化。覆盖卡牌、遗物、复刻品、事件、关键词、力量、药水与界面文本，并修复能量图标渲染与悬浮提示翻译。当时序已至，信徒终临此刻。",
+  "version": "3.4.4",
+  "author": {
+    "name": "24",
+    "email": "1547280872@qq.com"
+  },
+  "target": {
+    "modId": "chronomuncher",
+    "workshopId": "1609846039",
+    "versions": [
+      "2.0"
+    ]
+  },
+  "jar": "amethyst.ai.patch.chronomuncher.patch-1793399884157-536381f1.jar"
+}
