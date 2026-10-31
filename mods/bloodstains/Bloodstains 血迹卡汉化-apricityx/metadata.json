@@ -1,0 +1,18 @@
+{
+  "schemaVersion": 1,
+  "name": "Bloodstains 血迹卡汉化",
+  "description": "Bloodstains 新增的「血迹」卡牌（致敬《黑暗之魂》系列）此前只有英文文本，现补充简体/繁体中文：卡名「血迹」与描述（虚无、获得金币、消耗），以及地图节点提示「此处保留着你上一次冒险中失去的 X 金币」和模组设置项「金币取回比例」。文本在父模组加载英文字符串之后写入游戏的本地化表，因此优先显示；并按游戏语言只加载简体或繁体一份，避免两者互相覆盖（旧版补丁同时加载，繁体总是盖掉简体）。",
+  "version": "1.0.0",
+  "author": {
+    "name": "apricityx",
+    "email": "apricityx@qq.com"
+  },
+  "target": {
+    "modId": "bloodstains",
+    "workshopId": "2958404405",
+    "versions": [
+      "1.1.0"
+    ]
+  },
+  "jar": "amethyst.ai.patch.bloodstains.patch-1793414372835-120a9a7d.jar"
+}
