@@ -1,0 +1,18 @@
+{
+  "schemaVersion": 1,
+  "name": "全能模组中文翻译补丁",
+  "description": "将 Omnipotence 模组的卡牌名称与描述汉化为简体中文（卡牌\"全能\"：本场战斗升级所有牌、战斗中创建卡牌时升级该牌）。修复先前汉化不生效：改为在父模组加载字符串后强制注入中文，无论游戏语言设置如何都显示中文。",
+  "version": "1.3.0",
+  "author": {
+    "name": "枫陵",
+    "email": "368664198@qq.com1"
+  },
+  "target": {
+    "modId": "omnipotence",
+    "workshopId": "3330655081",
+    "versions": [
+      "1.0.0"
+    ]
+  },
+  "jar": "amethyst.ai.patch.omnipotence.patch-1793525606054-68d0882b.jar"
+}
