@@ -1,0 +1,18 @@
+{
+  "schemaVersion": 1,
+  "name": "Spirepass 41级彩蛋一键解锁",
+  "description": "进入游戏时自动解锁 Spirepass（尖塔通行证）隐藏的 41 级彩蛋并写盘保存，无需再连点 marcus 开关 5 次、满足 2000 XP 且玩家名为 \"pee\"。",
+  "version": "0.2.0",
+  "author": {
+    "name": "ZAQOU",
+    "email": "zaqou2014@qq.com"
+  },
+  "target": {
+    "modId": "Spirepass",
+    "workshopId": "3456149794",
+    "versions": [
+      "1.4.3"
+    ]
+  },
+  "jar": "amethyst.ai.patch.spirepass.patch-1792849960971-900cc5c1.jar"
+}
