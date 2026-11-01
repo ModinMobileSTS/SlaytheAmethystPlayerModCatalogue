@@ -1,0 +1,18 @@
+{
+  "schemaVersion": 1,
+  "name": "DNKmod 汉化与金币倍率",
+  "description": "保留 DNKmod 界面汉化（配置面板开关标签、模组徽章悬停简介、随从名称与技能提示），并在 DNKmod 配置面板新增“金币倍率”滑块（1~100 倍，默认 1 倍，数值保存在本补丁独立配置文件中）。倍率作用于战斗（普通/精英/Boss，以及战斗事件）掉落的金币奖励，奖励卡片显示的数字与实际获得的金币一致。",
+  "version": "1.1.0",
+  "author": {
+    "name": "枫陵",
+    "email": "368664198@qq.com1"
+  },
+  "target": {
+    "modId": "DNKmod",
+    "workshopId": "1867424482",
+    "versions": [
+      "2.3.0"
+    ]
+  },
+  "jar": "amethyst.ai.patch.dnkmod.patch-1793374002735-342aafcd.jar"
+}
