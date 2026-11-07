@@ -1,0 +1,18 @@
+{
+  "schemaVersion": 1,
+  "name": "Skindex全皮肤解锁",
+  "description": "解锁 Skindex 皮肤系统中全部角色皮肤：模组加载时打开 Skindex 自带的 SkindexDev.unlockAll 开关，并在 OwnableItem.canUse 处对所有角色皮肤直接返回已解锁。效果为角色与皮肤自定义界面不再显示 LOCKED、可直接设为默认皮肤，Neow 衣柜左右箭头可轮换出全部皮肤。仅运行时放行，不写入玩家解锁存档。",
+  "version": "1.0.0",
+  "author": {
+    "name": "apricityx",
+    "email": "apricityx@qq.com"
+  },
+  "target": {
+    "modId": "spireTogether",
+    "workshopId": "2384072973",
+    "versions": [
+      "6.4.20"
+    ]
+  },
+  "jar": "amethyst.ai.patch.spiretogether.patch-1794016797685-8cfa4e44.jar"
+}
