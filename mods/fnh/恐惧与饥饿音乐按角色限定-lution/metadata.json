@@ -1,0 +1,18 @@
+{
+  "schemaVersion": 1,
+  "name": "恐惧与饥饿音乐按角色限定",
+  "description": "Fear And Hunger 模组原本无条件替换全部游戏音乐（主菜单、三层楼、商店、神龛、精英、Boss、心之绽、终幕与片尾），游玩其他角色时也会播放其音乐。本补丁在原模组的两个音乐替换补丁前抢先判定：只有在游玩恐惧与饥饿自建角色（或该角色为当前选中角色）时才使用其音乐，其他情况直接采用游戏原版音乐。模组自带的音效只会由它自己的卡牌、怪物、遗物等触发，不存在全局替换，因此无需改动。",
+  "version": "1.0.0",
+  "author": {
+    "name": "lution",
+    "email": "admin@example.com"
+  },
+  "target": {
+    "modId": "fnh",
+    "workshopId": "3693597707",
+    "versions": [
+      "0.0.1"
+    ]
+  },
+  "jar": "amethyst.ai.patch.fnh.patch-1794047405169-716e9cb7.jar"
+}
