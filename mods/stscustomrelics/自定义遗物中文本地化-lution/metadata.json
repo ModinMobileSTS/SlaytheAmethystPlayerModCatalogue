@@ -1,0 +1,18 @@
+{
+  "schemaVersion": 1,
+  "name": "自定义遗物中文本地化",
+  "description": "为 Custom Relics Mod 的 5 个遗物补充简体中文文本：游戏语言为简体中文时，在父模组注册英文文本后追加中文名称、风味文本与描述，并覆盖 5 个遗物硬编码返回英文的 getUpdatedDescription，使遗物名与描述均为中文；其它语言保持原英文。",
+  "version": "1.0.0",
+  "author": {
+    "name": "lution",
+    "email": "admin@example.com"
+  },
+  "target": {
+    "modId": "stscustomrelics",
+    "workshopId": "3735504512",
+    "versions": [
+      "1.0.0"
+    ]
+  },
+  "jar": "amethyst.ai.patch.stscustomrelics.patch-1794148677130-921d7dd0.jar"
+}
