@@ -1,0 +1,18 @@
+{
+  "schemaVersion": 1,
+  "name": "Simple Map 崩坠地图适配",
+  "description": "修复 Simple Map 与崩坠（Downfall）反派模式翻图地图不兼容。开启地图收缩且崩坠处于反派模式时，在 generateMap / generateSpecialMap 完成后按收缩网格重排节点并把进度轴镜像（起始行在左、Boss 侧在右），直接写入绝对偏移以抹掉崩坠给节点叠加的 400*scale 平移，并重建全部连线的几何；同时固定 Boss 图标与点击框到收缩布局的 Boss 位置，绕过崩坠与父模组在 renderBossIcon、Hitbox.move 上的改写顺序冲突，避免图标画到屏幕外或点不到 Boss。",
+  "version": "0.1.0",
+  "author": {
+    "name": "apricityx",
+    "email": "apricityx@qq.com"
+  },
+  "target": {
+    "modId": "simplemap",
+    "workshopId": "3208102560",
+    "versions": [
+      "0.0.6"
+    ]
+  },
+  "jar": "amethyst.ai.patch.simplemap.patch-1794147939680-fdaa0bbe.jar"
+}
