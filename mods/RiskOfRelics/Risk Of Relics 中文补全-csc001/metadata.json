@@ -1,0 +1,18 @@
+{
+  "schemaVersion": 1,
+  "name": "Risk Of Relics 中文补全",
+  "description": "补齐 Risk Of Relics 在简体中文下仍未翻译或缺失的文本：能力名称与描述（14 项全部汉化）、遗物文本（念珠、AtG 导弹、飞镖、雏菊、护盾发生器、酒瓮、众筹者、打火机、神像、聚焦装置、黄玉胸针、雨衣、便士）、卡牌“念珠”、机运神龛/净化池/死亡元素/神器密室事件、相位圣龛的行动条、UI 文本（遗物摧毁提示、3D 打印机废料串、模组设置说明、指令与复仇神格）以及 6 个关键字的名称与说明。仅在游戏语言为简体中文时加载，其余语言不受影响。",
+  "version": "1.0.3",
+  "author": {
+    "name": "csc001",
+    "email": "csc0010274@163.com"
+  },
+  "target": {
+    "modId": "RiskOfRelics",
+    "workshopId": "2826958891",
+    "versions": [
+      "2.3.12"
+    ]
+  },
+  "jar": "amethyst.ai.patch.riskofrelics.patch-1794228127166-1b6c2f11.jar"
+}
