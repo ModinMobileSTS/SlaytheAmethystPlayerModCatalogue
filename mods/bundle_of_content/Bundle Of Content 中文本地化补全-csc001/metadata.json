@@ -1,0 +1,18 @@
+{
+  "schemaVersion": 1,
+  "name": "Bundle Of Content 中文本地化补全",
+  "description": "补全 Bundle Of Content 的简体中文文本：全部 60 件遗物的名称、风味文字与效果描述重译为中文并按当前英文版本校正，关键词的标题与说明一并译为中文（创作者致敬类关键词保留原名）。在原模组加载完自带文本后再覆盖，由此修正原中文文件中仍为英文或已过时的条目。",
+  "version": "1.0.0",
+  "author": {
+    "name": "csc001",
+    "email": "csc0010274@163.com"
+  },
+  "target": {
+    "modId": "bundle_of_content",
+    "workshopId": "3002490124",
+    "versions": [
+      "4.0.15"
+    ]
+  },
+  "jar": "amethyst.ai.patch.bundle_of_content.patch-1794224955296-4e0ec5b5.jar"
+}
