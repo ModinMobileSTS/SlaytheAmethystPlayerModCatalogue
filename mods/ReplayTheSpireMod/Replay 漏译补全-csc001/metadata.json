@@ -1,0 +1,18 @@
+{
+  "schemaVersion": 1,
+  "name": "Replay 漏译补全",
+  "description": "Replay The Spire 自带中文已基本完整，本补丁补齐仍显示英文的内容：失明、潜藏威胁两个能力，蓝衣法师怪物及其招式，4 个地精/流浪者联动遗物与地精敲击牌，以及 3 条遗物解锁成就说明。",
+  "version": "1.0.0",
+  "author": {
+    "name": "csc001",
+    "email": "csc0010274@163.com"
+  },
+  "target": {
+    "modId": "ReplayTheSpireMod",
+    "workshopId": "1610173938",
+    "versions": [
+      "1.6.7"
+    ]
+  },
+  "jar": "amethyst.ai.patch.replaythespiremod.patch-1794225505019-e080e50e.jar"
+}
