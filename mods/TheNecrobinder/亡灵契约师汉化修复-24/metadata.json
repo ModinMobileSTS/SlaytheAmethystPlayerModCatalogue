@@ -1,8 +1,8 @@
 {
   "schemaVersion": 1,
   "name": "亡灵契约师汉化修复",
-  "description": "为 The Necrobinder 提供简体中文本地化并修复部分BUG。\n目前mod全是bug，且缺少一系列立绘素材。不介意的可以先体验下在塔1玩塔2的感觉。😅",
-  "version": "0.0.1",
+  "description": "为 The Necrobinder 提供简体中文本地化（zhs 9个JSON）及4个Java修复编译：Osty适配新版Spine动画并修复死亡淡出误清bug、RightHandHandPatch动态定位替代硬编码行号、DemesnePower/FriendshipPower能量图标[R]→[E]。产出5个class文件覆盖父mod同名类。",
+  "version": "0.0.2",
   "author": {
     "name": "24",
     "email": "1547280872@qq.com"
@@ -11,7 +11,7 @@
     "modId": "TheNecrobinder",
     "workshopId": "3831549139",
     "versions": [
-      "0.0.1"
+      "1.0.1"
     ]
   },
   "jar": "amethyst.ai.patch.thenecrobinder.patch-1793620024231-b157a118.jar"
