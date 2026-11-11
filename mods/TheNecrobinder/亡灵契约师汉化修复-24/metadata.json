@@ -1,8 +1,8 @@
 {
   "schemaVersion": 1,
   "name": "亡灵契约师汉化修复",
-  "description": "为 The Necrobinder 提供简体中文本地化（zhs 9个JSON）及4个Java修复编译：Osty适配新版Spine动画并修复死亡淡出误清bug、RightHandHandPatch动态定位替代硬编码行号、DemesnePower/FriendshipPower能量图标[R]→[E]。产出5个class文件覆盖父mod同名类。",
-  "version": "0.0.2",
+  "description": "为「亡灵契约师」模组提供简体中文本地化及缺陷修复。涵盖全部内容（卡牌、遗物、能力、关键词、角色、事件等）的中文翻译，以及以下修复：四处选牌界面一帧即结束导致游戏死锁的卡死问题；奥斯蒂死亡淡出期间误清除新召唤实例；右手法掌牌补丁硬编码行号在版本更新后失效；领域与友谊能力描述中能量图标显示为红色的问题；牺牲牌在奥斯蒂未存活时打出会崩溃的空指针；解缚命匣因遗物标识缺少前缀导致永远无法在商店刷出；女妖之嚎在刚抽入手牌时追溯计算本战斗全部有飘牌造成费用骤降的问题；中文环境下赋予有飘/保留/重放描述前缀显示为英文的问题。",
+  "version": "0.0.8",
   "author": {
     "name": "24",
     "email": "1547280872@qq.com"
@@ -11,7 +11,7 @@
     "modId": "TheNecrobinder",
     "workshopId": "3831549139",
     "versions": [
-      "1.0.1"
+      "1.1.0"
     ]
   },
   "jar": "amethyst.ai.patch.thenecrobinder.patch-1793620024231-b157a118.jar"
