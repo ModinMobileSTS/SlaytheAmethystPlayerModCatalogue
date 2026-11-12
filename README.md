@@ -25,6 +25,19 @@
 
 ---
 
+## FrierenMod
+
+### 芙莉莲特殊BGM闪退修复
+
+修复 FrierenMod 特殊 BGM 导致的闪退：放弃本局/死亡结算时 FrierenMod 会请求自定义音乐键 Frieren\_DeathStinger，原版 TempMusic 兜底成无扩展名的 audio/music/Frieren\_DeathStinger 并抛出 Unknown file extension for music。补丁为 TempMusic\.getSong 增加前置处理，把 Frieren 开头的自定义键指向 Mod 内的 mp3；并在 MainMusic\.newMusic 对无扩展名或不可用的音乐路径补全扩展名或替换为原版合法 ogg，使坏音乐路径不再造成崩溃。
+
+- **补丁版本**：`1.0.0`
+- **作者**：dhdkfkfkf
+- **适用版本**：`2.3.1`
+- **下载**：[下载](https://raw.githubusercontent.com/ModinMobileSTS/SlaytheAmethystPlayerModCatalogue/main/mods/FrierenMod/%E8%8A%99%E8%8E%89%E8%8E%B2%E7%89%B9%E6%AE%8ABGM%E9%97%AA%E9%80%80%E4%BF%AE%E5%A4%8D-dhdkfkfkf/amethyst.ai.patch.frierenmod.patch-1794513610169-f6f84220.jar)
+
+---
+
 ## PickAllBossRelics
 
 ### Pick All Boss Relics 修复
