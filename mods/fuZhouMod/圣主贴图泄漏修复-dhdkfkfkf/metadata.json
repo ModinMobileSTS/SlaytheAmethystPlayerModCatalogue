@@ -1,0 +1,18 @@
+{
+  "schemaVersion": 1,
+  "name": "圣主贴图泄漏修复",
+  "description": "修复圣主待机动画的贴图泄漏：disableIdleAnimation() 只把 idleFrames 置空，20 张 517x572 的待机帧纹理（约 22MB）从不释放，鼠符咒被老爹封印后返还时会重新加载一整套，反复循环持续占用显存。现改为置空前先释放旧帧纹理；同时 loadIdleFrames() 发现帧数组含无效项时，先释放残留帧再重新加载，避免一直复用坏数组。不涉及任何玩法数值。",
+  "version": "0.1.2",
+  "author": {
+    "name": "dhdkfkfkf",
+    "email": "1079727828@qq.com"
+  },
+  "target": {
+    "modId": "fuZhouMod",
+    "workshopId": "3688298238",
+    "versions": [
+      "1.2.9"
+    ]
+  },
+  "jar": "amethyst.ai.patch.fuzhoumod.patch-1794507323585-b2a6a9e3.jar"
+}
