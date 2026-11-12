@@ -212,6 +212,15 @@ Fear And Hunger 模组原本无条件替换全部游戏音乐（主菜单、三�
 
 ## fuZhouMod
 
+### 圣主卡死现场抓取
+
+诊断用补丁：卡死时强行退出会杀掉进程，日志写不出来，原因无从判断。补丁在 update/render 每帧打心跳，由独立守护线程监视：启动时逐一实测候选目录找出真正可写的目录并写下启动横幅，每 10 秒写一行「存活」；主线程超过 3 秒无心跳时先把内存与游戏状态（当前/上一个动作、动作队列、房间楼层、玩家生命能力手牌、怪物）立即落盘，再另起线程追加主线程调用栈，停顿自行恢复时也记一行。只读游戏状态，不修改任何逻辑与数值。
+
+- **补丁版本**：`0.2.0`
+- **作者**：dhdkfkfkf
+- **适用版本**：`1.2.9`
+- **下载**：[下载](https://raw.githubusercontent.com/ModinMobileSTS/SlaytheAmethystPlayerModCatalogue/main/mods/fuZhouMod/%E5%9C%A3%E4%B8%BB%E5%8D%A1%E6%AD%BB%E7%8E%B0%E5%9C%BA%E6%8A%93%E5%8F%96-dhdkfkfkf/amethyst.ai.patch.fuzhoumod.patch-1794510181124-ae2439b0.jar)
+
 ### 圣主贴图泄漏修复
 
 修复圣主待机动画的贴图泄漏：disableIdleAnimation\(\) 只把 idleFrames 置空，20 张 517x572 的待机帧纹理（约 22MB）从不释放，鼠符咒被老爹封印后返还时会重新加载一整套，反复循环持续占用显存。现改为置空前先释放旧帧纹理；同时 loadIdleFrames\(\) 发现帧数组含无效项时，先释放残留帧再重新加载，避免一直复用坏数组。不涉及任何玩法数值。
