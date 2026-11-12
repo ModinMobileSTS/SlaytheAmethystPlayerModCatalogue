@@ -18,10 +18,15 @@ import java.util.Map;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
- * 卡死现场抓取（v2）。
+ * 卡死现场抓取（v3）。
+ *
+ * 输出位置（重要）：
+ *  - 主文件：游戏 logs 目录下的 fuzhou-watchdog.log，会被启动器的「导出日志」一起打包；
+ *  - 备份副本：游戏根目录下的 fuzhou-watchdog.txt，导出日志里万一没有，也能用文件管理器直接翻到。
+ *  两个文件内容完全一样，启动横幅里会把这两条绝对路径原样写出来，方便照着找。
  *
  * 主线程每帧调用一次 tick() 刷新时间戳。独立守护线程轮询：
- *  - 启动时先在若干候选目录里实测写一个探针文件，选出真正可写的目录，并写下启动横幅（用来确认补丁真的在跑、文件到底落在哪）。
+ *  - 启动时先在若干候选目录里实测写一个探针文件，选出真正可写的位置，写下启动横幅（含文件路径与使用说明）。
  *  - 每 10 秒写一行「存活」，这样卡死之后能看出看门狗几点停止跳动。
  *  - 主线程 ≥3 秒没有心跳：先把「横幅 + 内存 + 游戏状态」立刻落盘并 flush，
  *    再另起一个线程去收集线程栈（收集线程栈在卡死时可能永远不返回，所以绝不能放在落盘之前）。
@@ -36,25 +41,19 @@ public final class Watchdog {
     private static final long POLL_MS = 250L;
     private static final long ALIVE_INTERVAL_MS = 10000L;
     private static final long MAX_FILE_BYTES = 8L * 1024L * 1024L;
-    private static final String FILE_NAME = "fuzhou-watchdog.txt";
-    private static final String PREV_FILE_NAME = "fuzhou-watchdog.prev.txt";
-    private static final int MAX_FRAMES = 80;
 
-    private static final String[] CANDIDATE_DIRS = {
-            System.getProperty("user.dir", "."),
-            System.getProperty("user.dir", ".") + "/logs",
-            "/storage/emulated/0/Android/data/io.stamethyst/files/sts",
-            "/storage/emulated/0/Android/data/io.stamethyst/files/sts/logs",
-            "/sdcard/Android/data/io.stamethyst/files/sts",
-            "/sdcard/Android/data/io.stamethyst/files/sts/logs",
-            System.getProperty("java.io.tmpdir", "."),
-            System.getProperty("user.home", ".")
-    };
+    /** 主文件：写在游戏 logs 目录里，随「导出日志」一起被打包。 */
+    private static final String FILE_NAME = "fuzhou-watchdog.log";
+    /** 备份副本：写在游戏根目录，方便用文件管理器直接找。 */
+    private static final String MIRROR_FILE_NAME = "fuzhou-watchdog.txt";
+    private static final String PROBE_NAME = "fuzhou-watchdog-probe.tmp";
+    private static final int MAX_FRAMES = 80;
 
     private static volatile long lastTickMs = System.currentTimeMillis();
     private static volatile Thread gameThread;
     private static volatile boolean started;
     private static volatile File outputFile;
+    private static volatile File mirrorFile;
     private static final AtomicBoolean stackDumpInFlight = new AtomicBoolean(false);
 
     private Watchdog() {
@@ -89,17 +88,22 @@ public final class Watchdog {
     private static void loop() {
         StringBuilder probeLog = new StringBuilder();
         try {
-            outputFile = resolveOutput(probeLog);
+            outputFile = resolvePrimary(probeLog);
+            mirrorFile = resolveMirror(outputFile, probeLog);
         } catch (Throwable ignored) {
         }
         try {
-            StringBuilder banner = new StringBuilder();
+            StringBuilder banner = new StringBuilder(2048);
             banner.append("########## 卡死抓取看门狗启动 ").append(now()).append(" ##########\n");
+            banner.append("用法：正常玩即可。真的卡死到只能强杀时，重开游戏后打开下面「主文件」，把最后 60~80 行发出来。\n");
+            banner.append("  主文件（会被启动器「导出日志」一起打包） = ").append(pathOf(outputFile)).append('\n');
+            banner.append("  备份副本（游戏根目录，文件管理器可直接找） = ").append(pathOf(mirrorFile)).append('\n');
+            banner.append("  每 10 秒一行【存活】说明主线程还在跑；出现「主线程卡住中」段就说明抓到了卡死现场。\n");
+            banner.append("  文件超过 8MB 时旧的会轮换到同目录的 .prev 文件。\n");
             banner.append("user.dir = ").append(System.getProperty("user.dir", "?")).append('\n');
-            banner.append("输出文件 = ").append(outputFile == null ? "!! 没有找到任何可写目录 !!" : outputFile.getAbsolutePath()).append('\n');
-            banner.append(probeLog);
+            banner.append("目录探测结果:\n").append(probeLog);
             write(banner.toString());
-            logToGame("看门狗启动，输出文件=" + (outputFile == null ? "无" : outputFile.getAbsolutePath()));
+            logToGame("看门狗启动，主文件=" + pathOf(outputFile) + "，备份副本=" + pathOf(mirrorFile));
         } catch (Throwable ignored) {
         }
 
@@ -145,34 +149,91 @@ public final class Watchdog {
         }
     }
 
-    /** 依次实测候选目录，返回第一个真正能写文件的位置。 */
-    private static File resolveOutput(StringBuilder probeLog) {
-        for (int i = 0; i < CANDIDATE_DIRS.length; i++) {
-            String path = CANDIDATE_DIRS[i];
+    private static String pathOf(File f) {
+        return f == null ? "!! 没有找到可写目录，本次不会生成文件 !!" : f.getAbsolutePath();
+    }
+
+    /** 主文件优先落在 logs 目录，这样「导出日志」能带走。 */
+    private static File resolvePrimary(StringBuilder probeLog) {
+        String userDir = System.getProperty("user.dir", ".");
+        String[] dirs = {
+                userDir + "/logs",
+                "/storage/emulated/0/Android/data/io.stamethyst/files/sts/logs",
+                "/sdcard/Android/data/io.stamethyst/files/sts/logs",
+                userDir,
+                "/storage/emulated/0/Android/data/io.stamethyst/files/sts",
+                "/sdcard/Android/data/io.stamethyst/files/sts",
+                System.getProperty("java.io.tmpdir", "."),
+                System.getProperty("user.home", ".")
+        };
+        for (int i = 0; i < dirs.length; i++) {
+            String path = dirs[i];
             if (path == null || path.isEmpty()) {
                 continue;
             }
             File dir = new File(path);
-            boolean ok = false;
-            try {
-                if (dir.isDirectory()) {
-                    File probe = new File(dir, "fuzhou-watchdog-probe.tmp");
-                    FileWriter w = new FileWriter(probe, false);
-                    w.write("probe");
-                    w.flush();
-                    w.close();
-                    ok = probe.exists() && probe.length() > 0;
-                    probe.delete();
-                }
-            } catch (Throwable ignored) {
-                ok = false;
-            }
-            probeLog.append("  候选 ").append(path).append(" -> ").append(ok ? "可写" : "不可写").append('\n');
+            boolean ok = probeWritable(dir);
+            probeLog.append("  [主文件] ").append(path).append(" -> ").append(ok ? "可写" : "不可写").append('\n');
             if (ok) {
                 return new File(dir, FILE_NAME);
             }
         }
         return null;
+    }
+
+    /** 备份副本固定放在游戏根目录，免得用户翻不到。 */
+    private static File resolveMirror(File primary, StringBuilder probeLog) {
+        String userDir = System.getProperty("user.dir", ".");
+        File dir = new File(userDir);
+        boolean ok = probeWritable(dir);
+        probeLog.append("  [备份]   ").append(userDir).append(" -> ").append(ok ? "可写" : "不可写").append('\n');
+        if (!ok) {
+            return null;
+        }
+        File mirror = new File(dir, MIRROR_FILE_NAME);
+        if (primary != null && samePath(primary, mirror)) {
+            return null;
+        }
+        return mirror;
+    }
+
+    private static boolean samePath(File a, File b) {
+        if (a == null || b == null) {
+            return false;
+        }
+        try {
+            return a.getAbsolutePath().equals(b.getAbsolutePath());
+        } catch (Throwable t) {
+            return false;
+        }
+    }
+
+    /** 实测目录能不能真的写文件；不存在时先尝试创建。 */
+    private static boolean probeWritable(File dir) {
+        try {
+            if (dir == null) {
+                return false;
+            }
+            if (!dir.isDirectory()) {
+                dir.mkdirs();
+            }
+            if (!dir.isDirectory()) {
+                return false;
+            }
+            File probe = new File(dir, PROBE_NAME);
+            FileWriter w = new FileWriter(probe, false);
+            try {
+                w.write("probe");
+                w.flush();
+            } finally {
+                w.close();
+            }
+            boolean ok = probe.exists() && probe.length() > 0;
+            probe.delete();
+            return ok;
+        } catch (Throwable t) {
+            return false;
+        }
     }
 
     private static void writeStallState(long nowMs, long sinceMs) {
@@ -429,15 +490,24 @@ public final class Watchdog {
         }
     }
 
+    /** 同时写主文件与备份副本。 */
     private static synchronized void write(String text) {
-        File file = outputFile;
+        File primary = outputFile;
+        writeTo(primary, text);
+        File mirror = mirrorFile;
+        if (mirror != null && !samePath(primary, mirror)) {
+            writeTo(mirror, text);
+        }
+    }
+
+    private static void writeTo(File file, String text) {
         if (file == null) {
             return;
         }
         BufferedWriter writer = null;
         try {
             if (file.exists() && file.length() > MAX_FILE_BYTES) {
-                File prev = new File(file.getParentFile(), PREV_FILE_NAME);
+                File prev = siblingPrev(file);
                 if (prev.exists()) {
                     prev.delete();
                 }
@@ -456,6 +526,16 @@ public final class Watchdog {
                 }
             }
         }
+    }
+
+    /** fuzhou-watchdog.log -> fuzhou-watchdog.prev.log */
+    private static File siblingPrev(File file) {
+        String name = file.getName();
+        int dot = name.lastIndexOf('.');
+        String prevName = dot > 0
+                ? name.substring(0, dot) + ".prev" + name.substring(dot)
+                : name + ".prev";
+        return new File(file.getParentFile(), prevName);
     }
 
     /** 顺带写一行到游戏日志，方便从普通日志里交叉验证补丁是否在跑。单独起线程，避免被卡住的主线程拖住。 */
