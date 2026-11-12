@@ -221,6 +221,15 @@ Fear And Hunger 模组原本无条件替换全部游戏音乐（主菜单、三�
 - **适用版本**：`1.2.9`
 - **下载**：[下载](https://raw.githubusercontent.com/ModinMobileSTS/SlaytheAmethystPlayerModCatalogue/main/mods/fuZhouMod/%E5%9C%A3%E4%B8%BB%E5%8D%A1%E6%AD%BB%E7%8E%B0%E5%9C%BA%E6%8A%93%E5%8F%96-dhdkfkfkf/amethyst.ai.patch.fuzhoumod.patch-1794510181124-ae2439b0.jar)
 
+### 圣主受击卡死修复
+
+修复圣主受击时的卡死。根因是 GuFu（古夫）mod 的 luShi\.luShi\.onAttackAssit\(\) 用一个不推进下标的 while 循环找挡伤随从，遇到既不是随从也不是空槽的充能球（圣主的面具占槽）会永久循环，导致主线程彻底卡死、只能强杀。补丁不改 GuFu 也不改圣主：在 BaseMod 派发玩家受伤钩子前后，按原循环的判定顺序做一次无害推演，只在这次派发必然死循环或下标越界时，把毒住循环的球临时替换为空槽，派发结束立即原样还原；正常情况不做任何改动。不修改任何数值与其它逻辑。
+
+- **补丁版本**：`0.1.0`
+- **作者**：dhdkfkfkf
+- **适用版本**：`1.2.9`
+- **下载**：[下载](https://raw.githubusercontent.com/ModinMobileSTS/SlaytheAmethystPlayerModCatalogue/main/mods/fuZhouMod/%E5%9C%A3%E4%B8%BB%E5%8F%97%E5%87%BB%E5%8D%A1%E6%AD%BB%E4%BF%AE%E5%A4%8D-dhdkfkfkf/amethyst.ai.patch.fuzhoumod.patch-1794511969797-4188cd95.jar)
+
 ### 圣主贴图泄漏修复
 
 修复圣主待机动画的贴图泄漏：disableIdleAnimation\(\) 只把 idleFrames 置空，20 张 517x572 的待机帧纹理（约 22MB）从不释放，鼠符咒被老爹封印后返还时会重新加载一整套，反复循环持续占用显存。现改为置空前先释放旧帧纹理；同时 loadIdleFrames\(\) 发现帧数组含无效项时，先释放残留帧再重新加载，避免一直复用坏数组。不涉及任何玩法数值。
