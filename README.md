@@ -290,6 +290,15 @@ Start every run with the &quot;Card Rank Up\!&quot; relic \(rankupcard:RankUp\) 
 
 ## slaytheperktree
 
+### 技能树移动端适配
+
+修复 Slay the Perk Tree 技能树界面在移动端无法平移、也无法退出的问题：单指拖动平移视图，点击天赋购买，新增「点击：移除」模式用于移除一级，右上角新增「关闭」按钮并支持返回键关闭，底部操作提示改为触屏说明。界面左上角另加「加成：开启/暂停」开关（状态会保存），暂停后该模组的初始生命/金币/药水、战斗开始能力与额外卡牌奖励、金币加成、击杀回血、额外遗物选项均暂不生效，经验与技能点仍照常获得。
+
+- **补丁版本**：`1.0.0`
+- **作者**：lution
+- **适用版本**：`1.2.2`
+- **下载**：[下载](https://raw.githubusercontent.com/ModinMobileSTS/SlaytheAmethystPlayerModCatalogue/main/mods/slaytheperktree/%E6%8A%80%E8%83%BD%E6%A0%91%E7%A7%BB%E5%8A%A8%E7%AB%AF%E9%80%82%E9%85%8D-lution/amethyst.ai.patch.slaytheperktree.patch-1794360197161-0042d6ca.jar)
+
 ### 添加主菜单技能树入口和左键拖动
 
 主菜单添加技能树入口并新增左键按住拖动平移技能树视图
