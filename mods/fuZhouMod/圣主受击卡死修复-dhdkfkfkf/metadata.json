@@ -1,0 +1,18 @@
+{
+  "schemaVersion": 1,
+  "name": "圣主受击卡死修复",
+  "description": "修复圣主受击时的卡死。根因是 GuFu（古夫）mod 的 luShi.luShi.onAttackAssit() 用一个不推进下标的 while 循环找挡伤随从，遇到既不是随从也不是空槽的充能球（圣主的面具占槽）会永久循环，导致主线程彻底卡死、只能强杀。补丁不改 GuFu 也不改圣主：在 BaseMod 派发玩家受伤钩子前后，按原循环的判定顺序做一次无害推演，只在这次派发必然死循环或下标越界时，把毒住循环的球临时替换为空槽，派发结束立即原样还原；正常情况不做任何改动。不修改任何数值与其它逻辑。",
+  "version": "0.1.0",
+  "author": {
+    "name": "dhdkfkfkf",
+    "email": "1079727828@qq.com"
+  },
+  "target": {
+    "modId": "fuZhouMod",
+    "workshopId": "3688298238",
+    "versions": [
+      "1.2.9"
+    ]
+  },
+  "jar": "amethyst.ai.patch.fuzhoumod.patch-1794511969797-4188cd95.jar"
+}
