@@ -1,0 +1,18 @@
+{
+  "schemaVersion": 1,
+  "name": "技能树移动端适配",
+  "description": "修复 Slay the Perk Tree 技能树界面在移动端无法平移、也无法退出的问题：单指拖动平移视图，点击天赋购买，新增「点击：移除」模式用于移除一级，右上角新增「关闭」按钮并支持返回键关闭，底部操作提示改为触屏说明。界面左上角另加「加成：开启/暂停」开关（状态会保存），暂停后该模组的初始生命/金币/药水、战斗开始能力与额外卡牌奖励、金币加成、击杀回血、额外遗物选项均暂不生效，经验与技能点仍照常获得。",
+  "version": "1.0.0",
+  "author": {
+    "name": "lution",
+    "email": "admin@example.com"
+  },
+  "target": {
+    "modId": "slaytheperktree",
+    "workshopId": "3776032679",
+    "versions": [
+      "1.2.2"
+    ]
+  },
+  "jar": "amethyst.ai.patch.slaytheperktree.patch-1794360197161-0042d6ca.jar"
+}
