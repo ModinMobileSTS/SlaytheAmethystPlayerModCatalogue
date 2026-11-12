@@ -1,0 +1,18 @@
+{
+  "schemaVersion": 1,
+  "name": "芙莉莲特殊BGM闪退修复",
+  "description": "修复 FrierenMod 特殊 BGM 导致的闪退：放弃本局/死亡结算时 FrierenMod 会请求自定义音乐键 Frieren_DeathStinger，原版 TempMusic 兜底成无扩展名的 audio/music/Frieren_DeathStinger 并抛出 Unknown file extension for music。补丁为 TempMusic.getSong 增加前置处理，把 Frieren 开头的自定义键指向 Mod 内的 mp3；并在 MainMusic.newMusic 对无扩展名或不可用的音乐路径补全扩展名或替换为原版合法 ogg，使坏音乐路径不再造成崩溃。",
+  "version": "1.0.0",
+  "author": {
+    "name": "dhdkfkfkf",
+    "email": "1079727828@qq.com"
+  },
+  "target": {
+    "modId": "FrierenMod",
+    "workshopId": "3164722329",
+    "versions": [
+      "2.3.1"
+    ]
+  },
+  "jar": "amethyst.ai.patch.frierenmod.patch-1794513610169-f6f84220.jar"
+}
