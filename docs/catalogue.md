@@ -105,7 +105,10 @@ JAR 必须包含至少一个编译后的 `.class` 和根目录 `ModTheSpire.json
 
 根 README 只保留简介和自动生成的模组列表。列表位于 `<!-- MOD_LIST_START -->` 与
 `<!-- MOD_LIST_END -->` 之间，Action 只替换该区域；保留这对标记，技术说明统一放 `docs/`。
-简介等玩家输入作为纯文本转义，避免注入 Markdown 表格、链接或 HTML。
+列表按 modid 分组：modid 使用二级标题（`##`），补丁名使用三级标题（`###`），不同 modid
+之间使用 `---` 分割线。每个补丁的简介单独成段，下方列出补丁版本、作者、适用版本和下载链接，
+不再重复列出适用 modid。简介中的换行转换为段落分隔。
+简介等玩家输入作为纯文本转义，避免注入 Markdown 标题、链接或 HTML；版本信息使用行内代码显示。
 
 Pull request 只校验和试生成，不回写；`workflow_dispatch` 可以手动重建。
 默认仅授予只读权限，发布 job 单独使用 `contents: write`。不需要额外 Secret。

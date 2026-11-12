@@ -305,11 +305,18 @@ def read_generated_indexes(root: Path, output: dict[str, bytes]) -> dict[str, by
     return existing
 
 
-def markdown_cell(value: str) -> str:
-    """Treat player-provided table text as plain text, not Markdown or HTML."""
+def markdown_text(value: str) -> str:
+    """Treat player-provided text as plain text, not Markdown or HTML."""
     value = html.escape(value, quote=True)
-    value = re.sub(r"([\\`*_{}\[\]()#+.!|~])", r"\\\1", value)
-    return value.replace("\n", "<br>").replace("\t", " ")
+    value = re.sub(r"([\\`*_{}\[\]()#+.!|~\-])", r"\\\1", value)
+    return "\n\n".join(line.strip() for line in value.replace("\t", " ").split("\n"))
+
+
+def markdown_code(value: str) -> str:
+    """Keep literal version text readable, including embedded backticks."""
+    delimiter = "`" * (max((len(run) for run in re.findall(r"`+", value)), default=0) + 1)
+    padding = " " if value.startswith("`") or value.endswith("`") else ""
+    return f"{delimiter}{padding}{value}{padding}{delimiter}"
 
 
 def render_readme(root: Path, entries: list[dict]) -> bytes:
@@ -324,18 +331,26 @@ def render_readme(root: Path, entries: list[dict]) -> bytes:
             "README.md must contain one MOD_LIST_START/MOD_LIST_END marker pair")
     before, rest = document.split(MOD_LIST_START)
     _, after = rest.split(MOD_LIST_END)
-    lines = ["", "## 模组列表", ""]
+    lines = [""]
     if entries:
-        lines.extend(["| 补丁 | 简介 | 作者 | 适用 modid | 适用版本 | 下载 |",
-                      "| --- | --- | --- | --- | --- | --- |"])
+        grouped: dict[str, list[dict]] = {}
         for entry in entries:
-            name = f"{entry['name']} {entry['version']}" + ("（示例）" if entry.get("example") else "")
-            cells = [name, entry["description"], entry["author"]["name"], entry["target"]["modId"],
-                     ", ".join(entry["target"]["versions"])]
-            lines.append("| " + " | ".join(map(markdown_cell, cells)) + f" | [下载]({entry['download_url']}) |")
+            grouped.setdefault(entry["target"]["modId"], []).append(entry)
+        for position, (mod_id, patches) in enumerate(sorted(grouped.items())):
+            if position:
+                lines.extend(["---", ""])
+            lines.extend([f"## {markdown_text(mod_id)}", ""])
+            for entry in sorted(patches, key=lambda entry: (entry["name"], entry["author"]["name"])):
+                name = markdown_text(entry["name"]) + ("（示例）" if entry.get("example") else "")
+                lines.extend([
+                    f"### {name}", "", markdown_text(entry["description"]), "",
+                    f"- **补丁版本**：{markdown_code(entry['version'])}",
+                    f"- **作者**：{markdown_text(entry['author']['name'])}",
+                    f"- **适用版本**：{markdown_code(', '.join(entry['target']['versions']))}",
+                    f"- **下载**：[下载]({entry['download_url']})", "",
+                ])
     else:
-        lines.append("暂无模组。")
-    lines.append("")
+        lines.extend(["暂无模组。", ""])
     return (before + MOD_LIST_START + "\n".join(lines) + MOD_LIST_END + after).encode("utf-8")
 
 

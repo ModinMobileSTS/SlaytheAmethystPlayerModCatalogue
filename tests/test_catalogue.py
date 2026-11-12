@@ -420,7 +420,8 @@ class CatalogueTests(unittest.TestCase):
         document = readme.read_text(encoding="utf-8")
         self.assertTrue(document.startswith("# 简介\n\n自定义简介。\n\n"))
         self.assertIn(self.metadata["description"], document)
-        self.assertIn("Catalogue Example 1\\.0\\.0（示例）", document)
+        self.assertIn("## basemod\n\n### Catalogue Example（示例）", document)
+        self.assertIn("- **补丁版本**：`1.0.0`", document)
         self.assertIn(self.index()["patches"][0]["download_url"], document)
         self.assertNotIn("旧列表", document)
         self.generate(check=True)
@@ -445,14 +446,52 @@ class CatalogueTests(unittest.TestCase):
             self.generate()
         self.assertEqual((self.root / "index.json").read_bytes(), previous)
 
-    def test_readme_table_escapes_player_input(self):
+    def test_readme_sections_escape_player_input(self):
         self.metadata["description"] = '| broken\n<script>alert(1)</script> [link](https://evil.example)'
         self.add_patch()
         self.generate()
         document = (self.root / "README.md").read_text(encoding="utf-8")
-        self.assertIn("\\| broken<br>&lt;script&gt;", document)
+        self.assertIn("\\| broken\n\n&lt;script&gt;", document)
         self.assertNotIn("<script>", document)
         self.assertNotIn("[link](https://evil.example)", document)
+
+    def test_readme_groups_patches_with_separators_only_between_mods(self):
+        self.add_patch()
+        other = copy.deepcopy(self.metadata)
+        other.update(name="Another Patch", example=False)
+        other["target"].update(modId="Another_Mod", workshopId="12345", versions=["1.0", "2.0"])
+        self.add_patch(other)
+        other["name"] = "Second Patch"
+        self.add_patch(other)
+        self.generate()
+        document = (self.root / "README.md").read_text(encoding="utf-8")
+        headings = [line for line in document.splitlines() if line.startswith("##")]
+        self.assertEqual(headings, ["## Another\\_Mod", "### Another Patch", "### Second Patch",
+                                    "## basemod", "### Catalogue Example（示例）"])
+        self.assertEqual(document.count("\n---\n"), 1)
+        self.assertIn("\n---\n\n## basemod", document)
+        self.assertIn("- **适用版本**：`1.0, 2.0`", document)
+        self.assertNotIn("适用 modid", document)
+        self.assertNotIn("| ---", document)
+
+    def test_readme_code_spans_preserve_literal_versions(self):
+        self.assertEqual(catalogue.markdown_code("1.0"), "`1.0`")
+        self.assertEqual(catalogue.markdown_code("*"), "`*`")
+        self.assertEqual(catalogue.markdown_code("`1` & <2>"), "`` `1` & <2> ``")
+        self.assertEqual(catalogue.markdown_code("a``b"), "```a``b```")
+
+    def test_readme_description_cannot_inject_headings_or_separators(self):
+        self.metadata["description"] = "简介\n## fake\n---\n- item\n![image](https://evil.example/image.png)"
+        self.add_patch()
+        self.generate()
+        document = (self.root / "README.md").read_text(encoding="utf-8")
+        self.assertIn("简介\n\n\\#\\# fake\n\n\\-\\-\\-\n\n\\- item", document)
+        self.assertNotIn("\n## fake", document)
+        self.assertNotIn("\n---\n", document)
+        self.assertNotIn("![image]", document)
+
+    def test_readme_multiline_text_has_no_trailing_whitespace(self):
+        self.assertEqual(catalogue.markdown_text("简介 \n\t下一段"), "简介\n\n下一段")
 
     def test_deletion_removes_readme_entry(self):
         destination = self.add_patch()
