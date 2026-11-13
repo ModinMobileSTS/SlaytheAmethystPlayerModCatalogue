@@ -323,7 +323,9 @@ Fear And Hunger 模组原本无条件替换全部游戏音乐（主菜单、三�
 
 ### Starter Rank Up Relic
 
-Start every run with the &quot;Card Rank Up\!&quot; relic \(rankupcard:RankUp\) from Rank Up Cards, and take it out of the act 1 relic drop pools while the player owns it\. 1\.3\.0: removed the meaningless AbstractDungeon\.player check in receivePostCreateStartingRelics, dropped the unreliable injectedThisRun static \(reload\-safe condition instead, actNum &lt;= 1 because act 1 is 0\), and replaced the RelicLibrary\.getRelic\(\) existence check with a null\-safe languagePack\.getRelicStrings\(\) lookup\. Keeps CUSTOM\-1\.\.CUSTOM\-5 markers\.
+修复了仅为原版角色，自动添加三合遗物模组的bug
+
+现在所有其他mod角色也会自动装备该遗物
 
 - **补丁版本**：`1.3.0`
 - **作者**：yanx
