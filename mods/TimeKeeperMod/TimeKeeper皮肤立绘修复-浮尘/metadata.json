@@ -1,0 +1,18 @@
+{
+  "schemaVersion": 1,
+  "name": "TimeKeeper皮肤立绘修复",
+  "description": "修复 TimeKeeper 附带的原版角色皮肤（铁甲战士「苦痛恶魔」、静默猎手「花烛君主」）：选人界面立绘改到背景立绘之后绘制，正常显示；皮肤序号改用独立配置文件，避免母模组三个界面共用存档键 TimeCutter:skin 在读档时把序号刷回默认；玩家角色进入游戏第一帧无条件重设一次骨架，之后定期复查，被还原就补回；换骨架按「皮肤→备用皮肤→默认」逐级尝试，用骨架是否真的被替换判定成功。",
+  "version": "0.6.1",
+  "author": {
+    "name": "浮尘",
+    "email": "3856379880@qq.com"
+  },
+  "target": {
+    "modId": "TimeKeeperMod",
+    "workshopId": "3409065536",
+    "versions": [
+      "1.4.5"
+    ]
+  },
+  "jar": "amethyst.ai.patch.timekeepermod.patch-1794519907664-4dd7ac7b.jar"
+}
