@@ -134,6 +134,19 @@ Replay The Spire 自带中文已基本完整，本补丁补齐仍显示英文的
 
 ---
 
+## TimeKeeperMod
+
+### TimeKeeper皮肤立绘修复
+
+修复 TimeKeeper 附带的原版角色皮肤（铁甲战士「苦痛恶魔」、静默猎手「花烛君主」）：选人界面立绘改到背景立绘之后绘制，正常显示；皮肤序号改用独立配置文件，避免母模组三个界面共用存档键 TimeCutter:skin 在读档时把序号刷回默认；玩家角色进入游戏第一帧无条件重设一次骨架，之后定期复查，被还原就补回；换骨架按「皮肤→备用皮肤→默认」逐级尝试，用骨架是否真的被替换判定成功。
+
+- **补丁版本**：`0.6.1`
+- **作者**：浮尘
+- **适用版本**：`1.4.5`
+- **下载**：[下载](https://raw.githubusercontent.com/ModinMobileSTS/SlaytheAmethystPlayerModCatalogue/main/mods/TimeKeeperMod/TimeKeeper%E7%9A%AE%E8%82%A4%E7%AB%8B%E7%BB%98%E4%BF%AE%E5%A4%8D-%E6%B5%AE%E5%B0%98/amethyst.ai.patch.timekeepermod.patch-1794519907664-4dd7ac7b.jar)
+
+---
+
 ## aristocrat
 
 ### 加速卡牌失效修复
