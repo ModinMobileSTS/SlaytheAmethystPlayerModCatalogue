@@ -1,0 +1,18 @@
+{
+  "schemaVersion": 1,
+  "name": "恐惧与饥饿高阶植物学加强",
+  "description": "高阶植物学是能力牌，但它加成的植物牌全是一次性消耗牌，能力生效后常常无牌可用。本补丁为该能力新增效果：每回合开始时随机将 1 张已消耗的植物牌或【熟知灌丛】放入抽牌堆，升级后最多 2 张，消耗牌堆中没有这类牌时不发动；卡面文本同步新增该效果说明（基础版与升级版分别显示 1 张 / 最多 2 张）。",
+  "version": "1.0.0",
+  "author": {
+    "name": "lution",
+    "email": "admin@example.com"
+  },
+  "target": {
+    "modId": "fnh",
+    "workshopId": "3693597707",
+    "versions": [
+      "0.0.1"
+    ]
+  },
+  "jar": "amethyst.ai.patch.fnh.patch-1794673371934-48ef3dd7.jar"
+}
