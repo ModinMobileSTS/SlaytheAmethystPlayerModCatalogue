@@ -201,6 +201,19 @@ Bloodstains 新增的「血迹」卡牌（致敬《黑暗之魂》系列）此�
 
 ---
 
+## card\-forge
+
+### Card Forge 汉化
+
+将 Card Forge 的三个遗物（灼热之火、雷神之锤、众神之砧）的遗物名、遗物描述、风味文本以及选卡界面的提示文字汉化为中文，仅在游戏语言为中文时生效；顺带修正「雷神之锤」英文名中多余的重复空格。
+
+- **补丁版本**：`1.0.1`
+- **作者**：dhdkfkfkf
+- **适用版本**：`1.4`
+- **下载**：[下载](https://raw.githubusercontent.com/ModinMobileSTS/SlaytheAmethystPlayerModCatalogue/main/mods/card-forge/Card%20Forge%20%E6%B1%89%E5%8C%96-dhdkfkfkf/amethyst.ai.patch.card-forge.patch-1794619003678-3033c233.jar)
+
+---
+
 ## chronomuncher
 
 ### 信徒中文补丁
