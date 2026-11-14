@@ -35,8 +35,8 @@ import java.util.List;
  * 拖动时也不一定刷新触摸事件的坐标，所以按下 / 抬起取触摸事件，
  * 滚动条的拖动位置则在触摸坐标与 {@code InputHelper.mY} 之间取本帧真正变化的那个（见 {@link #updatePointer()}）。</p>
  *
- * <p>卡区不支持“按住划动”（该手势在本运行时不可靠），滚动改成：右侧竖条可点可拖，
- * 竖条两端的 ▲ / ▼ 按钮每次翻一屏，点按即响应。</p>
+ * <p>搜索词在界面右上角显示（“输入中…” / “搜索：xx”）。系统输入法的预览条由加载器绘制、
+ * 里面的文字删不掉，因此删字统一用界面上的“退格 / 清除”按钮。</p>
  */
 public final class ForgeCraftScreen extends Screen {
     private static final Color BACKGROUND = new Color(0.05f, 0.05f, 0.08f, 0.96f);
@@ -51,6 +51,7 @@ public final class ForgeCraftScreen extends Screen {
     private static final Color ARROW_BG = new Color(0.20f, 0.20f, 0.26f, 0.94f);
     private static final Color ARROW_BG_ON = new Color(0.52f, 0.42f, 0.16f, 1.0f);
     private static final Color ARROW_BORDER = new Color(1.0f, 1.0f, 1.0f, 0.30f);
+    private static final Color QUERY_COLOR = new Color(1.0f, 0.94f, 0.72f, 1.0f);
 
     private static final int TARGET_NONE = 0;
     private static final int TARGET_GRID = 1;
@@ -60,6 +61,7 @@ public final class ForgeCraftScreen extends Screen {
     private static final int TARGET_CLEAR = 7;
     private static final int TARGET_CANCEL = 8;
     private static final int TARGET_CONFIRM = 9;
+    private static final int TARGET_BACKSPACE = 10;
 
     private static final String KEYBOARD_REQUEST_PROP = "amethyst.in_game_keyboard_request";
 
@@ -87,6 +89,7 @@ public final class ForgeCraftScreen extends Screen {
     private float buttonH;
     private float labelY;
     private float poolRowY;
+    private float topRowEndX;
     private float gridTop;
     private float gridBottom;
     private float bottomY;
@@ -101,6 +104,7 @@ public final class ForgeCraftScreen extends Screen {
 
     private TextButton poolButton;
     private TextButton searchButton;
+    private TextButton backspaceButton;
     private TextButton clearButton;
     private TextButton confirmButton;
     private TextButton cancelButton;
@@ -299,15 +303,19 @@ public final class ForgeCraftScreen extends Screen {
     private void createButtons() {
         float availW = Settings.WIDTH - 2.0f * margin;
         float gap = 14.0f * Settings.scale;
-        float w1 = availW * 0.42f;
-        float w2 = availW * 0.15f;
-        float w3 = availW * 0.15f;
+        float w1 = availW * 0.36f;
+        float w2 = availW * 0.14f;
+        float w3 = availW * 0.13f;
+        float w4 = availW * 0.13f;
         float x = margin;
         poolButton = new TextButton("", x + w1 * 0.5f, poolRowY, w1, buttonH);
         x += w1 + gap;
         searchButton = new TextButton(Texts.t("搜索", "Search"), x + w2 * 0.5f, poolRowY, w2, buttonH);
         x += w2 + gap;
-        clearButton = new TextButton(Texts.t("清除", "Clear"), x + w3 * 0.5f, poolRowY, w3, buttonH);
+        backspaceButton = new TextButton(Texts.t("退格", "Del"), x + w3 * 0.5f, poolRowY, w3, buttonH);
+        x += w3 + gap;
+        clearButton = new TextButton(Texts.t("清除", "Clear"), x + w4 * 0.5f, poolRowY, w4, buttonH);
+        topRowEndX = x + w4;
 
         float wc = availW * 0.20f;
         float wok = availW * 0.26f;
@@ -321,6 +329,7 @@ public final class ForgeCraftScreen extends Screen {
         poolButton.setLabel(Texts.t("卡池：", "Pool: ") + poolName);
         confirmButton.setLabel(Texts.t("确认铸造", "Craft") + " (" + selected.size() + ")");
         confirmButton.enabled = !selected.isEmpty();
+        backspaceButton.enabled = !query.isEmpty();
         clearButton.enabled = !query.isEmpty();
         searchButton.setLabel(typing ? Texts.t("完成", "Done") : Texts.t("搜索", "Search"));
     }
@@ -670,6 +679,7 @@ public final class ForgeCraftScreen extends Screen {
     private void updateHovers(float mx, float my) {
         poolButton.updateHover(mx, my);
         searchButton.updateHover(mx, my);
+        backspaceButton.updateHover(mx, my);
         clearButton.updateHover(mx, my);
         confirmButton.updateHover(mx, my);
         cancelButton.updateHover(mx, my);
@@ -704,6 +714,10 @@ public final class ForgeCraftScreen extends Screen {
         }
         if (poolButton.contains(mx, my)) {
             pressTarget = TARGET_POOL;
+            return;
+        }
+        if (backspaceButton.enabled && backspaceButton.contains(mx, my)) {
+            pressTarget = TARGET_BACKSPACE;
             return;
         }
         if (clearButton.enabled && clearButton.contains(mx, my)) {
@@ -758,6 +772,9 @@ public final class ForgeCraftScreen extends Screen {
         if (target == TARGET_POOL && !poolButton.contains(mx, my)) {
             return;
         }
+        if (target == TARGET_BACKSPACE && !backspaceButton.contains(mx, my)) {
+            return;
+        }
         if (target == TARGET_CLEAR && !clearButton.contains(mx, my)) {
             return;
         }
@@ -780,8 +797,13 @@ public final class ForgeCraftScreen extends Screen {
                     startTyping();
                 }
                 break;
+            case TARGET_BACKSPACE:
+                if (!query.isEmpty()) {
+                    applyQueryFromButton(query.substring(0, query.length() - 1));
+                }
+                break;
             case TARGET_CLEAR:
-                setQuery("");
+                applyQueryFromButton("");
                 break;
             case TARGET_CANCEL:
                 close();
@@ -820,16 +842,26 @@ public final class ForgeCraftScreen extends Screen {
     private void clearMainHovers() {
         poolButton.clearHover();
         searchButton.clearHover();
+        backspaceButton.clearHover();
         clearButton.clearHover();
         confirmButton.clearHover();
         cancelButton.clearHover();
         hoveredCard = null;
     }
 
+    /** 键盘/加载器回传的文本。 */
     private void setQuery(String value) {
         query = value == null ? "" : value;
         applyFilter();
         refreshButtonLabels();
+    }
+
+    /** 界面上“退格 / 清除”按钮改的文本：同时同步给键盘缓冲，免得后面的字接在旧内容上。 */
+    private void applyQueryFromButton(String value) {
+        setQuery(value);
+        if (textBuffer != null) {
+            textBuffer.reset(query);
+        }
     }
 
     // ------------------------------------------------------------------ 系统输入法
@@ -1043,7 +1075,9 @@ public final class ForgeCraftScreen extends Screen {
 
         poolButton.render(sb);
         searchButton.render(sb);
+        backspaceButton.render(sb);
         clearButton.render(sb);
+        renderQuery(sb);
 
         renderCards(sb);
         renderScrollBar(sb);
@@ -1054,23 +1088,36 @@ public final class ForgeCraftScreen extends Screen {
                 Settings.WIDTH * 0.5f, bottomY, Settings.CREAM_COLOR);
     }
 
+    /** 右上角搜索词显示：正在输入时显示“输入中…”，有内容时显示“搜索：xx”。 */
+    private void renderQuery(SpriteBatch sb) {
+        String text;
+        if (!query.isEmpty()) {
+            text = Texts.t("搜索：", "Search: ") + query;
+        } else if (typing) {
+            text = Texts.t("输入中…", "Typing…");
+        } else {
+            return;
+        }
+        float left = topRowEndX + 12.0f * Settings.scale;
+        float right = Settings.WIDTH - margin - gridRightReserve;
+        if (right - left < 40.0f * Settings.scale) {
+            return;
+        }
+        FontHelper.renderFontCentered(sb, FontHelper.buttonLabelFont, text,
+                (left + right) * 0.5f, poolRowY, QUERY_COLOR);
+    }
+
     private String statusText() {
         if (Texts.useChinese()) {
             StringBuilder sb = new StringBuilder();
             sb.append("共 ").append(filtered.size()).append(" 张 · 已选 ").append(selected.size()).append(" 张");
-            if (!query.isEmpty()) {
-                sb.append(" · 筛选：").append(query);
-            }
-            if (typing && typingElapsed > 1.5f && !typingGotInput) {
+            if (typing) {
                 sb.append(" · 打完字按输入法的回车");
             }
             return sb.toString();
         }
         StringBuilder sb = new StringBuilder();
         sb.append("Cards: ").append(filtered.size()).append("  Selected: ").append(selected.size());
-        if (!query.isEmpty()) {
-            sb.append("  Filter: ").append(query);
-        }
         return sb.toString();
     }
 

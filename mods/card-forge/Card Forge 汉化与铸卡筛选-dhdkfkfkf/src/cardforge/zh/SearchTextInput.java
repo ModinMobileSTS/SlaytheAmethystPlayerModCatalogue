@@ -15,6 +15,9 @@ import java.nio.charset.StandardCharsets;
  *   <li>运行时把整段文本一次性回传时用 {@code \ue000<base64>\ue001} 包起来
  *       （TogetherInSpire 聊天框同样的协议），这里一并解析。</li>
  * </ul>
+ *
+ * <p>界面上还有自己的“退格 / 清除”按钮：加载器那个键盘预览条里的文字删不掉，
+ * 所以删字一律在游戏里做（见 {@link #reset(String)} 把按钮改动同步回缓冲）。</p>
  */
 final class SearchTextInput {
     /** 单次搜索的最大字符数。 */
@@ -42,10 +45,16 @@ final class SearchTextInput {
     private boolean discardSync;
 
     SearchTextInput(String initial, Listener listener) {
-        if (initial != null) {
-            buffer.append(initial);
-        }
+        reset(initial);
         this.listener = listener;
+    }
+
+    /** 用外部值替换当前内容（界面上的退格 / 清除按钮用）。 */
+    void reset(String text) {
+        buffer.setLength(0);
+        if (text != null) {
+            buffer.append(text.length() > MAX_LEN ? text.substring(0, MAX_LEN) : text);
+        }
     }
 
     private void backspace() {
@@ -118,8 +127,11 @@ final class SearchTextInput {
         sync.setLength(0);
         readingSync = false;
         discardSync = false;
-        if (text != null && listener != null) {
-            listener.committed(text.length() > MAX_LEN ? text.substring(0, MAX_LEN) : text);
+        if (text != null) {
+            reset(text);
+            if (listener != null) {
+                listener.committed(text.length() > MAX_LEN ? text.substring(0, MAX_LEN) : text);
+            }
         }
     }
 
