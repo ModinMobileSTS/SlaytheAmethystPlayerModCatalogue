@@ -365,6 +365,19 @@ Fear And Hunger 模组原本无条件替换全部游戏音乐（主菜单、三�
 
 ---
 
+## ninja
+
+### 欧内死手特效
+
+给蕾忍mod 的「我夺取心脏」加专属斩杀演出：前冲、破空音效与震屏、暗红速度线、红色拖影，敌人死亡瞬间炸开血滴并在地面留下按模型体积等比放大的静态血迹；同时补齐补丁元数据（mts\_version、credits），修正社区一键上传时报 Missing metadata fields 的问题。
+
+- **补丁版本**：`1.0.2`
+- **作者**：145141
+- **适用版本**：`1.7.1`
+- **下载**：[下载](https://raw.githubusercontent.com/ModinMobileSTS/SlaytheAmethystPlayerModCatalogue/main/mods/ninja/%E6%AC%A7%E5%86%85%E6%AD%BB%E6%89%8B%E7%89%B9%E6%95%88-145141/amethyst.ai.patch.ninja.patch-1793708455455-c63a5506.jar)
+
+---
+
 ## omnipotence
 
 ### 全能模组中文翻译补丁
