@@ -48,10 +48,9 @@ final class TextButton {
         return px >= x - w * 0.5f && px <= x + w * 0.5f && py >= y - h * 0.5f && py <= y + h * 0.5f;
     }
 
-    /** 更新悬停状态；被点击时返回 true。 */
-    boolean update(float mx, float my, boolean clicked) {
+    /** 只刷新悬停状态，不做点击判定（点击由界面统一处理按下/抬起）。 */
+    void updateHover(float mx, float my) {
         hovered = enabled && contains(mx, my);
-        return hovered && clicked;
     }
 
     void clearHover() {

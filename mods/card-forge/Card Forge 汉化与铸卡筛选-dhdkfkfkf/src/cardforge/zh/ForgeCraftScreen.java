@@ -1,6 +1,7 @@
 package cardforge.zh;
 
 import com.badlogic.gdx.Gdx;
+import com.badlogic.gdx.Input;
 import com.badlogic.gdx.InputProcessor;
 import com.badlogic.gdx.graphics.Color;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
@@ -24,16 +25,34 @@ import java.util.List;
  * 雷神之锤的铸卡界面重写版。
  *
  * <p>原界面每帧维护滚动条、对全部卡牌做悬停判定并插值卡牌位置，卡牌数量一多就会明显抖动；
- * 这里改为固定格位 + 直接赋值坐标，不再有滚动条与插值，因此不会抖动。
- * 同时新增：按角色卡池筛选（默认当前角色）、按名字搜索、触摸拖动浏览。</p>
+ * 这里改为固定格位 + 直接赋值坐标，没有插值与滚动条百分比回写，因此不会抖动。</p>
+ *
+ * <p>交互：按下记为一次“手势”，抬起才结算，因此“按住拖动 = 滚动”“轻点 = 选牌”可以共存。
+ * 右侧滚动条可以直接拖动，两端另有翻页按钮；顶部可按角色卡池筛选、可按名字搜索
+ * （搜索会唤起系统输入法）。</p>
  */
 public final class ForgeCraftScreen extends Screen {
     private static final Color BACKGROUND = new Color(0.05f, 0.05f, 0.08f, 0.96f);
     private static final Color PICKER_BG = new Color(0.03f, 0.03f, 0.05f, 0.97f);
     private static final Color SELECT_FRAME = new Color(1.0f, 0.82f, 0.30f, 0.85f);
     private static final Color HOVER_FRAME = new Color(0.95f, 0.95f, 1.0f, 0.55f);
-    private static final Color TRACK_COLOR = new Color(1.0f, 1.0f, 1.0f, 0.12f);
-    private static final Color THUMB_COLOR = new Color(1.0f, 0.92f, 0.65f, 0.55f);
+    private static final Color TRACK_COLOR = new Color(1.0f, 1.0f, 1.0f, 0.14f);
+    private static final Color THUMB_COLOR = new Color(1.0f, 0.92f, 0.65f, 0.60f);
+    private static final Color THUMB_ACTIVE = new Color(1.0f, 0.96f, 0.78f, 0.92f);
+    private static final Color ARROW_BG = new Color(0.18f, 0.18f, 0.24f, 0.92f);
+    private static final Color ARROW_BG_ON = new Color(0.42f, 0.36f, 0.16f, 0.96f);
+    private static final Color ARROW_BORDER = new Color(1.0f, 1.0f, 1.0f, 0.20f);
+
+    private static final int TARGET_NONE = 0;
+    private static final int TARGET_GRID = 1;
+    private static final int TARGET_BAR = 2;
+    private static final int TARGET_PAGE_UP = 3;
+    private static final int TARGET_PAGE_DOWN = 4;
+    private static final int TARGET_POOL = 5;
+    private static final int TARGET_SEARCH = 6;
+    private static final int TARGET_CLEAR = 7;
+    private static final int TARGET_CANCEL = 8;
+    private static final int TARGET_CONFIRM = 9;
 
     private static ForgeCraftScreen openInstance;
 
@@ -50,6 +69,7 @@ public final class ForgeCraftScreen extends Screen {
     private boolean typing;
     private InputProcessor savedProcessor;
     private SearchTextInput searchInput;
+    private volatile String pendingExternalQuery;
 
     private float margin;
     private float buttonH;
@@ -73,6 +93,7 @@ public final class ForgeCraftScreen extends Screen {
     private TextButton confirmButton;
     private TextButton cancelButton;
 
+    private int pressTarget = TARGET_NONE;
     private boolean pressing;
     private boolean dragging;
     private AbstractCard pressedCard;
@@ -381,6 +402,14 @@ public final class ForgeCraftScreen extends Screen {
         }
     }
 
+    private void scrollBy(float delta) {
+        if (delta == 0.0f) {
+            return;
+        }
+        scroll += delta;
+        layoutCards();
+    }
+
     private AbstractCard cardAt(float x, float y) {
         float halfW = AbstractCard.IMG_WIDTH * cardScale * 0.5f;
         float halfH = AbstractCard.IMG_HEIGHT * cardScale * 0.5f;
@@ -406,72 +435,268 @@ public final class ForgeCraftScreen extends Screen {
         refreshButtonLabels();
     }
 
+    // ------------------------------------------------------------------ 滚动条几何
+
+    private boolean canScroll() {
+        return minScroll() < -0.5f;
+    }
+
+    private float barCenterX() {
+        return Settings.WIDTH - margin * 0.5f;
+    }
+
+    private float arrowSize() {
+        return 52.0f * Settings.scale;
+    }
+
+    private float barTop() {
+        return gridTop - arrowSize() * 1.15f;
+    }
+
+    private float barBottom() {
+        return gridBottom + arrowSize() * 1.15f;
+    }
+
+    private static boolean inRect(float cx, float cy, float size, float px, float py) {
+        float half = size * 0.5f;
+        return px >= cx - half && px <= cx + half && py >= cy - half && py <= cy + half;
+    }
+
+    private boolean inPageUp(float mx, float my) {
+        return canScroll() && inRect(barCenterX(), gridTop - arrowSize() * 0.6f, arrowSize(), mx, my);
+    }
+
+    private boolean inPageDown(float mx, float my) {
+        return canScroll() && inRect(barCenterX(), gridBottom + arrowSize() * 0.6f, arrowSize(), mx, my);
+    }
+
+    private boolean inBar(float mx, float my) {
+        if (!canScroll()) {
+            return false;
+        }
+        float halfHit = Math.max(40.0f * Settings.scale, 22.0f);
+        return Math.abs(mx - barCenterX()) <= halfHit && my >= barBottom() - arrowSize() && my <= barTop() + arrowSize();
+    }
+
+    private void applyBar(float my) {
+        float min = minScroll();
+        if (min >= -0.5f) {
+            return;
+        }
+        float top = barTop();
+        float height = Math.max(1.0f, top - barBottom());
+        float t = (top - my) / height;
+        t = Math.max(0.0f, Math.min(1.0f, t));
+        scroll = min * t;
+        layoutCards();
+    }
+
     // ------------------------------------------------------------------ 输入
 
     @Override
     public void update() {
         float mx = InputHelper.mX;
         float my = InputHelper.mY;
-        boolean clicked = InputHelper.justClickedLeft;
+
+        String pending = pendingExternalQuery;
+        if (pending != null) {
+            pendingExternalQuery = null;
+            setQuery(pending);
+            stopTyping();
+        }
 
         if (pickerOpen) {
-            updatePicker(mx, my, clicked);
+            updatePicker(mx, my);
             return;
         }
 
-        if (poolButton.update(mx, my, clicked)) {
-            stopTyping();
-            openPicker();
+        updateHovers(mx, my);
+
+        if (InputHelper.justClickedLeft) {
+            beginPress(mx, my);
+        } else if (InputHelper.justReleasedClickLeft) {
+            finishPress(mx, my);
+        } else if (pressing) {
+            dragPress(mx, my);
+        }
+
+        if (pressTarget == TARGET_NONE) {
+            if (InputHelper.scrolledUp) {
+                scrollBy(-Settings.SCROLL_SPEED);
+            } else if (InputHelper.scrolledDown) {
+                scrollBy(Settings.SCROLL_SPEED);
+            }
+        }
+    }
+
+    private void updateHovers(float mx, float my) {
+        poolButton.updateHover(mx, my);
+        searchButton.updateHover(mx, my);
+        clearButton.updateHover(mx, my);
+        confirmButton.updateHover(mx, my);
+        cancelButton.updateHover(mx, my);
+        hoveredCard = dragging ? null : cardAt(mx, my);
+    }
+
+    private void beginPress(float mx, float my) {
+        pressing = true;
+        dragging = false;
+        pressY = my;
+        lastY = my;
+        pressedCard = null;
+
+        if (inPageUp(mx, my)) {
+            pressTarget = TARGET_PAGE_UP;
             return;
         }
-        if (clearButton.update(mx, my, clicked)) {
-            setQuery("");
+        if (inPageDown(mx, my)) {
+            pressTarget = TARGET_PAGE_DOWN;
             return;
         }
-        if (searchButton.update(mx, my, clicked)) {
-            if (typing) {
-                stopTyping();
-            } else {
-                startTyping();
+        if (inBar(mx, my)) {
+            pressTarget = TARGET_BAR;
+            applyBar(my);
+            return;
+        }
+        if (searchButton.contains(mx, my)) {
+            pressTarget = TARGET_SEARCH;
+            return;
+        }
+        if (poolButton.contains(mx, my)) {
+            pressTarget = TARGET_POOL;
+            return;
+        }
+        if (clearButton.enabled && clearButton.contains(mx, my)) {
+            pressTarget = TARGET_CLEAR;
+            return;
+        }
+        if (cancelButton.contains(mx, my)) {
+            pressTarget = TARGET_CANCEL;
+            return;
+        }
+        if (confirmButton.enabled && confirmButton.contains(mx, my)) {
+            pressTarget = TARGET_CONFIRM;
+            return;
+        }
+        if (my >= gridBottom && my <= gridTop) {
+            pressTarget = TARGET_GRID;
+            pressedCard = cardAt(mx, my);
+            return;
+        }
+        pressTarget = TARGET_NONE;
+    }
+
+    private void dragPress(float mx, float my) {
+        if (pressTarget == TARGET_BAR) {
+            applyBar(my);
+            return;
+        }
+        if (pressTarget != TARGET_GRID) {
+            return;
+        }
+        if (!dragging && Math.abs(my - pressY) > 16.0f * Settings.scale) {
+            dragging = true;
+            hoveredCard = null;
+        }
+        if (dragging) {
+            scrollBy(my - lastY);
+            lastY = my;
+        }
+    }
+
+    private void finishPress(float mx, float my) {
+        int target = pressTarget;
+        boolean wasDragging = dragging;
+        AbstractCard card = pressedCard;
+        pressTarget = TARGET_NONE;
+        pressing = false;
+        dragging = false;
+        pressedCard = null;
+        hoveredCard = cardAt(mx, my);
+
+        if (target == TARGET_NONE || target == TARGET_BAR) {
+            return;
+        }
+        if (target == TARGET_GRID) {
+            if (!wasDragging && card != null && cardAt(mx, my) == card) {
+                toggleSelection(card);
             }
             return;
         }
-        if (cancelButton.update(mx, my, clicked)) {
-            close();
+        if (target == TARGET_PAGE_UP) {
+            if (inPageUp(mx, my)) {
+                scrollBy((gridTop - gridBottom) * 0.85f);
+            }
             return;
         }
-        if (confirmButton.update(mx, my, clicked)) {
-            confirm();
+        if (target == TARGET_PAGE_DOWN) {
+            if (inPageDown(mx, my)) {
+                scrollBy(-(gridTop - gridBottom) * 0.85f);
+            }
+            return;
+        }
+        if (target == TARGET_SEARCH && !searchButton.contains(mx, my)) {
+            return;
+        }
+        if (target == TARGET_POOL && !poolButton.contains(mx, my)) {
+            return;
+        }
+        if (target == TARGET_CLEAR && !clearButton.contains(mx, my)) {
+            return;
+        }
+        if (target == TARGET_CANCEL && !cancelButton.contains(mx, my)) {
+            return;
+        }
+        if (target == TARGET_CONFIRM && !confirmButton.contains(mx, my)) {
             return;
         }
 
-        if (InputHelper.scrolledUp) {
-            scroll -= 120.0f * Settings.scale;
-            layoutCards();
-        } else if (InputHelper.scrolledDown) {
-            scroll += 120.0f * Settings.scale;
-            layoutCards();
+        switch (target) {
+            case TARGET_POOL:
+                stopTyping();
+                openPicker();
+                break;
+            case TARGET_SEARCH:
+                if (typing) {
+                    stopTyping();
+                } else {
+                    startTyping();
+                }
+                break;
+            case TARGET_CLEAR:
+                setQuery("");
+                break;
+            case TARGET_CANCEL:
+                close();
+                break;
+            case TARGET_CONFIRM:
+                confirm();
+                break;
+            default:
+                break;
         }
-
-        updateCardInput(mx, my, clicked);
     }
 
-    private void updatePicker(float mx, float my, boolean clicked) {
+    private void updatePicker(float mx, float my) {
         boolean hitAny = false;
         for (int i = 0; i < pickerButtons.size(); i++) {
             TextButton button = pickerButtons.get(i);
-            if (button.update(mx, my, clicked)) {
-                selectPool(i);
-                return;
-            }
+            button.updateHover(mx, my);
             if (button.hovered) {
                 hitAny = true;
             }
+            if (button.hovered && InputHelper.justClickedLeft) {
+                selectPool(i);
+                return;
+            }
         }
-        if (clicked && !hitAny) {
+        if (!hitAny && InputHelper.justClickedLeft) {
             pickerOpen = false;
             pickerButtons.clear();
         }
+        pressTarget = TARGET_NONE;
+        pressing = false;
+        dragging = false;
         clearMainHovers();
     }
 
@@ -481,42 +706,6 @@ public final class ForgeCraftScreen extends Screen {
         clearButton.clearHover();
         confirmButton.clearHover();
         cancelButton.clearHover();
-    }
-
-    private void updateCardInput(float mx, float my, boolean clicked) {
-        if (clicked) {
-            pressing = true;
-            dragging = false;
-            pressedCard = cardAt(mx, my);
-            hoveredCard = pressedCard;
-            pressY = my;
-            lastY = my;
-            return;
-        }
-        if (!pressing) {
-            hoveredCard = null;
-            return;
-        }
-        if (InputHelper.isMouseDown) {
-            if (!dragging && Math.abs(my - pressY) > 20.0f * Settings.scale) {
-                dragging = true;
-            }
-            if (dragging) {
-                scroll += my - lastY;
-                lastY = my;
-                layoutCards();
-                hoveredCard = null;
-            } else {
-                hoveredCard = pressedCard;
-            }
-            return;
-        }
-        if (!dragging && pressedCard != null && cardAt(mx, my) == pressedCard) {
-            toggleSelection(pressedCard);
-        }
-        pressing = false;
-        dragging = false;
-        pressedCard = null;
         hoveredCard = null;
     }
 
@@ -526,11 +715,24 @@ public final class ForgeCraftScreen extends Screen {
         refreshButtonLabels();
     }
 
-    /** 开始输入：换上一个“文本输入”处理器，运行时会据此弹出系统软键盘。 */
+    /** 系统键盘桥是否可用（Amethyst 运行时会提供这个属性）。 */
+    private static boolean keyboardBridgeAvailable() {
+        try {
+            return !System.getProperty("amethyst.in_game_keyboard_request", "").trim().isEmpty();
+        } catch (Throwable t) {
+            return false;
+        }
+    }
+
+    /**
+     * 开始输入：换上一个“文本输入”处理器，运行时会据此唤起系统输入法；
+     * 如果当前环境没有这个桥，则退回 libGDX 自带的系统文本框接口。
+     */
     private void startTyping() {
         if (typing) {
             return;
         }
+        typing = true;
         try {
             savedProcessor = Gdx.input.getInputProcessor();
             searchInput = new SearchTextInput(query, new SearchTextInput.Listener() {
@@ -540,18 +742,43 @@ public final class ForgeCraftScreen extends Screen {
                 }
 
                 @Override
+                public void committed(String text) {
+                    setQuery(text);
+                    stopTyping();
+                }
+
+                @Override
                 public void done() {
                     stopTyping();
                 }
             }, savedProcessor);
-            typing = true;
             Gdx.input.setInputProcessor(searchInput);
             Gdx.input.setOnscreenKeyboardVisible(true);
         } catch (Throwable t) {
             typing = false;
             searchInput = null;
         }
+        if (!keyboardBridgeAvailable()) {
+            requestTextDialog();
+        }
         refreshButtonLabels();
+    }
+
+    /** 其它安卓后端（含桌面）用 libGDX 的系统文本框弹出输入法。 */
+    private void requestTextDialog() {
+        try {
+            Gdx.input.getTextInput(new Input.TextInputListener() {
+                @Override
+                public void input(String text) {
+                    pendingExternalQuery = text == null ? "" : text;
+                }
+
+                @Override
+                public void canceled() {
+                }
+            }, Texts.t("搜索卡牌", "Search cards"), query, Texts.t("卡牌名称", "Card name"));
+        } catch (Throwable ignored) {
+        }
     }
 
     private void stopTyping() {
@@ -617,7 +844,7 @@ public final class ForgeCraftScreen extends Screen {
         }
 
         String title = typing
-                ? Texts.t("输入卡牌名称，点“完成”结束", "Type a card name, then tap Done")
+                ? Texts.t("用系统输入法输入卡名，点“完成”结束", "Type with the keyboard, then tap Done")
                 : Texts.t("铸造卡牌", "Craft Cards");
         FontHelper.renderFontCentered(sb, FontHelper.charTitleFont, title,
                 Settings.WIDTH * 0.5f, labelY, Settings.GOLD_COLOR);
@@ -629,6 +856,7 @@ public final class ForgeCraftScreen extends Screen {
 
         renderCards(sb);
         renderScrollBar(sb);
+        renderScrollButtons(sb);
 
         cancelButton.render(sb);
         confirmButton.render(sb);
@@ -654,9 +882,9 @@ public final class ForgeCraftScreen extends Screen {
 
     private String statusText() {
         if (Texts.useChinese()) {
-            return "共 " + filtered.size() + " 张 · 已选 " + selected.size() + " 张";
+            return "共 " + filtered.size() + " 张 · 已选 " + selected.size() + " 张 · 按住拖动可翻页";
         }
-        return "Cards: " + filtered.size() + "  Selected: " + selected.size();
+        return "Cards: " + filtered.size() + "  Selected: " + selected.size() + "  (drag to scroll)";
     }
 
     private void renderCards(SpriteBatch sb) {
@@ -685,23 +913,52 @@ public final class ForgeCraftScreen extends Screen {
     }
 
     private void renderScrollBar(SpriteBatch sb) {
-        float viewH = gridTop - gridBottom;
-        if (totalHeight <= viewH + 1.0f) {
+        if (!canScroll()) {
             return;
         }
         float scale = Settings.scale;
-        float barW = 6.0f * scale;
-        float x = Settings.WIDTH - margin * 0.5f;
+        float x = barCenterX();
+        float top = barTop();
+        float bottom = barBottom();
+        float trackH = top - bottom;
+        if (trackH <= 4.0f) {
+            return;
+        }
+        float trackW = Math.max(6.0f * scale, 4.0f);
         sb.setColor(TRACK_COLOR);
-        sb.draw(ImageMaster.WHITE_SQUARE_IMG, x - barW * 0.5f, gridBottom, barW, viewH);
-        float thumbH = Math.min(viewH, Math.max(viewH * viewH / totalHeight, 60.0f * scale));
+        sb.draw(ImageMaster.WHITE_SQUARE_IMG, x - trackW * 0.5f, bottom, trackW, trackH);
+
+        float viewH = gridTop - gridBottom;
+        float thumbH = Math.min(trackH, Math.max(trackH * (viewH / Math.max(totalHeight, 1.0f)), 70.0f * scale));
         float min = minScroll();
-        float t = min < 0.0f ? (scroll - min) / (-min) : 0.0f;
-        t = Math.max(0.0f, Math.min(1.0f, t));
-        float thumbY = gridTop - thumbH - (viewH - thumbH) * t;
-        sb.setColor(THUMB_COLOR);
-        sb.draw(ImageMaster.WHITE_SQUARE_IMG, x - barW, thumbY, barW * 2.0f, thumbH);
+        float progress = min < -0.5f ? scroll / min : 0.0f;
+        progress = Math.max(0.0f, Math.min(1.0f, progress));
+        float thumbY = top - thumbH - (trackH - thumbH) * progress;
+        float thumbW = Math.max(14.0f * scale, 10.0f);
+        sb.setColor(pressTarget == TARGET_BAR || pressing && pressTarget == TARGET_BAR ? THUMB_ACTIVE : THUMB_COLOR);
+        sb.draw(ImageMaster.WHITE_SQUARE_IMG, x - thumbW * 0.5f, thumbY, thumbW, thumbH);
         sb.setColor(Color.WHITE);
+    }
+
+    private void renderScrollButtons(SpriteBatch sb) {
+        if (!canScroll()) {
+            return;
+        }
+        renderArrowButton(sb, barCenterX(), gridTop - arrowSize() * 0.6f, "▲", pressTarget == TARGET_PAGE_UP);
+        renderArrowButton(sb, barCenterX(), gridBottom + arrowSize() * 0.6f, "▼", pressTarget == TARGET_PAGE_DOWN);
+        sb.setColor(Color.WHITE);
+    }
+
+    private void renderArrowButton(SpriteBatch sb, float cx, float cy, String glyph, boolean active) {
+        float size = arrowSize();
+        sb.setColor(active ? ARROW_BG_ON : ARROW_BG);
+        sb.draw(ImageMaster.WHITE_SQUARE_IMG, cx - size * 0.5f, cy - size * 0.5f, size, size);
+        sb.setColor(ARROW_BORDER);
+        float line = Math.max(2.0f, 2.0f * Settings.scale);
+        sb.draw(ImageMaster.WHITE_SQUARE_IMG, cx - size * 0.5f, cy + size * 0.5f - line, size, line);
+        sb.draw(ImageMaster.WHITE_SQUARE_IMG, cx - size * 0.5f, cy - size * 0.5f, size, line);
+        sb.setColor(Color.WHITE);
+        FontHelper.renderFontCentered(sb, FontHelper.buttonLabelFont, glyph, cx, cy, Settings.CREAM_COLOR);
     }
 
     private void renderPicker(SpriteBatch sb) {
