@@ -2,7 +2,6 @@ package cardforge.zh;
 
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.Input;
-import com.badlogic.gdx.InputProcessor;
 import com.badlogic.gdx.graphics.Color;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.eternal0.slay.the.spire.mods.ui.Screen;
@@ -15,8 +14,9 @@ import com.megacrit.cardcrawl.dungeons.AbstractDungeon;
 import com.megacrit.cardcrawl.helpers.CardLibrary;
 import com.megacrit.cardcrawl.helpers.FontHelper;
 import com.megacrit.cardcrawl.helpers.ImageMaster;
-import com.megacrit.cardcrawl.helpers.input.InputHelper;
 import com.megacrit.cardcrawl.vfx.cardManip.ShowCardAndObtainEffect;
+import java.io.File;
+import java.io.FileWriter;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
@@ -24,24 +24,24 @@ import java.util.List;
 /**
  * 雷神之锤的铸卡界面重写版。
  *
- * <p>原界面每帧维护滚动条、对全部卡牌做悬停判定并插值卡牌位置，卡牌数量一多就会明显抖动；
- * 这里改为固定格位 + 直接赋值坐标，没有插值与滚动条百分比回写，因此不会抖动。</p>
+ * <p>原界面每帧维护滚动条、对全部卡牌做悬停判定并插值卡牌位置，卡牌一多就会明显抖动；
+ * 这里改为固定格位 + 直接赋值坐标，没有插值与百分比回写，因此不会抖动。</p>
  *
- * <p>交互：按下记为一次“手势”，抬起才结算，因此“按住拖动 = 滚动”“轻点 = 选牌”可以共存。
- * 右侧滚动条可以直接拖动，两端另有翻页按钮；顶部可按角色卡池筛选、可按名字搜索
- * （搜索会唤起系统输入法）。</p>
+ * <p>输入直接接管触摸事件（见 {@link ForgeInput}）：这个安卓运行时的触摸不会产生鼠标按键状态，
+ * 也不保证拖动时刷新 {@code InputHelper.mY}，所以按下 / 拖动 / 抬起全部来自原始触摸事件，
+ * “按住拖动 = 滚动”“轻点 = 选牌”才能同时可靠工作。</p>
  */
 public final class ForgeCraftScreen extends Screen {
     private static final Color BACKGROUND = new Color(0.05f, 0.05f, 0.08f, 0.96f);
     private static final Color PICKER_BG = new Color(0.03f, 0.03f, 0.05f, 0.97f);
     private static final Color SELECT_FRAME = new Color(1.0f, 0.82f, 0.30f, 0.85f);
     private static final Color HOVER_FRAME = new Color(0.95f, 0.95f, 1.0f, 0.55f);
-    private static final Color TRACK_COLOR = new Color(1.0f, 1.0f, 1.0f, 0.14f);
-    private static final Color THUMB_COLOR = new Color(1.0f, 0.92f, 0.65f, 0.60f);
-    private static final Color THUMB_ACTIVE = new Color(1.0f, 0.96f, 0.78f, 0.92f);
-    private static final Color ARROW_BG = new Color(0.18f, 0.18f, 0.24f, 0.92f);
-    private static final Color ARROW_BG_ON = new Color(0.42f, 0.36f, 0.16f, 0.96f);
-    private static final Color ARROW_BORDER = new Color(1.0f, 1.0f, 1.0f, 0.20f);
+    private static final Color TRACK_COLOR = new Color(1.0f, 1.0f, 1.0f, 0.22f);
+    private static final Color THUMB_COLOR = new Color(1.0f, 0.90f, 0.60f, 0.75f);
+    private static final Color THUMB_ACTIVE = new Color(1.0f, 0.97f, 0.82f, 0.98f);
+    private static final Color ARROW_BG = new Color(0.20f, 0.20f, 0.26f, 0.92f);
+    private static final Color ARROW_BG_ON = new Color(0.46f, 0.38f, 0.16f, 0.98f);
+    private static final Color ARROW_BORDER = new Color(1.0f, 1.0f, 1.0f, 0.28f);
 
     private static final int TARGET_NONE = 0;
     private static final int TARGET_GRID = 1;
@@ -54,6 +54,8 @@ public final class ForgeCraftScreen extends Screen {
     private static final int TARGET_CANCEL = 8;
     private static final int TARGET_CONFIRM = 9;
 
+    private static final String KEYBOARD_REQUEST_PROP = "amethyst.in_game_keyboard_request";
+
     private static ForgeCraftScreen openInstance;
 
     private final List<AbstractCard> library = new ArrayList<>();
@@ -62,12 +64,15 @@ public final class ForgeCraftScreen extends Screen {
     private final List<CardPool> pools = new ArrayList<>();
     private final List<TextButton> pickerButtons = new ArrayList<>();
 
+    private ForgeInput input;
+
     private int poolIndex;
     private String query = "";
     private boolean pickerOpen;
 
     private boolean typing;
-    private InputProcessor savedProcessor;
+    private float typingElapsed;
+    private boolean typingGotInput;
     private SearchTextInput searchInput;
     private volatile String pendingExternalQuery;
 
@@ -85,6 +90,7 @@ public final class ForgeCraftScreen extends Screen {
     private float rowStep;
     private float gridCenterX;
     private float cardScale;
+    private float gridRightReserve;
     private int cols;
 
     private TextButton poolButton;
@@ -123,6 +129,7 @@ public final class ForgeCraftScreen extends Screen {
         }
         openInstance = null;
         ForgeCraftScreen screen = new ForgeCraftScreen();
+        screen.input = ForgeInput.install();
         ScreenManager.INSTANCE.show(screen);
         openInstance = screen;
     }
@@ -263,25 +270,26 @@ public final class ForgeCraftScreen extends Screen {
         gridTop = poolRowY - buttonH * 0.5f - Math.max(18.0f * scale, height * 0.024f);
         bottomY = Math.max(buttonH * 0.5f + 14.0f * scale, height * 0.062f);
         gridBottom = bottomY + buttonH * 0.5f + Math.max(18.0f * scale, height * 0.024f);
+        gridRightReserve = Math.max(64.0f * scale, width * 0.045f);
 
-        float availW = width - 2.0f * margin;
+        float availW = Math.max(160.0f * scale, width - 2.0f * margin - gridRightReserve);
         float availH = Math.max(140.0f * scale, gridTop - gridBottom);
         float gap = 12.0f * scale;
         float byHeight = (availH / 2.0f) * 0.90f / AbstractCard.IMG_HEIGHT;
         float byWidth = (availW / 6.0f) * 0.90f / AbstractCard.IMG_WIDTH;
-        cardScale = Math.max(0.30f, Math.min(0.72f, Math.min(byHeight, byWidth)));
+        cardScale = Math.max(0.28f, Math.min(0.72f, Math.min(byHeight, byWidth)));
         colStep = AbstractCard.IMG_WIDTH * cardScale + gap;
         rowStep = AbstractCard.IMG_HEIGHT * cardScale + gap;
-        cols = Math.max(4, Math.min(10, (int) Math.floor(availW / colStep)));
-        gridCenterX = width * 0.5f;
+        cols = Math.max(3, Math.min(10, (int) Math.floor(availW / colStep)));
+        gridCenterX = margin + availW * 0.5f;
     }
 
     private void createButtons() {
         float availW = Settings.WIDTH - 2.0f * margin;
         float gap = 14.0f * Settings.scale;
-        float w1 = availW * 0.40f;
-        float w2 = availW * 0.15f;
-        float w3 = availW * 0.14f;
+        float w1 = availW * 0.38f;
+        float w2 = availW * 0.14f;
+        float w3 = availW * 0.13f;
         float x = margin;
         poolButton = new TextButton("", x + w1 * 0.5f, poolRowY, w1, buttonH);
         x += w1 + gap;
@@ -388,6 +396,10 @@ public final class ForgeCraftScreen extends Screen {
         }
     }
 
+    private float viewHeight() {
+        return gridTop - gridBottom;
+    }
+
     private float minScroll() {
         return Math.min(0.0f, gridBottom - gridTop + totalHeight);
     }
@@ -438,15 +450,15 @@ public final class ForgeCraftScreen extends Screen {
     // ------------------------------------------------------------------ 滚动条几何
 
     private boolean canScroll() {
-        return minScroll() < -0.5f;
+        return minScroll() < -0.5f && barTop() > barBottom();
     }
 
     private float barCenterX() {
-        return Settings.WIDTH - margin * 0.5f;
+        return Settings.WIDTH - margin - gridRightReserve * 0.5f;
     }
 
     private float arrowSize() {
-        return 52.0f * Settings.scale;
+        return 46.0f * Settings.scale;
     }
 
     private float barTop() {
@@ -457,25 +469,29 @@ public final class ForgeCraftScreen extends Screen {
         return gridBottom + arrowSize() * 1.15f;
     }
 
-    private static boolean inRect(float cx, float cy, float size, float px, float py) {
-        float half = size * 0.5f;
-        return px >= cx - half && px <= cx + half && py >= cy - half && py <= cy + half;
+    private static boolean inRect(float cx, float cy, float sizeX, float sizeY, float px, float py) {
+        return px >= cx - sizeX * 0.5f && px <= cx + sizeX * 0.5f
+                && py >= cy - sizeY * 0.5f && py <= cy + sizeY * 0.5f;
     }
 
     private boolean inPageUp(float mx, float my) {
-        return canScroll() && inRect(barCenterX(), gridTop - arrowSize() * 0.6f, arrowSize(), mx, my);
+        return canScroll() && inRect(barCenterX(), gridTop - arrowSize() * 0.55f,
+                arrowSize() * 1.3f, arrowSize() * 1.3f, mx, my);
     }
 
     private boolean inPageDown(float mx, float my) {
-        return canScroll() && inRect(barCenterX(), gridBottom + arrowSize() * 0.6f, arrowSize(), mx, my);
+        return canScroll() && inRect(barCenterX(), gridBottom + arrowSize() * 0.55f,
+                arrowSize() * 1.3f, arrowSize() * 1.3f, mx, my);
     }
 
     private boolean inBar(float mx, float my) {
         if (!canScroll()) {
             return false;
         }
-        float halfHit = Math.max(40.0f * Settings.scale, 22.0f);
-        return Math.abs(mx - barCenterX()) <= halfHit && my >= barBottom() - arrowSize() && my <= barTop() + arrowSize();
+        float halfHit = Math.max(34.0f * Settings.scale, 20.0f);
+        return Math.abs(mx - barCenterX()) <= halfHit
+                && my >= barBottom() - arrowSize() * 0.5f
+                && my <= barTop() + arrowSize() * 0.5f;
     }
 
     private void applyBar(float my) {
@@ -495,8 +511,10 @@ public final class ForgeCraftScreen extends Screen {
 
     @Override
     public void update() {
-        float mx = InputHelper.mX;
-        float my = InputHelper.mY;
+        if (input == null) {
+            return;
+        }
+        float delta = Gdx.graphics.getDeltaTime();
 
         String pending = pendingExternalQuery;
         if (pending != null) {
@@ -504,29 +522,39 @@ public final class ForgeCraftScreen extends Screen {
             setQuery(pending);
             stopTyping();
         }
+        if (typing) {
+            typingElapsed += delta;
+        }
+
+        // 保证输入处理器一直在位（其它界面/热重载可能把它换掉）
+        if (!typing && Gdx.input.getInputProcessor() != input) {
+            Gdx.input.setInputProcessor(input);
+        }
+
+        float mx = input.x;
+        float my = input.y;
 
         if (pickerOpen) {
             updatePicker(mx, my);
+            input.consume();
             return;
         }
 
         updateHovers(mx, my);
 
-        if (InputHelper.justClickedLeft) {
+        if (input.pressed) {
             beginPress(mx, my);
-        } else if (InputHelper.justReleasedClickLeft) {
+        } else if (pressing && (!input.down || input.released)) {
             finishPress(mx, my);
         } else if (pressing) {
             dragPress(mx, my);
         }
 
-        if (pressTarget == TARGET_NONE) {
-            if (InputHelper.scrolledUp) {
-                scrollBy(-Settings.SCROLL_SPEED);
-            } else if (InputHelper.scrolledDown) {
-                scrollBy(Settings.SCROLL_SPEED);
-            }
+        if (!pressing && input.scrollAmount != 0) {
+            scrollBy(-input.scrollAmount * Settings.SCROLL_SPEED * 0.6f);
         }
+
+        input.consume();
     }
 
     private void updateHovers(float mx, float my) {
@@ -594,7 +622,7 @@ public final class ForgeCraftScreen extends Screen {
         if (pressTarget != TARGET_GRID) {
             return;
         }
-        if (!dragging && Math.abs(my - pressY) > 16.0f * Settings.scale) {
+        if (!dragging && Math.abs(my - pressY) > 12.0f * Settings.scale) {
             dragging = true;
             hoveredCard = null;
         }
@@ -625,13 +653,13 @@ public final class ForgeCraftScreen extends Screen {
         }
         if (target == TARGET_PAGE_UP) {
             if (inPageUp(mx, my)) {
-                scrollBy((gridTop - gridBottom) * 0.85f);
+                scrollBy(viewHeight() * 0.85f);
             }
             return;
         }
         if (target == TARGET_PAGE_DOWN) {
             if (inPageDown(mx, my)) {
-                scrollBy(-(gridTop - gridBottom) * 0.85f);
+                scrollBy(-viewHeight() * 0.85f);
             }
             return;
         }
@@ -685,12 +713,12 @@ public final class ForgeCraftScreen extends Screen {
             if (button.hovered) {
                 hitAny = true;
             }
-            if (button.hovered && InputHelper.justClickedLeft) {
+            if (button.hovered && input.released) {
                 selectPool(i);
                 return;
             }
         }
-        if (!hitAny && InputHelper.justClickedLeft) {
+        if (!hitAny && input.released) {
             pickerOpen = false;
             pickerButtons.clear();
         }
@@ -715,53 +743,77 @@ public final class ForgeCraftScreen extends Screen {
         refreshButtonLabels();
     }
 
+    // ------------------------------------------------------------------ 系统输入法
+
     /** 系统键盘桥是否可用（Amethyst 运行时会提供这个属性）。 */
-    private static boolean keyboardBridgeAvailable() {
+    private static String keyboardRequestPath() {
         try {
-            return !System.getProperty("amethyst.in_game_keyboard_request", "").trim().isEmpty();
+            String path = System.getProperty(KEYBOARD_REQUEST_PROP, "").trim();
+            return path.isEmpty() ? null : path;
         } catch (Throwable t) {
-            return false;
+            return null;
         }
     }
 
-    /**
-     * 开始输入：换上一个“文本输入”处理器，运行时会据此唤起系统输入法；
-     * 如果当前环境没有这个桥，则退回 libGDX 自带的系统文本框接口。
-     */
-    private void startTyping() {
-        if (typing) {
-            return;
-        }
-        typing = true;
+    private static String base64(String text) {
+        byte[] bytes;
         try {
-            savedProcessor = Gdx.input.getInputProcessor();
-            searchInput = new SearchTextInput(query, new SearchTextInput.Listener() {
-                @Override
-                public void changed(String text) {
-                    setQuery(text);
-                }
-
-                @Override
-                public void committed(String text) {
-                    setQuery(text);
-                    stopTyping();
-                }
-
-                @Override
-                public void done() {
-                    stopTyping();
-                }
-            }, savedProcessor);
-            Gdx.input.setInputProcessor(searchInput);
-            Gdx.input.setOnscreenKeyboardVisible(true);
+            bytes = text.getBytes("UTF-8");
         } catch (Throwable t) {
-            typing = false;
-            searchInput = null;
+            bytes = text.getBytes();
         }
-        if (!keyboardBridgeAvailable()) {
-            requestTextDialog();
+        String alphabet = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
+        StringBuilder out = new StringBuilder();
+        int i = 0;
+        while (i + 2 < bytes.length) {
+            int n = ((bytes[i] & 0xFF) << 16) | ((bytes[i + 1] & 0xFF) << 8) | (bytes[i + 2] & 0xFF);
+            out.append(alphabet.charAt((n >> 18) & 63))
+                    .append(alphabet.charAt((n >> 12) & 63))
+                    .append(alphabet.charAt((n >> 6) & 63))
+                    .append(alphabet.charAt(n & 63));
+            i += 3;
         }
-        refreshButtonLabels();
+        int rest = bytes.length - i;
+        if (rest == 1) {
+            int n = (bytes[i] & 0xFF) << 16;
+            out.append(alphabet.charAt((n >> 18) & 63))
+                    .append(alphabet.charAt((n >> 12) & 63))
+                    .append("==");
+        } else if (rest == 2) {
+            int n = ((bytes[i] & 0xFF) << 16) | ((bytes[i + 1] & 0xFF) << 8);
+            out.append(alphabet.charAt((n >> 18) & 63))
+                    .append(alphabet.charAt((n >> 12) & 63))
+                    .append(alphabet.charAt((n >> 6) & 63))
+                    .append('=');
+        }
+        return out.toString();
+    }
+
+    /**
+     * 按运行时的“系统键盘预览”协议写请求文件：来源、时间戳、初值、允许字符、长度上限。
+     * 这是 TogetherInSpire 聊天框在同一运行时里唤起手机输入法所用的格式。
+     */
+    private static void writeKeyboardRequest(String path, String initial, int limit) {
+        try {
+            File file = new File(path);
+            File parent = file.getParentFile();
+            if (parent != null && !parent.isDirectory()) {
+                parent.mkdirs();
+            }
+            FileWriter writer = new FileWriter(file, false);
+            writer.write("system_keyboard_preview:card_forge_search");
+            writer.write(10);
+            writer.write(Long.toString(System.currentTimeMillis()));
+            writer.write(10);
+            writer.write(base64(initial == null ? "" : initial));
+            writer.write(10);
+            writer.write(base64(""));
+            writer.write(10);
+            writer.write(Integer.toString(limit));
+            writer.write(10);
+            writer.close();
+        } catch (Throwable ignored) {
+        }
     }
 
     /** 其它安卓后端（含桌面）用 libGDX 的系统文本框弹出输入法。 */
@@ -781,20 +833,63 @@ public final class ForgeCraftScreen extends Screen {
         }
     }
 
+    /**
+     * 开始输入：把输入处理器换成文本输入类，并直接按运行时的协议请求系统输入法。
+     */
+    private void startTyping() {
+        if (typing) {
+            return;
+        }
+        typing = true;
+        typingElapsed = 0.0f;
+        typingGotInput = false;
+        try {
+            searchInput = new SearchTextInput(query, new SearchTextInput.Listener() {
+                @Override
+                public void changed(String text) {
+                    typingGotInput = true;
+                    setQuery(text);
+                }
+
+                @Override
+                public void committed(String text) {
+                    typingGotInput = true;
+                    setQuery(text);
+                    stopTyping();
+                }
+
+                @Override
+                public void done() {
+                    stopTyping();
+                }
+            }, input);
+            Gdx.input.setInputProcessor(searchInput);
+            Gdx.input.setOnscreenKeyboardVisible(true);
+        } catch (Throwable t) {
+            searchInput = null;
+        }
+        String path = keyboardRequestPath();
+        if (path != null) {
+            writeKeyboardRequest(path, query, -1);
+        } else {
+            requestTextDialog();
+        }
+        refreshButtonLabels();
+    }
+
     private void stopTyping() {
         if (!typing) {
             return;
         }
         typing = false;
+        typingElapsed = 0.0f;
         searchInput = null;
         try {
-            if (savedProcessor != null) {
-                Gdx.input.setInputProcessor(savedProcessor);
+            if (input != null) {
+                Gdx.input.setInputProcessor(input);
             }
-            Gdx.input.setOnscreenKeyboardVisible(false);
         } catch (Throwable ignored) {
         }
-        savedProcessor = null;
         refreshButtonLabels();
     }
 
@@ -820,6 +915,9 @@ public final class ForgeCraftScreen extends Screen {
 
     private void close() {
         stopTyping();
+        if (input != null) {
+            input.uninstall();
+        }
         for (AbstractCard card : library) {
             card.isSelected = false;
             card.stopGlowing();
@@ -843,10 +941,7 @@ public final class ForgeCraftScreen extends Screen {
             return;
         }
 
-        String title = typing
-                ? Texts.t("用系统输入法输入卡名，点“完成”结束", "Type with the keyboard, then tap Done")
-                : Texts.t("铸造卡牌", "Craft Cards");
-        FontHelper.renderFontCentered(sb, FontHelper.charTitleFont, title,
+        FontHelper.renderFontCentered(sb, FontHelper.charTitleFont, titleText(),
                 Settings.WIDTH * 0.5f, labelY, Settings.GOLD_COLOR);
 
         poolButton.render(sb);
@@ -864,6 +959,16 @@ public final class ForgeCraftScreen extends Screen {
                 Settings.WIDTH * 0.5f, bottomY, Settings.CREAM_COLOR);
     }
 
+    private String titleText() {
+        if (!typing) {
+            return Texts.t("铸造卡牌", "Craft Cards");
+        }
+        if (typingElapsed > 2.5f && !typingGotInput) {
+            return Texts.t("若系统输入法没弹出，点“完成”返回", "No keyboard? Tap Done to go back");
+        }
+        return Texts.t("正在唤起系统输入法…", "Opening keyboard...");
+    }
+
     private void renderQuery(SpriteBatch sb) {
         String text = query.isEmpty()
                 ? (typing ? Texts.t("输入中…", "Typing...") : "")
@@ -872,7 +977,7 @@ public final class ForgeCraftScreen extends Screen {
             return;
         }
         float left = topRowEndX + 12.0f * Settings.scale;
-        float right = Settings.WIDTH - margin;
+        float right = Settings.WIDTH - margin - gridRightReserve;
         if (right - left < 40.0f * Settings.scale) {
             return;
         }
@@ -882,9 +987,9 @@ public final class ForgeCraftScreen extends Screen {
 
     private String statusText() {
         if (Texts.useChinese()) {
-            return "共 " + filtered.size() + " 张 · 已选 " + selected.size() + " 张 · 按住拖动可翻页";
+            return "共 " + filtered.size() + " 张 · 已选 " + selected.size() + " 张";
         }
-        return "Cards: " + filtered.size() + "  Selected: " + selected.size() + "  (drag to scroll)";
+        return "Cards: " + filtered.size() + "  Selected: " + selected.size();
     }
 
     private void renderCards(SpriteBatch sb) {
@@ -924,18 +1029,18 @@ public final class ForgeCraftScreen extends Screen {
         if (trackH <= 4.0f) {
             return;
         }
-        float trackW = Math.max(6.0f * scale, 4.0f);
+        float trackW = Math.max(8.0f * scale, 5.0f);
         sb.setColor(TRACK_COLOR);
         sb.draw(ImageMaster.WHITE_SQUARE_IMG, x - trackW * 0.5f, bottom, trackW, trackH);
 
-        float viewH = gridTop - gridBottom;
-        float thumbH = Math.min(trackH, Math.max(trackH * (viewH / Math.max(totalHeight, 1.0f)), 70.0f * scale));
+        float viewH = viewHeight();
+        float thumbH = Math.min(trackH, Math.max(trackH * (viewH / Math.max(totalHeight, 1.0f)), 80.0f * scale));
         float min = minScroll();
         float progress = min < -0.5f ? scroll / min : 0.0f;
         progress = Math.max(0.0f, Math.min(1.0f, progress));
         float thumbY = top - thumbH - (trackH - thumbH) * progress;
-        float thumbW = Math.max(14.0f * scale, 10.0f);
-        sb.setColor(pressTarget == TARGET_BAR || pressing && pressTarget == TARGET_BAR ? THUMB_ACTIVE : THUMB_COLOR);
+        float thumbW = Math.max(18.0f * scale, 12.0f);
+        sb.setColor(pressTarget == TARGET_BAR ? THUMB_ACTIVE : THUMB_COLOR);
         sb.draw(ImageMaster.WHITE_SQUARE_IMG, x - thumbW * 0.5f, thumbY, thumbW, thumbH);
         sb.setColor(Color.WHITE);
     }
@@ -944,8 +1049,8 @@ public final class ForgeCraftScreen extends Screen {
         if (!canScroll()) {
             return;
         }
-        renderArrowButton(sb, barCenterX(), gridTop - arrowSize() * 0.6f, "▲", pressTarget == TARGET_PAGE_UP);
-        renderArrowButton(sb, barCenterX(), gridBottom + arrowSize() * 0.6f, "▼", pressTarget == TARGET_PAGE_DOWN);
+        renderArrowButton(sb, barCenterX(), gridTop - arrowSize() * 0.55f, "▲", pressTarget == TARGET_PAGE_UP);
+        renderArrowButton(sb, barCenterX(), gridBottom + arrowSize() * 0.55f, "▼", pressTarget == TARGET_PAGE_DOWN);
         sb.setColor(Color.WHITE);
     }
 
