@@ -1,0 +1,18 @@
+{
+  "schemaVersion": 1,
+  "name": "卡牌刷新单卡模式",
+  "description": "•修复了sl之后，刷新次数不会还原的问题\n•增加单卡刷新模式",
+  "version": "1.4.0",
+  "author": {
+    "name": "yanx",
+    "email": "yaninme@163.com"
+  },
+  "target": {
+    "modId": "cardrefresh",
+    "workshopId": "3822858439",
+    "versions": [
+      "0.3.0"
+    ]
+  },
+  "jar": "amethyst.ai.patch.cardrefresh.patch-1794577030315-27d056f8.jar"
+}
