@@ -315,6 +315,15 @@ Fear And Hunger 模组原本无条件替换全部游戏音乐（主菜单、三�
 - **适用版本**：`0.0.1`
 - **下载**：[下载](https://raw.githubusercontent.com/ModinMobileSTS/SlaytheAmethystPlayerModCatalogue/main/mods/fnh/%E6%81%90%E6%83%A7%E4%B8%8E%E9%A5%A5%E9%A5%BF%E9%9F%B3%E4%B9%90%E6%8C%89%E8%A7%92%E8%89%B2%E9%99%90%E5%AE%9A-lution/amethyst.ai.patch.fnh.patch-1794047405169-716e9cb7.jar)
 
+### 恐惧与饥饿高阶植物学加强
+
+高阶植物学是能力牌，但它加成的植物牌全是一次性消耗牌，能力生效后常常无牌可用。本补丁为该能力新增效果：每回合开始时随机将 1 张已消耗的植物牌或【熟知灌丛】放入抽牌堆，升级后最多 2 张，消耗牌堆中没有这类牌时不发动；卡面文本同步新增该效果说明（基础版与升级版分别显示 1 张 / 最多 2 张）。
+
+- **补丁版本**：`1.0.0`
+- **作者**：lution
+- **适用版本**：`0.0.1`
+- **下载**：[下载](https://raw.githubusercontent.com/ModinMobileSTS/SlaytheAmethystPlayerModCatalogue/main/mods/fnh/%E6%81%90%E6%83%A7%E4%B8%8E%E9%A5%A5%E9%A5%BF%E9%AB%98%E9%98%B6%E6%A4%8D%E7%89%A9%E5%AD%A6%E5%8A%A0%E5%BC%BA-lution/amethyst.ai.patch.fnh.patch-1794673371934-48ef3dd7.jar)
+
 ---
 
 ## fuZhouMod
