@@ -6,52 +6,52 @@ import com.megacrit.cardcrawl.core.Settings;
 import com.megacrit.cardcrawl.helpers.input.InputHelper;
 
 /**
- * 铸卡界面自己的输入处理器。
+ * 铸卡界面常驻的输入处理器。
  *
- * <p>为什么不用 {@link InputHelper}：这个安卓运行时里触摸只会到达 InputProcessor 的
- * touchDown / touchDragged / touchUp，鼠标按键状态（{@code InputHelper.isMouseDown}）在触摸时一直是 false，
- * 而且实现“点击命中”补丁会把 {@code justClickedLeft} 延迟一帧、甚至在拖动过程中不再更新
- * {@code InputHelper.mY}。所以这里直接接管触摸事件，按下/移动/抬起与坐标都来自原始事件。</p>
+ * <p>为什么不用 {@link InputHelper} 的鼠标语义：这个安卓运行时里触摸只会到达 InputProcessor，
+ * 鼠标按键状态（{@code InputHelper.isMouseDown}）在触摸时一直是 false。所以按下/抬起直接取触摸事件。</p>
  *
- * <p>所有事件都会转发给原来的处理器，保证游戏自身的输入逻辑不受影响。</p>
+ * <p>指针坐标同时参考触摸事件与 {@code InputHelper.mX/mY}：运行时在拖动时只有其中一个会更新，
+ * 由界面层决定采用哪个（见 ForgeCraftScreen#updatePointer）。</p>
+ *
+ * <p>类名刻意不含 text/input/type/keyboard，避免运行时把它当成文本输入而反复唤起键盘。</p>
  */
-final class ForgeInput implements InputProcessor {
+final class CraftPointer implements InputProcessor {
     private final InputProcessor previous;
 
     /** 指针位置（世界坐标，与界面绘制同一坐标系）。 */
     float x;
     float y;
-    /** 当前是否按住。 */
     boolean down;
-    /** 本帧是否刚按下 / 刚抬起。 */
     boolean pressed;
     boolean released;
-    /** 本帧滚轮累计（正数向下）。 */
     int scrollAmount;
 
-    private ForgeInput(InputProcessor previous) {
+    /** 当前接收文本的缓冲；非 null 表示正在输入搜索词。 */
+    SearchTextInput text;
+
+    private CraftPointer(InputProcessor previous) {
         this.previous = previous;
         this.x = InputHelper.mX;
         this.y = InputHelper.mY;
     }
 
-    /** 安装到游戏输入链上；如果已经装过就复用。 */
-    static ForgeInput install() {
+    static CraftPointer install() {
         InputProcessor current = Gdx.input.getInputProcessor();
-        if (current instanceof ForgeInput) {
-            ForgeInput existing = (ForgeInput) current;
+        if (current instanceof CraftPointer) {
+            CraftPointer existing = (CraftPointer) current;
             existing.pressed = false;
             existing.released = false;
             existing.scrollAmount = 0;
             return existing;
         }
-        ForgeInput created = new ForgeInput(current);
+        CraftPointer created = new CraftPointer(current);
         Gdx.input.setInputProcessor(created);
         return created;
     }
 
-    /** 卸载，恢复原来的处理器。 */
     void uninstall() {
+        text = null;
         if (Gdx.input.getInputProcessor() == this) {
             try {
                 Gdx.input.setInputProcessor(previous);
@@ -111,7 +111,7 @@ final class ForgeInput implements InputProcessor {
         if (previous != null) {
             previous.touchUp(screenX, screenY, pointer, button);
         }
-        if (isPrimary(pointer, button) && down) {
+        if (isPrimary(pointer, button)) {
             x = toWorldX(screenX);
             y = toWorldY(screenY);
             down = false;
@@ -126,8 +126,12 @@ final class ForgeInput implements InputProcessor {
             previous.touchDragged(screenX, screenY, pointer);
         }
         if (pointer == 0) {
-            x = toWorldX(screenX);
-            y = toWorldY(screenY);
+            float worldX = toWorldX(screenX);
+            float worldY = toWorldY(screenY);
+            if (Math.abs(worldX - x) > 0.5f || Math.abs(worldY - y) > 0.5f) {
+                x = worldX;
+                y = worldY;
+            }
         }
         return false;
     }
@@ -155,16 +159,27 @@ final class ForgeInput implements InputProcessor {
 
     @Override
     public boolean keyDown(int keycode) {
+        if (text != null) {
+            text.handleKeyDown(keycode);
+            return true;
+        }
         return previous != null && previous.keyDown(keycode);
     }
 
     @Override
     public boolean keyUp(int keycode) {
+        if (text != null) {
+            return true;
+        }
         return previous != null && previous.keyUp(keycode);
     }
 
     @Override
     public boolean keyTyped(char character) {
+        if (text != null) {
+            text.handleKeyTyped(character);
+            return true;
+        }
         return previous != null && previous.keyTyped(character);
     }
 }

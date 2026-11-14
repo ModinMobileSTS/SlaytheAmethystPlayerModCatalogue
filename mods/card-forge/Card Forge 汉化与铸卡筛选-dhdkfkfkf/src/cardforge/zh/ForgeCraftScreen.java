@@ -14,6 +14,7 @@ import com.megacrit.cardcrawl.dungeons.AbstractDungeon;
 import com.megacrit.cardcrawl.helpers.CardLibrary;
 import com.megacrit.cardcrawl.helpers.FontHelper;
 import com.megacrit.cardcrawl.helpers.ImageMaster;
+import com.megacrit.cardcrawl.helpers.input.InputHelper;
 import com.megacrit.cardcrawl.vfx.cardManip.ShowCardAndObtainEffect;
 import java.io.File;
 import java.io.FileWriter;
@@ -27,27 +28,30 @@ import java.util.List;
  * <p>原界面每帧维护滚动条、对全部卡牌做悬停判定并插值卡牌位置，卡牌一多就会明显抖动；
  * 这里改为固定格位 + 直接赋值坐标，没有插值与百分比回写，因此不会抖动。</p>
  *
- * <p>输入直接接管触摸事件（见 {@link ForgeInput}）：这个安卓运行时的触摸不会产生鼠标按键状态，
- * 也不保证拖动时刷新 {@code InputHelper.mY}，所以按下 / 拖动 / 抬起全部来自原始触摸事件，
- * “按住拖动 = 滚动”“轻点 = 选牌”才能同时可靠工作。</p>
+ * <p>输入由常驻的 {@link CraftPointer} 接管：这个安卓运行时里触摸不会产生鼠标按键状态，
+ * 拖动时也不一定刷新触摸事件的坐标，所以按下 / 抬起取触摸事件，
+ * 滚动条的拖动位置则在触摸坐标与 {@code InputHelper.mY} 之间取本帧真正变化的那个（见 {@link #updatePointer()}）。</p>
+ *
+ * <p>卡区不再支持“按住划动”（该手势在本运行时不可靠），滚动改成：右侧竖条可点可拖，
+ * 竖条两端的 ▲ / ▼ 按钮每次翻一屏，点按即响应。</p>
  */
 public final class ForgeCraftScreen extends Screen {
     private static final Color BACKGROUND = new Color(0.05f, 0.05f, 0.08f, 0.96f);
     private static final Color PICKER_BG = new Color(0.03f, 0.03f, 0.05f, 0.97f);
     private static final Color SELECT_FRAME = new Color(1.0f, 0.82f, 0.30f, 0.85f);
     private static final Color HOVER_FRAME = new Color(0.95f, 0.95f, 1.0f, 0.55f);
-    private static final Color TRACK_COLOR = new Color(1.0f, 1.0f, 1.0f, 0.22f);
-    private static final Color THUMB_COLOR = new Color(1.0f, 0.90f, 0.60f, 0.75f);
-    private static final Color THUMB_ACTIVE = new Color(1.0f, 0.97f, 0.82f, 0.98f);
-    private static final Color ARROW_BG = new Color(0.20f, 0.20f, 0.26f, 0.92f);
-    private static final Color ARROW_BG_ON = new Color(0.46f, 0.38f, 0.16f, 0.98f);
-    private static final Color ARROW_BORDER = new Color(1.0f, 1.0f, 1.0f, 0.28f);
+    private static final Color TRACK_COLOR = new Color(1.0f, 1.0f, 1.0f, 0.32f);
+    private static final Color TRACK_EDGE = new Color(1.0f, 1.0f, 1.0f, 0.14f);
+    private static final Color THUMB_COLOR = new Color(1.0f, 0.90f, 0.60f, 0.92f);
+    private static final Color THUMB_ACTIVE = new Color(1.0f, 0.97f, 0.82f, 1.0f);
+    private static final Color THUMB_GRIP = new Color(0.35f, 0.28f, 0.10f, 0.85f);
+    private static final Color ARROW_BG = new Color(0.20f, 0.20f, 0.26f, 0.94f);
+    private static final Color ARROW_BG_ON = new Color(0.52f, 0.42f, 0.16f, 1.0f);
+    private static final Color ARROW_BORDER = new Color(1.0f, 1.0f, 1.0f, 0.30f);
 
     private static final int TARGET_NONE = 0;
     private static final int TARGET_GRID = 1;
     private static final int TARGET_BAR = 2;
-    private static final int TARGET_PAGE_UP = 3;
-    private static final int TARGET_PAGE_DOWN = 4;
     private static final int TARGET_POOL = 5;
     private static final int TARGET_SEARCH = 6;
     private static final int TARGET_CLEAR = 7;
@@ -64,7 +68,7 @@ public final class ForgeCraftScreen extends Screen {
     private final List<CardPool> pools = new ArrayList<>();
     private final List<TextButton> pickerButtons = new ArrayList<>();
 
-    private ForgeInput input;
+    private CraftPointer input;
 
     private int poolIndex;
     private String query = "";
@@ -73,19 +77,17 @@ public final class ForgeCraftScreen extends Screen {
     private boolean typing;
     private float typingElapsed;
     private boolean typingGotInput;
-    private SearchTextInput searchInput;
+    private SearchTextInput textBuffer;
     private volatile String pendingExternalQuery;
 
     private float margin;
     private float buttonH;
     private float labelY;
     private float poolRowY;
-    private float topRowEndX;
     private float gridTop;
     private float gridBottom;
     private float bottomY;
     private float scroll;
-    private float totalHeight;
     private float colStep;
     private float rowStep;
     private float gridCenterX;
@@ -101,11 +103,17 @@ public final class ForgeCraftScreen extends Screen {
 
     private int pressTarget = TARGET_NONE;
     private boolean pressing;
-    private boolean dragging;
     private AbstractCard pressedCard;
     private AbstractCard hoveredCard;
-    private float pressY;
-    private float lastY;
+
+    /** 本帧指针 Y：触摸事件与 InputHelper.mY 中真正变化的那个。 */
+    private float pointerY;
+    private float lastRawY;
+    private float lastCursorY;
+    private boolean pointerReady;
+    /** 拖竖条时指针相对滑块中心的偏移，避免一按就跳。 */
+    private float barGrabOffset;
+    private boolean barDragging;
 
     private ForgeCraftScreen() {
         collectCards();
@@ -129,7 +137,7 @@ public final class ForgeCraftScreen extends Screen {
         }
         openInstance = null;
         ForgeCraftScreen screen = new ForgeCraftScreen();
-        screen.input = ForgeInput.install();
+        screen.input = CraftPointer.install();
         ScreenManager.INSTANCE.show(screen);
         openInstance = screen;
     }
@@ -270,7 +278,7 @@ public final class ForgeCraftScreen extends Screen {
         gridTop = poolRowY - buttonH * 0.5f - Math.max(18.0f * scale, height * 0.024f);
         bottomY = Math.max(buttonH * 0.5f + 14.0f * scale, height * 0.062f);
         gridBottom = bottomY + buttonH * 0.5f + Math.max(18.0f * scale, height * 0.024f);
-        gridRightReserve = Math.max(64.0f * scale, width * 0.045f);
+        gridRightReserve = Math.max(78.0f * scale, width * 0.058f);
 
         float availW = Math.max(160.0f * scale, width - 2.0f * margin - gridRightReserve);
         float availH = Math.max(140.0f * scale, gridTop - gridBottom);
@@ -287,16 +295,15 @@ public final class ForgeCraftScreen extends Screen {
     private void createButtons() {
         float availW = Settings.WIDTH - 2.0f * margin;
         float gap = 14.0f * Settings.scale;
-        float w1 = availW * 0.38f;
-        float w2 = availW * 0.14f;
-        float w3 = availW * 0.13f;
+        float w1 = availW * 0.42f;
+        float w2 = availW * 0.15f;
+        float w3 = availW * 0.15f;
         float x = margin;
         poolButton = new TextButton("", x + w1 * 0.5f, poolRowY, w1, buttonH);
         x += w1 + gap;
         searchButton = new TextButton(Texts.t("搜索", "Search"), x + w2 * 0.5f, poolRowY, w2, buttonH);
         x += w2 + gap;
         clearButton = new TextButton(Texts.t("清除", "Clear"), x + w3 * 0.5f, poolRowY, w3, buttonH);
-        topRowEndX = x + w3;
 
         float wc = availW * 0.20f;
         float wok = availW * 0.26f;
@@ -324,7 +331,7 @@ public final class ForgeCraftScreen extends Screen {
         float scale = Settings.scale;
         int pickerCols = count <= 4 ? 2 : (count <= 9 ? 3 : 4);
         int rows = (count + pickerCols - 1) / pickerCols;
-        float bh = Math.min(70.0f * scale, (Settings.HEIGHT * 0.60f) / rows);
+        float bh = Math.min(70.0f * scale, (Settings.HEIGHT * 0.70f) / rows);
         float bw = Math.min(460.0f * scale, (Settings.WIDTH * 0.86f) / pickerCols - 16.0f * scale);
         float gapX = 12.0f * scale;
         float gapY = 10.0f * scale;
@@ -378,8 +385,6 @@ public final class ForgeCraftScreen extends Screen {
 
     private void layoutCards() {
         int count = filtered.size();
-        int rows = count == 0 ? 1 : (count + cols - 1) / cols;
-        totalHeight = rows * rowStep;
         clampScroll();
         for (int i = 0; i < count; i++) {
             AbstractCard card = filtered.get(i);
@@ -397,11 +402,21 @@ public final class ForgeCraftScreen extends Screen {
     }
 
     private float viewHeight() {
-        return gridTop - gridBottom;
+        return Math.max(1.0f, gridTop - gridBottom);
+    }
+
+    private int contentRows() {
+        int perRow = Math.max(1, cols);
+        return Math.max(1, (filtered.size() + perRow - 1) / perRow);
+    }
+
+    /** 内容总高度：每次按当前卡数与格距重新算，避免缓存过期导致“看起来不能滚”。 */
+    private float contentHeight() {
+        return contentRows() * rowStep;
     }
 
     private float minScroll() {
-        return Math.min(0.0f, gridBottom - gridTop + totalHeight);
+        return Math.min(0.0f, viewHeight() - contentHeight());
     }
 
     private void clampScroll() {
@@ -420,6 +435,11 @@ public final class ForgeCraftScreen extends Screen {
         }
         scroll += delta;
         layoutCards();
+    }
+
+    /** 一次翻一屏（留一点重叠，方便定位）。 */
+    private void pageBy(float sign) {
+        scrollBy(sign * viewHeight() * 0.88f);
     }
 
     private AbstractCard cardAt(float x, float y) {
@@ -458,7 +478,7 @@ public final class ForgeCraftScreen extends Screen {
     }
 
     private float arrowSize() {
-        return 46.0f * Settings.scale;
+        return Math.max(52.0f * Settings.scale, 34.0f);
     }
 
     private float barTop() {
@@ -469,6 +489,41 @@ public final class ForgeCraftScreen extends Screen {
         return gridBottom + arrowSize() * 1.15f;
     }
 
+    private float trackWidth() {
+        return Math.max(12.0f * Settings.scale, 7.0f);
+    }
+
+    private float thumbWidth() {
+        return Math.max(30.0f * Settings.scale, 18.0f);
+    }
+
+    private float thumbHeight() {
+        float trackH = Math.max(1.0f, barTop() - barBottom());
+        float ratio = viewHeight() / Math.max(contentHeight(), 1.0f);
+        float minimum = Math.min(trackH, Math.max(96.0f * Settings.scale, 40.0f));
+        return Math.min(trackH, Math.max(trackH * Math.min(1.0f, ratio), minimum));
+    }
+
+    /** 滑块的“进度”，0 = 最上，1 = 最下。 */
+    private float barProgress() {
+        float min = minScroll();
+        if (min >= -0.5f) {
+            return 0.0f;
+        }
+        float p = scroll / min;
+        return Math.max(0.0f, Math.min(1.0f, p));
+    }
+
+    private float thumbBottom() {
+        float trackH = Math.max(1.0f, barTop() - barBottom());
+        float thumbH = thumbHeight();
+        return barTop() - thumbH - (trackH - thumbH) * barProgress();
+    }
+
+    private float thumbCenter() {
+        return thumbBottom() + thumbHeight() * 0.5f;
+    }
+
     private static boolean inRect(float cx, float cy, float sizeX, float sizeY, float px, float py) {
         return px >= cx - sizeX * 0.5f && px <= cx + sizeX * 0.5f
                 && py >= cy - sizeY * 0.5f && py <= cy + sizeY * 0.5f;
@@ -476,32 +531,42 @@ public final class ForgeCraftScreen extends Screen {
 
     private boolean inPageUp(float mx, float my) {
         return canScroll() && inRect(barCenterX(), gridTop - arrowSize() * 0.55f,
-                arrowSize() * 1.3f, arrowSize() * 1.3f, mx, my);
+                arrowSize() * 1.25f, arrowSize() * 1.25f, mx, my);
     }
 
     private boolean inPageDown(float mx, float my) {
         return canScroll() && inRect(barCenterX(), gridBottom + arrowSize() * 0.55f,
-                arrowSize() * 1.3f, arrowSize() * 1.3f, mx, my);
+                arrowSize() * 1.25f, arrowSize() * 1.25f, mx, my);
     }
 
+    /** 竖条整段（含滑块）都可点：点在滑块上就按抓取处理，点在轨道上就直接跳过去。 */
     private boolean inBar(float mx, float my) {
         if (!canScroll()) {
             return false;
         }
-        float halfHit = Math.max(34.0f * Settings.scale, 20.0f);
+        float halfHit = Math.max(thumbWidth() * 0.9f, 30.0f * Settings.scale);
         return Math.abs(mx - barCenterX()) <= halfHit
-                && my >= barBottom() - arrowSize() * 0.5f
-                && my <= barTop() + arrowSize() * 0.5f;
+                && my >= barBottom() - arrowSize() * 0.35f
+                && my <= barTop() + arrowSize() * 0.35f;
     }
 
-    private void applyBar(float my) {
+    private boolean inThumb(float my) {
+        float half = thumbWidth() * 0.9f;
+        float bottom = thumbBottom();
+        return my >= bottom - 8.0f * Settings.scale && my <= bottom + thumbHeight() + 8.0f * Settings.scale;
+    }
+
+    /** 让滑块中心落到 targetCenterY（世界坐标）处。 */
+    private void applyBarCenter(float targetCenterY) {
         float min = minScroll();
         if (min >= -0.5f) {
             return;
         }
         float top = barTop();
-        float height = Math.max(1.0f, top - barBottom());
-        float t = (top - my) / height;
+        float thumbH = thumbHeight();
+        float travel = Math.max(1.0f, (top - barBottom()) - thumbH);
+        float centerTop = top - thumbH * 0.5f;
+        float t = (centerTop - targetCenterY) / travel;
         t = Math.max(0.0f, Math.min(1.0f, t));
         scroll = min * t;
         layoutCards();
@@ -526,13 +591,17 @@ public final class ForgeCraftScreen extends Screen {
             typingElapsed += delta;
         }
 
-        // 保证输入处理器一直在位（其它界面/热重载可能把它换掉）
-        if (!typing && Gdx.input.getInputProcessor() != input) {
-            Gdx.input.setInputProcessor(input);
+        // 常驻处理器：其它界面、失焦、恢复焦点都可能把它换掉，这里始终保持我们的在位。
+        if (Gdx.input.getInputProcessor() != input) {
+            try {
+                Gdx.input.setInputProcessor(input);
+            } catch (Throwable ignored) {
+            }
         }
 
         float mx = input.x;
         float my = input.y;
+        updatePointer();
 
         if (pickerOpen) {
             updatePicker(mx, my);
@@ -542,12 +611,24 @@ public final class ForgeCraftScreen extends Screen {
 
         updateHovers(mx, my);
 
+        // ▲ / ▼ 按下即翻页（点按最可靠，不依赖拖动）。
+        if (input.pressed && inPageUp(mx, my)) {
+            pageBy(1.0f);
+            input.consume();
+            return;
+        }
+        if (input.pressed && inPageDown(mx, my)) {
+            pageBy(-1.0f);
+            input.consume();
+            return;
+        }
+
         if (input.pressed) {
             beginPress(mx, my);
         } else if (pressing && (!input.down || input.released)) {
             finishPress(mx, my);
         } else if (pressing) {
-            dragPress(mx, my);
+            continuePress();
         }
 
         if (!pressing && input.scrollAmount != 0) {
@@ -557,33 +638,58 @@ public final class ForgeCraftScreen extends Screen {
         input.consume();
     }
 
+    /**
+     * 取本帧真正变化的指针高度：触摸事件坐标，或 {@code InputHelper.mY}。
+     * 这个运行时在拖动时通常只刷新其中之一，取“变了的那一个”才能让滑块跟手。
+     */
+    private void updatePointer() {
+        float rawY = input.y;
+        float cursorY = InputHelper.mY;
+        if (!pointerReady) {
+            pointerY = rawY;
+            lastRawY = rawY;
+            lastCursorY = cursorY;
+            pointerReady = true;
+            return;
+        }
+        if (Math.abs(cursorY - lastCursorY) > 0.5f) {
+            pointerY = cursorY;
+        } else if (Math.abs(rawY - lastRawY) > 0.5f) {
+            pointerY = rawY;
+        }
+        lastRawY = rawY;
+        lastCursorY = cursorY;
+    }
+
     private void updateHovers(float mx, float my) {
         poolButton.updateHover(mx, my);
         searchButton.updateHover(mx, my);
         clearButton.updateHover(mx, my);
         confirmButton.updateHover(mx, my);
         cancelButton.updateHover(mx, my);
-        hoveredCard = dragging ? null : cardAt(mx, my);
+        hoveredCard = cardAt(mx, my);
     }
 
     private void beginPress(float mx, float my) {
         pressing = true;
-        dragging = false;
-        pressY = my;
-        lastY = my;
+        barDragging = false;
         pressedCard = null;
 
-        if (inPageUp(mx, my)) {
-            pressTarget = TARGET_PAGE_UP;
-            return;
-        }
-        if (inPageDown(mx, my)) {
-            pressTarget = TARGET_PAGE_DOWN;
-            return;
-        }
+        // 按下这一帧的触摸坐标是准的，用它对齐指针基准。
+        pointerY = my;
+        lastRawY = my;
+        lastCursorY = InputHelper.mY;
+        pointerReady = true;
+
         if (inBar(mx, my)) {
             pressTarget = TARGET_BAR;
-            applyBar(my);
+            if (inThumb(my)) {
+                barGrabOffset = pointerY - thumbCenter();
+                barDragging = true;
+            } else {
+                barGrabOffset = 0.0f;
+                applyBarCenter(pointerY);
+            }
             return;
         }
         if (searchButton.contains(mx, my)) {
@@ -614,31 +720,20 @@ public final class ForgeCraftScreen extends Screen {
         pressTarget = TARGET_NONE;
     }
 
-    private void dragPress(float mx, float my) {
-        if (pressTarget == TARGET_BAR) {
-            applyBar(my);
+    private void continuePress() {
+        if (pressTarget != TARGET_BAR) {
             return;
         }
-        if (pressTarget != TARGET_GRID) {
-            return;
-        }
-        if (!dragging && Math.abs(my - pressY) > 12.0f * Settings.scale) {
-            dragging = true;
-            hoveredCard = null;
-        }
-        if (dragging) {
-            scrollBy(my - lastY);
-            lastY = my;
-        }
+        // 按住竖条拖动：滑块跟着指针走。
+        applyBarCenter(pointerY - barGrabOffset);
     }
 
     private void finishPress(float mx, float my) {
         int target = pressTarget;
-        boolean wasDragging = dragging;
         AbstractCard card = pressedCard;
         pressTarget = TARGET_NONE;
         pressing = false;
-        dragging = false;
+        barDragging = false;
         pressedCard = null;
         hoveredCard = cardAt(mx, my);
 
@@ -646,20 +741,8 @@ public final class ForgeCraftScreen extends Screen {
             return;
         }
         if (target == TARGET_GRID) {
-            if (!wasDragging && card != null && cardAt(mx, my) == card) {
+            if (card != null && cardAt(mx, my) == card) {
                 toggleSelection(card);
-            }
-            return;
-        }
-        if (target == TARGET_PAGE_UP) {
-            if (inPageUp(mx, my)) {
-                scrollBy(viewHeight() * 0.85f);
-            }
-            return;
-        }
-        if (target == TARGET_PAGE_DOWN) {
-            if (inPageDown(mx, my)) {
-                scrollBy(-viewHeight() * 0.85f);
             }
             return;
         }
@@ -724,7 +807,7 @@ public final class ForgeCraftScreen extends Screen {
         }
         pressTarget = TARGET_NONE;
         pressing = false;
-        dragging = false;
+        barDragging = false;
         clearMainHovers();
     }
 
@@ -834,7 +917,10 @@ public final class ForgeCraftScreen extends Screen {
     }
 
     /**
-     * 开始输入：把输入处理器换成文本输入类，并直接按运行时的协议请求系统输入法。
+     * 开始输入：用 {@link SearchKeyboardTrigger} 触发一次系统键盘请求，然后立刻把常驻处理器装回去。
+     *
+     * <p>这样即使运行时在弹键盘时切换了输入处理器、或失焦后调用 regainInputFocus 换掉处理器，
+     * 字符最终仍会落到 {@link CraftPointer} 上（它每帧都会把自己装回去）。</p>
      */
     private void startTyping() {
         if (typing) {
@@ -843,30 +929,38 @@ public final class ForgeCraftScreen extends Screen {
         typing = true;
         typingElapsed = 0.0f;
         typingGotInput = false;
+        textBuffer = new SearchTextInput(query, new SearchTextInput.Listener() {
+            @Override
+            public void changed(String text) {
+                typingGotInput = true;
+                setQuery(text);
+            }
+
+            @Override
+            public void committed(String text) {
+                typingGotInput = true;
+                setQuery(text);
+                stopTyping();
+            }
+
+            @Override
+            public void done() {
+                stopTyping();
+            }
+        });
+        if (input != null) {
+            input.text = textBuffer;
+        }
         try {
-            searchInput = new SearchTextInput(query, new SearchTextInput.Listener() {
-                @Override
-                public void changed(String text) {
-                    typingGotInput = true;
-                    setQuery(text);
-                }
-
-                @Override
-                public void committed(String text) {
-                    typingGotInput = true;
-                    setQuery(text);
-                    stopTyping();
-                }
-
-                @Override
-                public void done() {
-                    stopTyping();
-                }
-            }, input);
-            Gdx.input.setInputProcessor(searchInput);
+            Gdx.input.setInputProcessor(new SearchKeyboardTrigger(input));
+        } catch (Throwable ignored) {
+        }
+        try {
+            if (input != null) {
+                Gdx.input.setInputProcessor(input);
+            }
             Gdx.input.setOnscreenKeyboardVisible(true);
-        } catch (Throwable t) {
-            searchInput = null;
+        } catch (Throwable ignored) {
         }
         String path = keyboardRequestPath();
         if (path != null) {
@@ -883,12 +977,9 @@ public final class ForgeCraftScreen extends Screen {
         }
         typing = false;
         typingElapsed = 0.0f;
-        searchInput = null;
-        try {
-            if (input != null) {
-                Gdx.input.setInputProcessor(input);
-            }
-        } catch (Throwable ignored) {
+        textBuffer = null;
+        if (input != null) {
+            input.text = null;
         }
         refreshButtonLabels();
     }
@@ -941,17 +1032,15 @@ public final class ForgeCraftScreen extends Screen {
             return;
         }
 
-        FontHelper.renderFontCentered(sb, FontHelper.charTitleFont, titleText(),
+        FontHelper.renderFontCentered(sb, FontHelper.charTitleFont, Texts.t("铸造卡牌", "Craft Cards"),
                 Settings.WIDTH * 0.5f, labelY, Settings.GOLD_COLOR);
 
         poolButton.render(sb);
         searchButton.render(sb);
         clearButton.render(sb);
-        renderQuery(sb);
 
         renderCards(sb);
         renderScrollBar(sb);
-        renderScrollButtons(sb);
 
         cancelButton.render(sb);
         confirmButton.render(sb);
@@ -959,37 +1048,24 @@ public final class ForgeCraftScreen extends Screen {
                 Settings.WIDTH * 0.5f, bottomY, Settings.CREAM_COLOR);
     }
 
-    private String titleText() {
-        if (!typing) {
-            return Texts.t("铸造卡牌", "Craft Cards");
-        }
-        if (typingElapsed > 2.5f && !typingGotInput) {
-            return Texts.t("若系统输入法没弹出，点“完成”返回", "No keyboard? Tap Done to go back");
-        }
-        return Texts.t("正在唤起系统输入法…", "Opening keyboard...");
-    }
-
-    private void renderQuery(SpriteBatch sb) {
-        String text = query.isEmpty()
-                ? (typing ? Texts.t("输入中…", "Typing...") : "")
-                : Texts.t("搜索：", "Search: ") + query;
-        if (text.isEmpty()) {
-            return;
-        }
-        float left = topRowEndX + 12.0f * Settings.scale;
-        float right = Settings.WIDTH - margin - gridRightReserve;
-        if (right - left < 40.0f * Settings.scale) {
-            return;
-        }
-        FontHelper.renderFontCentered(sb, FontHelper.buttonLabelFont, text,
-                (left + right) * 0.5f, poolRowY, Settings.CREAM_COLOR);
-    }
-
     private String statusText() {
         if (Texts.useChinese()) {
-            return "共 " + filtered.size() + " 张 · 已选 " + selected.size() + " 张";
+            StringBuilder sb = new StringBuilder();
+            sb.append("共 ").append(filtered.size()).append(" 张 · 已选 ").append(selected.size()).append(" 张");
+            if (!query.isEmpty()) {
+                sb.append(" · 筛选：").append(query);
+            }
+            if (typing && typingElapsed > 1.5f && !typingGotInput) {
+                sb.append(" · 打完字按输入法的回车");
+            }
+            return sb.toString();
         }
-        return "Cards: " + filtered.size() + "  Selected: " + selected.size();
+        StringBuilder sb = new StringBuilder();
+        sb.append("Cards: ").append(filtered.size()).append("  Selected: ").append(selected.size());
+        if (!query.isEmpty()) {
+            sb.append("  Filter: ").append(query);
+        }
+        return sb.toString();
     }
 
     private void renderCards(SpriteBatch sb) {
@@ -1017,40 +1093,46 @@ public final class ForgeCraftScreen extends Screen {
         }
     }
 
+    /** 竖条 + 滑块 + 两端 ▲▼：始终画在右侧预留区里，不会被卡牌盖住。 */
     private void renderScrollBar(SpriteBatch sb) {
+        float scale = Settings.scale;
+        float x = barCenterX();
+        float trackW = trackWidth();
+        float thumbW = thumbWidth();
+
+        renderArrowButton(sb, x, gridTop - arrowSize() * 0.55f, "▲", barProgress() > 0.001f);
+        renderArrowButton(sb, x, gridBottom + arrowSize() * 0.55f, "▼", barProgress() < 0.999f);
+
         if (!canScroll()) {
             return;
         }
-        float scale = Settings.scale;
-        float x = barCenterX();
         float top = barTop();
         float bottom = barBottom();
         float trackH = top - bottom;
-        if (trackH <= 4.0f) {
+        if (trackH <= 6.0f) {
             return;
         }
-        float trackW = Math.max(8.0f * scale, 5.0f);
+
+        sb.setColor(TRACK_EDGE);
+        sb.draw(ImageMaster.WHITE_SQUARE_IMG, x - trackW * 0.5f - 2.0f * scale, bottom - 2.0f * scale,
+                trackW + 4.0f * scale, trackH + 4.0f * scale);
         sb.setColor(TRACK_COLOR);
         sb.draw(ImageMaster.WHITE_SQUARE_IMG, x - trackW * 0.5f, bottom, trackW, trackH);
 
-        float viewH = viewHeight();
-        float thumbH = Math.min(trackH, Math.max(trackH * (viewH / Math.max(totalHeight, 1.0f)), 80.0f * scale));
-        float min = minScroll();
-        float progress = min < -0.5f ? scroll / min : 0.0f;
-        progress = Math.max(0.0f, Math.min(1.0f, progress));
-        float thumbY = top - thumbH - (trackH - thumbH) * progress;
-        float thumbW = Math.max(18.0f * scale, 12.0f);
-        sb.setColor(pressTarget == TARGET_BAR ? THUMB_ACTIVE : THUMB_COLOR);
+        float thumbH = thumbHeight();
+        float thumbY = thumbBottom();
+        sb.setColor(barDragging || pressTarget == TARGET_BAR ? THUMB_ACTIVE : THUMB_COLOR);
         sb.draw(ImageMaster.WHITE_SQUARE_IMG, x - thumbW * 0.5f, thumbY, thumbW, thumbH);
-        sb.setColor(Color.WHITE);
-    }
 
-    private void renderScrollButtons(SpriteBatch sb) {
-        if (!canScroll()) {
-            return;
+        // 滑块上的三道抓握纹，让它看起来是可以拖的。
+        sb.setColor(THUMB_GRIP);
+        float gripH = Math.max(2.0f, 2.0f * scale);
+        float gripW = thumbW * 0.55f;
+        for (int i = -1; i <= 1; i++) {
+            sb.draw(ImageMaster.WHITE_SQUARE_IMG,
+                    x - gripW * 0.5f, thumbY + thumbH * 0.5f + i * 10.0f * scale - gripH * 0.5f,
+                    gripW, gripH);
         }
-        renderArrowButton(sb, barCenterX(), gridTop - arrowSize() * 0.55f, "▲", pressTarget == TARGET_PAGE_UP);
-        renderArrowButton(sb, barCenterX(), gridBottom + arrowSize() * 0.55f, "▼", pressTarget == TARGET_PAGE_DOWN);
         sb.setColor(Color.WHITE);
     }
 
@@ -1063,7 +1145,8 @@ public final class ForgeCraftScreen extends Screen {
         sb.draw(ImageMaster.WHITE_SQUARE_IMG, cx - size * 0.5f, cy + size * 0.5f - line, size, line);
         sb.draw(ImageMaster.WHITE_SQUARE_IMG, cx - size * 0.5f, cy - size * 0.5f, size, line);
         sb.setColor(Color.WHITE);
-        FontHelper.renderFontCentered(sb, FontHelper.buttonLabelFont, glyph, cx, cy, Settings.CREAM_COLOR);
+        FontHelper.renderFontCentered(sb, FontHelper.buttonLabelFont, glyph, cx, cy,
+                active ? Color.WHITE : Settings.CREAM_COLOR);
     }
 
     private void renderPicker(SpriteBatch sb) {
