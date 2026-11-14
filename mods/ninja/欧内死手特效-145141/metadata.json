@@ -1,0 +1,18 @@
+{
+  "schemaVersion": 1,
+  "name": "欧内死手特效",
+  "description": "给蕾忍mod 的「我夺取心脏」加专属斩杀演出：前冲、破空音效与震屏、暗红速度线、红色拖影，敌人死亡瞬间炸开血滴并在地面留下按模型体积等比放大的静态血迹；同时补齐补丁元数据（mts_version、credits），修正社区一键上传时报 Missing metadata fields 的问题。",
+  "version": "1.0.2",
+  "author": {
+    "name": "145141",
+    "email": "162067414@qq.com"
+  },
+  "target": {
+    "modId": "ninja",
+    "workshopId": "3468618252",
+    "versions": [
+      "1.7.1"
+    ]
+  },
+  "jar": "amethyst.ai.patch.ninja.patch-1793708455455-c63a5506.jar"
+}
