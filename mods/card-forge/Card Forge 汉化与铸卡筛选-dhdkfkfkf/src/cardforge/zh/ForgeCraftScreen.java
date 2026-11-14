@@ -28,11 +28,14 @@ import java.util.List;
  * <p>原界面每帧维护滚动条、对全部卡牌做悬停判定并插值卡牌位置，卡牌一多就会明显抖动；
  * 这里改为固定格位 + 直接赋值坐标，没有插值与百分比回写，因此不会抖动。</p>
  *
+ * <p>滚动约定：{@code scroll} 取值 0（第一行贴住网格顶部）到 {@code contentHeight - viewHeight}
+ * （末行贴住网格底部）。数值变大 = 内容上移 = 看到后面的卡，和滑块从上往下拖的方向一致。</p>
+ *
  * <p>输入由常驻的 {@link CraftPointer} 接管：这个安卓运行时里触摸不会产生鼠标按键状态，
  * 拖动时也不一定刷新触摸事件的坐标，所以按下 / 抬起取触摸事件，
  * 滚动条的拖动位置则在触摸坐标与 {@code InputHelper.mY} 之间取本帧真正变化的那个（见 {@link #updatePointer()}）。</p>
  *
- * <p>卡区不再支持“按住划动”（该手势在本运行时不可靠），滚动改成：右侧竖条可点可拖，
+ * <p>卡区不支持“按住划动”（该手势在本运行时不可靠），滚动改成：右侧竖条可点可拖，
  * 竖条两端的 ▲ / ▼ 按钮每次翻一屏，点按即响应。</p>
  */
 public final class ForgeCraftScreen extends Screen {
@@ -87,6 +90,7 @@ public final class ForgeCraftScreen extends Screen {
     private float gridTop;
     private float gridBottom;
     private float bottomY;
+    /** 0 = 第一行贴住网格顶部；正数 = 内容上移（看到后面的卡）。 */
     private float scroll;
     private float colStep;
     private float rowStep;
@@ -391,6 +395,7 @@ public final class ForgeCraftScreen extends Screen {
             int col = i % cols;
             int row = i / cols;
             card.current_x = card.target_x = gridCenterX + (col - (cols - 1) * 0.5f) * colStep;
+            // scroll 变大 = 内容上移 = 看到后面的卡
             card.current_y = card.target_y = gridTop - rowStep * 0.5f - row * rowStep + scroll;
             card.drawScale = card.targetDrawScale = cardScale;
             card.angle = card.targetAngle = 0.0f;
@@ -415,17 +420,18 @@ public final class ForgeCraftScreen extends Screen {
         return contentRows() * rowStep;
     }
 
-    private float minScroll() {
-        return Math.min(0.0f, viewHeight() - contentHeight());
+    /** 能滚多远（正数）：0 表示全部卡牌都在一屏里。 */
+    private float maxScroll() {
+        return Math.max(0.0f, contentHeight() - viewHeight());
     }
 
     private void clampScroll() {
-        float min = minScroll();
-        if (scroll > 0.0f) {
+        float max = maxScroll();
+        if (scroll < 0.0f) {
             scroll = 0.0f;
         }
-        if (scroll < min) {
-            scroll = min;
+        if (scroll > max) {
+            scroll = max;
         }
     }
 
@@ -437,7 +443,7 @@ public final class ForgeCraftScreen extends Screen {
         layoutCards();
     }
 
-    /** 一次翻一屏（留一点重叠，方便定位）。 */
+    /** 一次翻一屏：sign = +1 往后翻（看到后面的卡），-1 往前翻。 */
     private void pageBy(float sign) {
         scrollBy(sign * viewHeight() * 0.88f);
     }
@@ -470,7 +476,7 @@ public final class ForgeCraftScreen extends Screen {
     // ------------------------------------------------------------------ 滚动条几何
 
     private boolean canScroll() {
-        return minScroll() < -0.5f && barTop() > barBottom();
+        return maxScroll() > 0.5f && barTop() > barBottom();
     }
 
     private float barCenterX() {
@@ -504,14 +510,13 @@ public final class ForgeCraftScreen extends Screen {
         return Math.min(trackH, Math.max(trackH * Math.min(1.0f, ratio), minimum));
     }
 
-    /** 滑块的“进度”，0 = 最上，1 = 最下。 */
+    /** 滑块进度：0 = 最上（第一行），1 = 最下（末行）。 */
     private float barProgress() {
-        float min = minScroll();
-        if (min >= -0.5f) {
+        float max = maxScroll();
+        if (max <= 0.5f) {
             return 0.0f;
         }
-        float p = scroll / min;
-        return Math.max(0.0f, Math.min(1.0f, p));
+        return Math.max(0.0f, Math.min(1.0f, scroll / max));
     }
 
     private float thumbBottom() {
@@ -551,15 +556,14 @@ public final class ForgeCraftScreen extends Screen {
     }
 
     private boolean inThumb(float my) {
-        float half = thumbWidth() * 0.9f;
         float bottom = thumbBottom();
         return my >= bottom - 8.0f * Settings.scale && my <= bottom + thumbHeight() + 8.0f * Settings.scale;
     }
 
-    /** 让滑块中心落到 targetCenterY（世界坐标）处。 */
+    /** 让滑块中心落到 targetCenterY（世界坐标，y 向上）处；往下拖 = 看后面的卡。 */
     private void applyBarCenter(float targetCenterY) {
-        float min = minScroll();
-        if (min >= -0.5f) {
+        float max = maxScroll();
+        if (max <= 0.5f) {
             return;
         }
         float top = barTop();
@@ -568,7 +572,7 @@ public final class ForgeCraftScreen extends Screen {
         float centerTop = top - thumbH * 0.5f;
         float t = (centerTop - targetCenterY) / travel;
         t = Math.max(0.0f, Math.min(1.0f, t));
-        scroll = min * t;
+        scroll = max * t;
         layoutCards();
     }
 
@@ -613,12 +617,12 @@ public final class ForgeCraftScreen extends Screen {
 
         // ▲ / ▼ 按下即翻页（点按最可靠，不依赖拖动）。
         if (input.pressed && inPageUp(mx, my)) {
-            pageBy(1.0f);
+            pageBy(-1.0f);
             input.consume();
             return;
         }
         if (input.pressed && inPageDown(mx, my)) {
-            pageBy(-1.0f);
+            pageBy(1.0f);
             input.consume();
             return;
         }
@@ -632,6 +636,7 @@ public final class ForgeCraftScreen extends Screen {
         }
 
         if (!pressing && input.scrollAmount != 0) {
+            // 滚轮向下（负值）= 看后面的卡
             scrollBy(-input.scrollAmount * Settings.SCROLL_SPEED * 0.6f);
         }
 
@@ -641,6 +646,7 @@ public final class ForgeCraftScreen extends Screen {
     /**
      * 取本帧真正变化的指针高度：触摸事件坐标，或 {@code InputHelper.mY}。
      * 这个运行时在拖动时通常只刷新其中之一，取“变了的那一个”才能让滑块跟手。
+     * 两者都是 y 向上的世界坐标（{@code HEIGHT - 屏幕Y}），可以直接混用。
      */
     private void updatePointer() {
         float rawY = input.y;
@@ -724,7 +730,7 @@ public final class ForgeCraftScreen extends Screen {
         if (pressTarget != TARGET_BAR) {
             return;
         }
-        // 按住竖条拖动：滑块跟着指针走。
+        // 按住竖条拖动：滑块跟着手指走。
         applyBarCenter(pointerY - barGrabOffset);
     }
 
@@ -1099,9 +1105,10 @@ public final class ForgeCraftScreen extends Screen {
         float x = barCenterX();
         float trackW = trackWidth();
         float thumbW = thumbWidth();
+        float progress = barProgress();
 
-        renderArrowButton(sb, x, gridTop - arrowSize() * 0.55f, "▲", barProgress() > 0.001f);
-        renderArrowButton(sb, x, gridBottom + arrowSize() * 0.55f, "▼", barProgress() < 0.999f);
+        renderArrowButton(sb, x, gridTop - arrowSize() * 0.55f, "▲", progress > 0.001f);
+        renderArrowButton(sb, x, gridBottom + arrowSize() * 0.55f, "▼", progress < 0.999f);
 
         if (!canScroll()) {
             return;
