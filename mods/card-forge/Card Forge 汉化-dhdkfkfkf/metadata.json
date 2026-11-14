@@ -1,0 +1,18 @@
+{
+  "schemaVersion": 1,
+  "name": "Card Forge 汉化",
+  "description": "将 Card Forge 的三个遗物（灼热之火、雷神之锤、众神之砧）的遗物名、遗物描述、风味文本以及选卡界面的提示文字汉化为中文，仅在游戏语言为中文时生效；顺带修正「雷神之锤」英文名中多余的重复空格。",
+  "version": "1.0.1",
+  "author": {
+    "name": "dhdkfkfkf",
+    "email": "1079727828@qq.com"
+  },
+  "target": {
+    "modId": "card-forge",
+    "workshopId": "1619307966",
+    "versions": [
+      "1.4"
+    ]
+  },
+  "jar": "amethyst.ai.patch.card-forge.patch-1794619003678-3033c233.jar"
+}
