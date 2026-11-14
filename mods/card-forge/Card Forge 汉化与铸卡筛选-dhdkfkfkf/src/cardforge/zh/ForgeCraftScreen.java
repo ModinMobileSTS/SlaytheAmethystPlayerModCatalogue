@@ -35,8 +35,9 @@ import java.util.List;
  * 拖动时也不一定刷新触摸事件的坐标，所以按下 / 抬起取触摸事件，
  * 滚动条的拖动位置则在触摸坐标与 {@code InputHelper.mY} 之间取本帧真正变化的那个（见 {@link #updatePointer()}）。</p>
  *
- * <p>搜索词在界面右上角显示（“输入中…” / “搜索：xx”）。系统输入法的预览条由加载器绘制、
- * 里面的文字删不掉，因此删字统一用界面上的“退格 / 清除”按钮。</p>
+ * <p>搜索词在界面右上角显示（“输入中…” / “搜索：xx”）。输入法上方那条预览横条由加载器绘制
+ * （和 TogetherInSpire 聊天框同一套请求协议），它只是把游戏里的文本镜像出来；
+ * 删字靠输入法的退格键送到游戏，界面上的文本会立即跟着变。</p>
  */
 public final class ForgeCraftScreen extends Screen {
     private static final Color BACKGROUND = new Color(0.05f, 0.05f, 0.08f, 0.96f);
@@ -61,7 +62,6 @@ public final class ForgeCraftScreen extends Screen {
     private static final int TARGET_CLEAR = 7;
     private static final int TARGET_CANCEL = 8;
     private static final int TARGET_CONFIRM = 9;
-    private static final int TARGET_BACKSPACE = 10;
 
     private static final String KEYBOARD_REQUEST_PROP = "amethyst.in_game_keyboard_request";
 
@@ -104,7 +104,6 @@ public final class ForgeCraftScreen extends Screen {
 
     private TextButton poolButton;
     private TextButton searchButton;
-    private TextButton backspaceButton;
     private TextButton clearButton;
     private TextButton confirmButton;
     private TextButton cancelButton;
@@ -303,19 +302,16 @@ public final class ForgeCraftScreen extends Screen {
     private void createButtons() {
         float availW = Settings.WIDTH - 2.0f * margin;
         float gap = 14.0f * Settings.scale;
-        float w1 = availW * 0.36f;
-        float w2 = availW * 0.14f;
-        float w3 = availW * 0.13f;
-        float w4 = availW * 0.13f;
+        float w1 = availW * 0.39f;
+        float w2 = availW * 0.15f;
+        float w3 = availW * 0.15f;
         float x = margin;
         poolButton = new TextButton("", x + w1 * 0.5f, poolRowY, w1, buttonH);
         x += w1 + gap;
         searchButton = new TextButton(Texts.t("搜索", "Search"), x + w2 * 0.5f, poolRowY, w2, buttonH);
         x += w2 + gap;
-        backspaceButton = new TextButton(Texts.t("退格", "Del"), x + w3 * 0.5f, poolRowY, w3, buttonH);
-        x += w3 + gap;
-        clearButton = new TextButton(Texts.t("清除", "Clear"), x + w4 * 0.5f, poolRowY, w4, buttonH);
-        topRowEndX = x + w4;
+        clearButton = new TextButton(Texts.t("清除", "Clear"), x + w3 * 0.5f, poolRowY, w3, buttonH);
+        topRowEndX = x + w3;
 
         float wc = availW * 0.20f;
         float wok = availW * 0.26f;
@@ -329,7 +325,6 @@ public final class ForgeCraftScreen extends Screen {
         poolButton.setLabel(Texts.t("卡池：", "Pool: ") + poolName);
         confirmButton.setLabel(Texts.t("确认铸造", "Craft") + " (" + selected.size() + ")");
         confirmButton.enabled = !selected.isEmpty();
-        backspaceButton.enabled = !query.isEmpty();
         clearButton.enabled = !query.isEmpty();
         searchButton.setLabel(typing ? Texts.t("完成", "Done") : Texts.t("搜索", "Search"));
     }
@@ -679,7 +674,6 @@ public final class ForgeCraftScreen extends Screen {
     private void updateHovers(float mx, float my) {
         poolButton.updateHover(mx, my);
         searchButton.updateHover(mx, my);
-        backspaceButton.updateHover(mx, my);
         clearButton.updateHover(mx, my);
         confirmButton.updateHover(mx, my);
         cancelButton.updateHover(mx, my);
@@ -714,10 +708,6 @@ public final class ForgeCraftScreen extends Screen {
         }
         if (poolButton.contains(mx, my)) {
             pressTarget = TARGET_POOL;
-            return;
-        }
-        if (backspaceButton.enabled && backspaceButton.contains(mx, my)) {
-            pressTarget = TARGET_BACKSPACE;
             return;
         }
         if (clearButton.enabled && clearButton.contains(mx, my)) {
@@ -772,9 +762,6 @@ public final class ForgeCraftScreen extends Screen {
         if (target == TARGET_POOL && !poolButton.contains(mx, my)) {
             return;
         }
-        if (target == TARGET_BACKSPACE && !backspaceButton.contains(mx, my)) {
-            return;
-        }
         if (target == TARGET_CLEAR && !clearButton.contains(mx, my)) {
             return;
         }
@@ -797,13 +784,11 @@ public final class ForgeCraftScreen extends Screen {
                     startTyping();
                 }
                 break;
-            case TARGET_BACKSPACE:
-                if (!query.isEmpty()) {
-                    applyQueryFromButton(query.substring(0, query.length() - 1));
-                }
-                break;
             case TARGET_CLEAR:
-                applyQueryFromButton("");
+                setQuery("");
+                if (textBuffer != null) {
+                    textBuffer.reset("");
+                }
                 break;
             case TARGET_CANCEL:
                 close();
@@ -842,26 +827,16 @@ public final class ForgeCraftScreen extends Screen {
     private void clearMainHovers() {
         poolButton.clearHover();
         searchButton.clearHover();
-        backspaceButton.clearHover();
         clearButton.clearHover();
         confirmButton.clearHover();
         cancelButton.clearHover();
         hoveredCard = null;
     }
 
-    /** 键盘/加载器回传的文本。 */
     private void setQuery(String value) {
         query = value == null ? "" : value;
         applyFilter();
         refreshButtonLabels();
-    }
-
-    /** 界面上“退格 / 清除”按钮改的文本：同时同步给键盘缓冲，免得后面的字接在旧内容上。 */
-    private void applyQueryFromButton(String value) {
-        setQuery(value);
-        if (textBuffer != null) {
-            textBuffer.reset(query);
-        }
     }
 
     // ------------------------------------------------------------------ 系统输入法
@@ -937,23 +912,6 @@ public final class ForgeCraftScreen extends Screen {
         }
     }
 
-    /** 其它安卓后端（含桌面）用 libGDX 的系统文本框弹出输入法。 */
-    private void requestTextDialog() {
-        try {
-            Gdx.input.getTextInput(new Input.TextInputListener() {
-                @Override
-                public void input(String text) {
-                    pendingExternalQuery = text == null ? "" : text;
-                }
-
-                @Override
-                public void canceled() {
-                }
-            }, Texts.t("搜索卡牌", "Search cards"), query, Texts.t("卡牌名称", "Card name"));
-        } catch (Throwable ignored) {
-        }
-    }
-
     /**
      * 开始输入：用 {@link SearchKeyboardTrigger} 触发一次系统键盘请求，然后立刻把常驻处理器装回去。
      *
@@ -1003,8 +961,6 @@ public final class ForgeCraftScreen extends Screen {
         String path = keyboardRequestPath();
         if (path != null) {
             writeKeyboardRequest(path, query, -1);
-        } else {
-            requestTextDialog();
         }
         refreshButtonLabels();
     }
@@ -1075,7 +1031,6 @@ public final class ForgeCraftScreen extends Screen {
 
         poolButton.render(sb);
         searchButton.render(sb);
-        backspaceButton.render(sb);
         clearButton.render(sb);
         renderQuery(sb);
 
@@ -1111,14 +1066,9 @@ public final class ForgeCraftScreen extends Screen {
         if (Texts.useChinese()) {
             StringBuilder sb = new StringBuilder();
             sb.append("共 ").append(filtered.size()).append(" 张 · 已选 ").append(selected.size()).append(" 张");
-            if (typing) {
-                sb.append(" · 打完字按输入法的回车");
-            }
             return sb.toString();
         }
-        StringBuilder sb = new StringBuilder();
-        sb.append("Cards: ").append(filtered.size()).append("  Selected: ").append(selected.size());
-        return sb.toString();
+        return "Cards: " + filtered.size() + "  Selected: " + selected.size();
     }
 
     private void renderCards(SpriteBatch sb) {
