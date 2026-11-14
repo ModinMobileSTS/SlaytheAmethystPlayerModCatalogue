@@ -212,6 +212,15 @@ Bloodstains 新增的「血迹」卡牌（致敬《黑暗之魂》系列）此�
 - **适用版本**：`1.4`
 - **下载**：[下载](https://raw.githubusercontent.com/ModinMobileSTS/SlaytheAmethystPlayerModCatalogue/main/mods/card-forge/Card%20Forge%20%E6%B1%89%E5%8C%96-dhdkfkfkf/amethyst.ai.patch.card-forge.patch-1794619003678-3033c233.jar)
 
+### Card Forge 汉化与铸卡界面
+
+为 Card Forge 提供中文汉化（遗物名、风味文字、描述、选卡提示），并重写雷神之锤的铸卡界面：卡牌固定格位不再抖动，可按角色卡包筛选（默认当前角色），右侧竖条可长按拖动、两端 ▲▼ 翻页；已移除搜索输入功能。
+
+- **补丁版本**：`1.6.0`
+- **作者**：dhdkfkfkf
+- **适用版本**：`1.4`
+- **下载**：[下载](https://raw.githubusercontent.com/ModinMobileSTS/SlaytheAmethystPlayerModCatalogue/main/mods/card-forge/Card%20Forge%20%E6%B1%89%E5%8C%96%E4%B8%8E%E9%93%B8%E5%8D%A1%E7%95%8C%E9%9D%A2-dhdkfkfkf/amethyst.ai.patch.card-forge.patch-1794619003678-3033c233.jar)
+
 ### Card Forge 汉化与铸卡筛选
 
 Card Forge 中文汉化，并重写雷神之锤的选卡界面：固定格位消除抖动、按角色卡包筛选（默认当前角色）、卡名搜索。右上角显示“输入中… / 搜索：xx”；右侧竖条可点轨道跳转、按住滑块拖动、两端 ▲/▼ 翻一屏。键盘预览横条由加载器绘制，游戏内只负责接收输入法与显示文本。
