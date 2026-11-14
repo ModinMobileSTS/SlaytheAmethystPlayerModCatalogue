@@ -1,0 +1,18 @@
+{
+  "schemaVersion": 1,
+  "name": "蓝色实验室中文汉化",
+  "description": "模组自带的中文文本从未被加载（receiveEditStrings 只读取 eng 文件），因此中文环境下药剂与能力都显示英文。本补丁在模组加载完英文文本后，于中文环境载入完整中文文本：55 种药剂与 17 种能力的名称与描述全部译为中文，并统一使用游戏官方术语（多层护甲、残影、印记、真言等），修正了原自带文本中残留的英文与错译。",
+  "version": "0.2.0",
+  "author": {
+    "name": "dhdkfkfkf",
+    "email": "1079727828@qq.com"
+  },
+  "target": {
+    "modId": "BlueLaboratory",
+    "workshopId": "2225226801",
+    "versions": [
+      "1.0.45"
+    ]
+  },
+  "jar": "amethyst.ai.patch.bluelaboratory.patch-1794633145363-82cc36a4.jar"
+}
