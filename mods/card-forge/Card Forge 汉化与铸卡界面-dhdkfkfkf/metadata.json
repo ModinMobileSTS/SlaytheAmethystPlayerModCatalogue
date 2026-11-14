@@ -1,0 +1,18 @@
+{
+  "schemaVersion": 1,
+  "name": "Card Forge 汉化与铸卡界面",
+  "description": "为 Card Forge 提供中文汉化（遗物名、风味文字、描述、选卡提示），并重写雷神之锤的铸卡界面：卡牌固定格位不再抖动，可按角色卡包筛选（默认当前角色），右侧竖条可长按拖动、两端 ▲▼ 翻页；已移除搜索输入功能。",
+  "version": "1.6.0",
+  "author": {
+    "name": "dhdkfkfkf",
+    "email": "1079727828@qq.com"
+  },
+  "target": {
+    "modId": "card-forge",
+    "workshopId": "1619307966",
+    "versions": [
+      "1.4"
+    ]
+  },
+  "jar": "amethyst.ai.patch.card-forge.patch-1794619003678-3033c233.jar"
+}
