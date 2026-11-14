@@ -232,6 +232,21 @@ Card Forge 中文汉化，并重写雷神之锤的选卡界面：固定格位消
 
 ---
 
+## cardrefresh
+
+### 卡牌刷新单卡模式
+
+•修复了sl之后，刷新次数不会还原的问题
+
+•增加单卡刷新模式
+
+- **补丁版本**：`1.4.0`
+- **作者**：yanx
+- **适用版本**：`0.3.0`
+- **下载**：[下载](https://raw.githubusercontent.com/ModinMobileSTS/SlaytheAmethystPlayerModCatalogue/main/mods/cardrefresh/%E5%8D%A1%E7%89%8C%E5%88%B7%E6%96%B0%E5%8D%95%E5%8D%A1%E6%A8%A1%E5%BC%8F-yanx/amethyst.ai.patch.cardrefresh.patch-1794577030315-27d056f8.jar)
+
+---
+
 ## chronomuncher
 
 ### 信徒中文补丁
