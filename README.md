@@ -51,6 +51,19 @@
 
 ---
 
+## PotionMod
+
+### 药水扩展修复
+
+修复幽灵药水缺少第 3 条 DESCRIPTIONS 导致构造函数越界、药剂图鉴与随机药水空指针；修复三个无效效果：转化药水会清空全部能量且只塞无色牌（改为随机转化手牌 2 张牌、不再扣能量）、混乱药水无实际作用（喝下时与每回合结束让敌人重新决策意图）、打折能力只闪不降费（回合开始手牌费用 \-1，最低 0）；并按实际强度改写描述：折扣药水改为“下回合抽 3 张”、偷窃药水与偷窃能力说明整场战斗按伤害 7 倍获得金币、虚化药水说明授予腐化。
+
+- **补丁版本**：`1.2.0`
+- **作者**：yanx
+- **适用版本**：`3.0.1`
+- **下载**：[下载](https://raw.githubusercontent.com/ModinMobileSTS/SlaytheAmethystPlayerModCatalogue/main/mods/PotionMod/%E8%8D%AF%E6%B0%B4%E6%89%A9%E5%B1%95%E4%BF%AE%E5%A4%8D-yanx/amethyst.ai.patch.potionmod.patch-1794584157184-8b6d64c0.jar)
+
+---
+
 ## ReplayTheSpireMod
 
 ### Replay 漏译补全
