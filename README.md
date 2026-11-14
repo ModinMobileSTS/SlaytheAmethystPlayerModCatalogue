@@ -3,6 +3,19 @@
 玩家分享的 AI 补丁模组目录，供 Slay the Amethyst 浏览、下载和分享适用的模组补丁。
 
 <!-- MOD_LIST_START -->
+## BlueLaboratory
+
+### 蓝色实验室中文汉化
+
+模组自带的中文文本从未被加载（receiveEditStrings 只读取 eng 文件），因此中文环境下药剂与能力都显示英文。本补丁在模组加载完英文文本后，于中文环境载入完整中文文本：55 种药剂与 17 种能力的名称与描述全部译为中文，并统一使用游戏官方术语（多层护甲、残影、印记、真言等），修正了原自带文本中残留的英文与错译。
+
+- **补丁版本**：`0.2.0`
+- **作者**：dhdkfkfkf
+- **适用版本**：`1.0.45`
+- **下载**：[下载](https://raw.githubusercontent.com/ModinMobileSTS/SlaytheAmethystPlayerModCatalogue/main/mods/BlueLaboratory/%E8%93%9D%E8%89%B2%E5%AE%9E%E9%AA%8C%E5%AE%A4%E4%B8%AD%E6%96%87%E6%B1%89%E5%8C%96-dhdkfkfkf/amethyst.ai.patch.bluelaboratory.patch-1794633145363-82cc36a4.jar)
+
+---
+
 ## DNKmod
 
 ### DNKmod 中文汉化
