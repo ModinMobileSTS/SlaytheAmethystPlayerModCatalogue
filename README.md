@@ -186,6 +186,19 @@ Replay The Spire 自带中文已基本完整，本补丁补齐仍显示英文的
 
 ---
 
+## annualmember
+
+### 会员卡领取选择
+
+年度大会员原本在开局自动发放遗物「会员卡」，现改为每局开始时在涅奥房间弹出「领取／不领取」提示：选择领取才获得会员卡，选择不领取则不发放；开始时先拦截原自动发放，按选择结果处理，不影响之后的正常游玩。
+
+- **补丁版本**：`1.0.5`
+- **作者**：ZAQOU
+- **适用版本**：`1.0.0`
+- **下载**：[下载](https://raw.githubusercontent.com/ModinMobileSTS/SlaytheAmethystPlayerModCatalogue/main/mods/annualmember/%E4%BC%9A%E5%91%98%E5%8D%A1%E9%A2%86%E5%8F%96%E9%80%89%E6%8B%A9-ZAQOU/amethyst.ai.patch.annualmember.patch-1794748653587-a9578988.jar)
+
+---
+
 ## aristocrat
 
 ### 加速卡牌失效修复
