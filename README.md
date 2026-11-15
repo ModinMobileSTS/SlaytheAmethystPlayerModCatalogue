@@ -383,6 +383,19 @@ Fear And Hunger 模组原本无条件替换全部游戏音乐（主菜单、三�
 
 ---
 
+## jesterMod
+
+### JesterMod 简体中文汉化
+
+JesterMod 的简体中文汉化。修正卡牌与遗物文本渲染：小丑专属词条（回收、难以捉摸、掩埋、弹回）不再显示 jestermod: 前缀，可高亮并显示说明；格挡、虚弱、易伤、脆弱、力量、敏捷、消耗、固有、虚无、保留等词条改为官方中文的独立分词写法；「精神分裂」的彩色词按各自颜色显示，不再露出 \[\]、\# 与色值；\[E\] 独立分词，卡牌与「猛男护腕」等遗物正常显示小丑能量图案；「无法打出」改用官方词条名「不能被打出」。
+
+- **补丁版本**：`1.2.0`
+- **作者**：水母2号
+- **适用版本**：`0.11.0`
+- **下载**：[下载](https://raw.githubusercontent.com/ModinMobileSTS/SlaytheAmethystPlayerModCatalogue/main/mods/jesterMod/JesterMod%20%E7%AE%80%E4%BD%93%E4%B8%AD%E6%96%87%E6%B1%89%E5%8C%96-%E6%B0%B4%E6%AF%8D2%E5%8F%B7/amethyst.ai.patch.jestermod.patch-1790501872770-dd223493.jar)
+
+---
+
 ## morerelics
 
 ### More Relics 简体中文汉化
