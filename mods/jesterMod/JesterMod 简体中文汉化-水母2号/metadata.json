@@ -1,0 +1,18 @@
+{
+  "schemaVersion": 1,
+  "name": "JesterMod 简体中文汉化",
+  "description": "JesterMod 的简体中文汉化。修正卡牌与遗物文本渲染：小丑专属词条（回收、难以捉摸、掩埋、弹回）不再显示 jestermod: 前缀，可高亮并显示说明；格挡、虚弱、易伤、脆弱、力量、敏捷、消耗、固有、虚无、保留等词条改为官方中文的独立分词写法；「精神分裂」的彩色词按各自颜色显示，不再露出 []、# 与色值；[E] 独立分词，卡牌与「猛男护腕」等遗物正常显示小丑能量图案；「无法打出」改用官方词条名「不能被打出」。",
+  "version": "1.2.0",
+  "author": {
+    "name": "水母2号",
+    "email": "guzhangjiqi@qq.com"
+  },
+  "target": {
+    "modId": "jesterMod",
+    "workshopId": "2129214076",
+    "versions": [
+      "0.11.0"
+    ]
+  },
+  "jar": "amethyst.ai.patch.jestermod.patch-1790501872770-dd223493.jar"
+}
