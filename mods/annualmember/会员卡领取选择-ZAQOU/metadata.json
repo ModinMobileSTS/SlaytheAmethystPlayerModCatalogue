@@ -1,0 +1,18 @@
+{
+  "schemaVersion": 1,
+  "name": "会员卡领取选择",
+  "description": "年度大会员原本在开局自动发放遗物「会员卡」，现改为每局开始时在涅奥房间弹出「领取／不领取」提示：选择领取才获得会员卡，选择不领取则不发放；开始时先拦截原自动发放，按选择结果处理，不影响之后的正常游玩。",
+  "version": "1.0.5",
+  "author": {
+    "name": "ZAQOU",
+    "email": "zaqou2014@qq.com"
+  },
+  "target": {
+    "modId": "annualmember",
+    "workshopId": "3825289078",
+    "versions": [
+      "1.0.0"
+    ]
+  },
+  "jar": "amethyst.ai.patch.annualmember.patch-1794748653587-a9578988.jar"
+}
