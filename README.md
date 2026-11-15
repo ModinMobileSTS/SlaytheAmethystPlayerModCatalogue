@@ -173,6 +173,19 @@ Replay The Spire 自带中文已基本完整，本补丁补齐仍显示英文的
 
 ---
 
+## anniv7
+
+### 尖塔咖啡厅汉化
+
+将尖塔咖啡厅（Spire Cafe）完整汉化为简体中文（含对话、卡牌、遗物、事件、关键词与 Missingno 乱码文本）。本次修复玩家可见文本中的多余标记：清除中文对话里的 \[\#颜色\] 与 \[\] 残留；用游戏原生的词首颜色标记恢复「黏糊糊的」「完美」「混沌/不谐」等词的着色；清除对话中会原样显示的星号（改为中文括号与直接拟声）；修正斯派克史莱姆、蛇蜥酒保等处会导致 \~ 或 \#b 露出字符的写法。
+
+- **补丁版本**：`0.6.0`
+- **作者**：水母2号
+- **适用版本**：`1.3.1`
+- **下载**：[下载](https://raw.githubusercontent.com/ModinMobileSTS/SlaytheAmethystPlayerModCatalogue/main/mods/anniv7/%E5%B0%96%E5%A1%94%E5%92%96%E5%95%A1%E5%8E%85%E6%B1%89%E5%8C%96-%E6%B0%B4%E6%AF%8D2%E5%8F%B7/amethyst.ai.patch.anniv7.patch-1794666714568-7c71ea40.jar)
+
+---
+
 ## aristocrat
 
 ### 加速卡牌失效修复
