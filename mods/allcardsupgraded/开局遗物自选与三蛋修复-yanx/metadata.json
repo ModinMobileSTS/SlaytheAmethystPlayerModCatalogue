@@ -1,0 +1,18 @@
+{
+  "schemaVersion": 1,
+  "name": "开局遗物自选与三蛋修复",
+  "description": "在 mod 设置面板里自选开局遗物：12 列 × 4 行图标网格、稀有度筛选页签（全部/初始/普通/罕见/稀有/商店/BOSS/特殊）、翻页与清空、启用开关，配置写入 startRelics.ini；开局第 0 层发放所选遗物并从遗物池移除。同时修复父 mod 三蛋逻辑：跳过 grantEggsAndUpgradeStartingDeck，改为只在开局发放、hasRelic 去重、三蛋从全部 5 个遗物池移除。",
+  "version": "0.3.0",
+  "author": {
+    "name": "yanx",
+    "email": "yaninme@163.com"
+  },
+  "target": {
+    "modId": "allcardsupgraded",
+    "workshopId": "3648065060",
+    "versions": [
+      "1.0.5"
+    ]
+  },
+  "jar": "amethyst.ai.patch.allcardsupgraded.patch-1794761964489-b1688790.jar"
+}
