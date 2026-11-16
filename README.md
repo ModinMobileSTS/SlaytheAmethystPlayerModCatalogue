@@ -51,6 +51,19 @@
 
 ---
 
+## HighwaymanMod
+
+### Highwayman 简体中文汉化
+
+修正 Highwayman Mod 汉化的显示问题：角色名改为「强盗」；「弹药、开火、流血、闪避、反击、推进、撤退、装填」等专属词条改为中文本名注册并独立成词，不再出现 thehighwayman: 前缀，且可正常高亮与显示效果提示；通用词条（格挡、易伤、虚弱、力量、消耗、固有等）紧贴上下文，避免词条两侧出现多余空格；\[E\] 独立成词，正常显示强盗的能量图标。可算搞好了，ds贵是贵了点，但用着也烧心❤️
+
+- **补丁版本**：`1.1.0`
+- **作者**：水母2号
+- **适用版本**：`0.0.1`
+- **下载**：[下载](https://raw.githubusercontent.com/ModinMobileSTS/SlaytheAmethystPlayerModCatalogue/main/mods/HighwaymanMod/Highwayman%20%E7%AE%80%E4%BD%93%E4%B8%AD%E6%96%87%E6%B1%89%E5%8C%96-%E6%B0%B4%E6%AF%8D2%E5%8F%B7/amethyst.ai.patch.highwaymanmod.patch-1790456913035-76203d82.jar)
+
+---
+
 ## PickAllBossRelics
 
 ### Pick All Boss Relics 修复
