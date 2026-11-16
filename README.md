@@ -349,6 +349,15 @@ Card Forge 中文汉化，并重写雷神之锤的选卡界面：固定格位消
 
 ## com\.dsaita\.NavSys
 
+### NavSys 优选路线
+
+用&quot;染色糯米纸&quot;方式高亮两条最优路线，并把开关收进模组配置页。路线显示：去掉在图标外面套描边圈的做法（那样看着像悬浮贴纸，节点脉动时还会果冻般晃动），改为对房间图标本体再画一次同位置、同缩放的半透明染色层——坐标与缩放完全复制 MapRoomNode\.render\(\)（含 x/y 偏移、节点自身偏移、Settings\.scale 与手机端 ×2），所以染色贴着图标不会漂移；图标本身的明暗细节保留，眼睛、面具、问号等都还看得见；颜色按配置原值使用，不再向灰度混合，避免灰完之后发暗看不清。配置页：NavSysConfigPanel 继承 BaseMod EasyConfigPanel，在 receivePostInitialize 中通过 BaseMod\.registerModBadge 挂上主菜单徽章（运行时用 Pixmap 画的金/红双环 40×40 图标），点徽章打开设置页，含显示左侧路线列表面板（默认关）、显示安全路线、显示激进路线、标记模式、染色浓度 0\-100，以及安全线与激进线各自的 RGB 滑条；改动由 EasyConfigPanel 直接写入 SpireConfig，启动时 ConfigRuntime 读回生效。其余保留：按 RouteSuggest 权重计算安全/激进最优路线；先画激进再画安全，重叠处安全在上；路线枚举改为深度优先；离开地图屏后 4x 缩放不还原；当前节点为空时的空指针；面板行热区错位与分辨率变化失效；不同路线被去重丢弃；compareTo 与 equals 不一致；ShapeRenderer 未释放；clearCurrentAct 清空其他章节标记；损坏标记数据造成的每帧解析异常。
+
+- **补丁版本**：`1.7.0`
+- **作者**：yanx
+- **适用版本**：`1.1.0`
+- **下载**：[下载](https://raw.githubusercontent.com/ModinMobileSTS/SlaytheAmethystPlayerModCatalogue/main/mods/com.dsaita.NavSys/NavSys%20%E4%BC%98%E9%80%89%E8%B7%AF%E7%BA%BF-yanx/amethyst.ai.patch.com.dsaita.navsys.patch-1794815217126-ed53f487.jar)
+
 ### NavSys 路线面板修复
 
 把 NavSys 设置全部移入模组列表的 Config 页面，并清理地图上的多余按钮。配置页用 BaseMod EasyConfigPanel（与其它补丁同款开关/滑条控件）：显示左侧路线列表（默认关）、显示安全路线（金线）、显示激进路线（红线）、标记模式、安全线与激进线的 RGB 三个 0\-255 滑条；改动即时写入 SpireConfig，开局时也按存档值加载。地图上不再显示 \[M\]/\[S\]/\[C\] 文字按钮，左侧面板默认关闭。两条路线经过的图标外围新增一圈半透明小黑点作为阴影环，图标更有立体感。同时保留：按 RouteSuggest 权重计算安全/激进最优路线并绘制金红双线（激进先画、安全在上）；路线枚举异常（改深度优先）；离开地图屏后 4x 缩放不还原；当前节点为空时空指针；面板行热区错位与分辨率变化失效；同构成不同路线被去重丢弃；compareTo 与 equals 不一致；ShapeRenderer 未释放；clearCurrentAct 清空其他章节标记；损坏标记数据导致每帧解析异常。
