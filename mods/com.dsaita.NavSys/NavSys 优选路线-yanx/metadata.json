@@ -1,0 +1,18 @@
+{
+  "schemaVersion": 1,
+  "name": "NavSys 优选路线",
+  "description": "用\"染色糯米纸\"方式高亮两条最优路线，并把开关收进模组配置页。路线显示：去掉在图标外面套描边圈的做法（那样看着像悬浮贴纸，节点脉动时还会果冻般晃动），改为对房间图标本体再画一次同位置、同缩放的半透明染色层——坐标与缩放完全复制 MapRoomNode.render()（含 x/y 偏移、节点自身偏移、Settings.scale 与手机端 ×2），所以染色贴着图标不会漂移；图标本身的明暗细节保留，眼睛、面具、问号等都还看得见；颜色按配置原值使用，不再向灰度混合，避免灰完之后发暗看不清。配置页：NavSysConfigPanel 继承 BaseMod EasyConfigPanel，在 receivePostInitialize 中通过 BaseMod.registerModBadge 挂上主菜单徽章（运行时用 Pixmap 画的金/红双环 40×40 图标），点徽章打开设置页，含显示左侧路线列表面板（默认关）、显示安全路线、显示激进路线、标记模式、染色浓度 0-100，以及安全线与激进线各自的 RGB 滑条；改动由 EasyConfigPanel 直接写入 SpireConfig，启动时 ConfigRuntime 读回生效。其余保留：按 RouteSuggest 权重计算安全/激进最优路线；先画激进再画安全，重叠处安全在上；路线枚举改为深度优先；离开地图屏后 4x 缩放不还原；当前节点为空时的空指针；面板行热区错位与分辨率变化失效；不同路线被去重丢弃；compareTo 与 equals 不一致；ShapeRenderer 未释放；clearCurrentAct 清空其他章节标记；损坏标记数据造成的每帧解析异常。",
+  "version": "1.7.0",
+  "author": {
+    "name": "yanx",
+    "email": "yaninme@163.com"
+  },
+  "target": {
+    "modId": "com.dsaita.NavSys",
+    "workshopId": "3747087286",
+    "versions": [
+      "1.1.0"
+    ]
+  },
+  "jar": "amethyst.ai.patch.com.dsaita.navsys.patch-1794815217126-ed53f487.jar"
+}
