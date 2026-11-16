@@ -1,0 +1,18 @@
+{
+  "schemaVersion": 1,
+  "name": "NavSys 路线面板修复",
+  "description": "修复 NavSys 地图路线面板的多处缺陷并补上触屏操作。修复：离开地图屏后 4x 缩放不还原；当前节点为空时空指针导致面板与高亮失效；面板行点击热区与绘制行错位、分辨率变化后失效；房间构成相同但路径不同的路线被去重丢弃；compareTo 与 equals 不一致导致排序不确定；ShapeRenderer 未释放；clearCurrentAct 会清空其他章节标记；损坏的标记数据导致每帧解析异常。新增：点击面板行选中路线，[M] 标记模式下点击地图节点可标记而不前进。",
+  "version": "1.0.1",
+  "author": {
+    "name": "yanx",
+    "email": "yaninme@163.com"
+  },
+  "target": {
+    "modId": "com.dsaita.NavSys",
+    "workshopId": "3747087286",
+    "versions": [
+      "1.1.0"
+    ]
+  },
+  "jar": "amethyst.ai.patch.com.dsaita.navsys.patch-1794815217126-ed53f487.jar"
+}
