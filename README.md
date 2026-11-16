@@ -373,6 +373,19 @@ Card Forge 中文汉化，并重写雷神之锤的选卡界面：固定格位消
 
 ---
 
+## downfall
+
+### 崩坠史莱姆凝滞能量球等栏位bug修复
+
+修复 Downfall 内置 Slimebound 的废料史莱姆球（ScrapOozeSlime）在球还没渲染出特效就被唤起时，cleanUpVFX 对空特效对象调用 finish\(\) 造成的空指针闪退；同一处缺陷也存在于冠军史莱姆球（ChampSlime），一并修复。补丁给这两个方法加了空值保护：特效对象不存在时跳过清理（已存在的特效照常结束），从而不再抛异常；Downfall 中同类写法（CultistSlime / SlowingSlime）已有判空，未做改动。
+
+- **补丁版本**：`1.0.0`
+- **作者**：dtl
+- **适用版本**：`6.0.20`
+- **下载**：[下载](https://raw.githubusercontent.com/ModinMobileSTS/SlaytheAmethystPlayerModCatalogue/main/mods/downfall/%E5%B4%A9%E5%9D%A0%E5%8F%B2%E8%8E%B1%E5%A7%86%E5%87%9D%E6%BB%9E%E8%83%BD%E9%87%8F%E7%90%83%E7%AD%89%E6%A0%8F%E4%BD%8Dbug%E4%BF%AE%E5%A4%8D-dtl/amethyst.ai.patch.downfall.patch-1794848217678-de4538b6.jar)
+
+---
+
 ## estaliaspire1
 
 ### 艾斯塔利亚启动修复
