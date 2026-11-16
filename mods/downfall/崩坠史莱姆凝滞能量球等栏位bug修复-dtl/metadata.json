@@ -1,0 +1,18 @@
+{
+  "schemaVersion": 1,
+  "name": "崩坠史莱姆凝滞能量球等栏位bug修复",
+  "description": "修复 Downfall 内置 Slimebound 的废料史莱姆球（ScrapOozeSlime）在球还没渲染出特效就被唤起时，cleanUpVFX 对空特效对象调用 finish() 造成的空指针闪退；同一处缺陷也存在于冠军史莱姆球（ChampSlime），一并修复。补丁给这两个方法加了空值保护：特效对象不存在时跳过清理（已存在的特效照常结束），从而不再抛异常；Downfall 中同类写法（CultistSlime / SlowingSlime）已有判空，未做改动。",
+  "version": "1.0.0",
+  "author": {
+    "name": "dtl",
+    "email": "2652226316@qq.com"
+  },
+  "target": {
+    "modId": "downfall",
+    "workshopId": "1610056683",
+    "versions": [
+      "6.0.20"
+    ]
+  },
+  "jar": "amethyst.ai.patch.downfall.patch-1794848217678-de4538b6.jar"
+}
