@@ -340,15 +340,6 @@ Card Forge 中文汉化，并重写雷神之锤的选卡界面：固定格位消
 
 ## chronomuncher
 
-### 信徒中文补丁
-
-为 The Disciple 提供全量中文本地化。覆盖卡牌、遗物、复刻品、事件、关键词、力量、药水与界面文本，并修复能量图标渲染与悬浮提示翻译。当时序已至，信徒终临此刻。
-
-- **补丁版本**：`3.7.0`
-- **作者**：24
-- **适用版本**：`2.0`
-- **下载**：[下载](https://raw.githubusercontent.com/ModinMobileSTS/SlaytheAmethystPlayerModCatalogue/main/mods/chronomuncher/%E4%BF%A1%E5%BE%92%E4%B8%AD%E6%96%87%E8%A1%A5%E4%B8%81-24/amethyst.ai.patch.chronomuncher.patch-1793399884157-536381f1.jar)
-
 ### 时序·信徒中文补丁
 
 为 The Disciple 提供全量中文本地化。覆盖卡牌、遗物、复刻品、事件、关键词、力量、药水与界面文本，并修复能量图标渲染与悬浮提示翻译。当时序已至，信徒终临此刻。
