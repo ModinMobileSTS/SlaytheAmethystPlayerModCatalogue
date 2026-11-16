@@ -1,27 +1,19 @@
 package com.navsysfix;
 
-import basemod.BaseMod;
-import basemod.interfaces.StartGameSubscriber;
 import com.evacipated.cardcrawl.modthespire.lib.SpireInitializer;
 
 /**
- * Entry point: loads the persisted settings, then lets the patches take over.
+ * Entry point: restores the saved settings, then lets the patches take over.
+ * The config page itself is NavSysConfigPanel, opened from the game's mod list.
  */
 @SpireInitializer
-public class NavSysFixInit implements StartGameSubscriber {
+public class NavSysFixInit {
 
     public NavSysFixInit() {
-        Config.load();
-        BaseMod.subscribe(this);
+        ConfigRuntime.load();
     }
 
     public static void initialize() {
         new NavSysFixInit();
-    }
-
-    @Override
-    public void receiveStartGame() {
-        MarkMode.on = false;
-        RoutePainter.invalidate();
     }
 }

@@ -9,14 +9,13 @@ import com.megacrit.cardcrawl.helpers.Hitbox;
 import com.megacrit.cardcrawl.helpers.input.InputHelper;
 import com.megacrit.cardcrawl.map.MapRoomNode;
 import com.megacrit.cardcrawl.screens.DungeonMapScreen;
-import com.navsysfix.MarkMode;
+import com.navsysfix.NavSysConfigPanel;
 import com.navsysfix.PanelUi;
-import com.navsysfix.SettingsOverlay;
 
 import java.util.ArrayList;
 
 /**
- * Makes mark mode work with a finger, and keeps every tap on our own UI from
+ * Makes mark mode work with a finger, and keeps every tap on the route list from
  * being read as a map step.
  *
  * Map travel is decided by MapRoomNode.update() reading DungeonMapScreen.clicked,
@@ -42,17 +41,13 @@ public class PatchDungeonMapScreen {
         float x = InputHelper.mX;
         float y = InputHelper.mY;
 
-        // A tap on the NavSys UI is never a map step.
-        if (SettingsOverlay.covers(x, y)
-                || PanelUi.insideSettingsButton(x, y)
-                || PanelUi.insideToggleButton(x, y)
-                || PanelUi.insideMarkButton(x, y)
-                || PanelUi.rowAt(x, y) >= 0) {
+        // A tap on a route row is a selection, never a map step.
+        if (PanelUi.rowAt(x, y) >= 0) {
             consume(__instance);
             return;
         }
 
-        if (!MarkMode.on || PanelUi.hidden()) {
+        if (!NavSysConfigPanel.markMode) {
             return;
         }
         // Never swallow the first room choice, or the act cannot be started.
