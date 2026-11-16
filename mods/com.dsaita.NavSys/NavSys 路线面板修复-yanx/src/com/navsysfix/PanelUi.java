@@ -4,46 +4,50 @@ import com.dsaita.NavSys.ui.PathInfoPanel;
 import com.megacrit.cardcrawl.core.Settings;
 
 /**
- * Geometry of the NavSys result panel.
+ * Geometry of the left-side NavSys UI and its extra buttons.
  *
- * The panel rows are painted by PathInfoPanel.draw at
- *   y = CONTENT_Y - 30 * (index + 1)
- * which is the top of the text line (y grows upwards). Everything that has to
- * line up with those rows - the panel hitboxes, the extra mark-mode button,
- * touch hit testing - goes through this class so one formula owns the layout.
+ * Rows are painted at y = CONTENT_Y - 30 * (index + 1); everything that must
+ * line up with them goes through here so one formula owns the layout.
  */
 public final class PanelUi {
 
-    /** Vertical distance between two result rows, as used by PathInfoPanel.draw. */
     public static final float ROW_SPACING = 30.0f;
-    /** Height of one clickable row band; equal to ROW_SPACING so bands tile. */
     public static final float ROW_HEIGHT = 30.0f;
-    /** Width of one clickable row band (five number columns plus padding). */
     public static final float ROW_WIDTH = 210.0f;
-    /** Number of result rows the panel can show (PathInfoPanel.MAX_RESULTS). */
     public static final int MAX_ROWS = 15;
 
-    private static final float MARK_BTN_W = 52.0f;
-    private static final float MARK_BTN_H = 26.0f;
-    private static final float MARK_BTN_OFFSET_X = 320.0f;
-    private static final float MARK_BTN_OFFSET_Y = 30.0f;
+    /** Rows actually painted last frame. */
+    public static int visibleRows = 0;
+
+    private static final float BTN_W = 56.0f;
+    private static final float BTN_H = 26.0f;
+    private static final float MARK_OFFSET_X = 320.0f;
+    private static final float TOGGLE_OFFSET_X = 390.0f;
+    private static final float SETTINGS_OFFSET_X = 460.0f;
+    private static final float BTN_OFFSET_Y = 30.0f;
 
     private PanelUi() {
     }
 
-    /** Top edge of row {@code index} in world coordinates. */
+    /** The panel starts hidden; the setting decides whether it is shown. */
+    public static boolean hidden() {
+        return !Config.showPanel;
+    }
+
     public static float rowTop(int index) {
         return PathInfoPanel.CONTENT_Y - ROW_SPACING * (index + 1);
     }
 
-    /** Bottom edge of row {@code index} in world coordinates. */
     public static float rowBottom(int index) {
         return rowTop(index) - ROW_HEIGHT;
     }
 
-    /** Left edge of the result columns. */
     public static float rowLeft() {
         return PathInfoPanel.CONTENT_X;
+    }
+
+    public static int rowCount() {
+        return hidden() ? 0 : Math.min(visibleRows, MAX_ROWS);
     }
 
     public static boolean insideRow(int index, float x, float y) {
@@ -53,9 +57,9 @@ public final class PanelUi {
                 && y >= rowBottom(index);
     }
 
-    /** Index of the result row under the pointer, or -1 when outside. */
     public static int rowAt(float x, float y) {
-        for (int i = 0; i < MAX_ROWS; i++) {
+        int rows = rowCount();
+        for (int i = 0; i < rows; i++) {
             if (insideRow(i, x, y)) {
                 return i;
             }
@@ -63,22 +67,41 @@ public final class PanelUi {
         return -1;
     }
 
-    /** Left edge of the mark-mode button, next to the eye button. */
     public static float markButtonX() {
-        return PathInfoPanel.CONTENT_X + MARK_BTN_OFFSET_X * Settings.xScale;
+        return PathInfoPanel.CONTENT_X + MARK_OFFSET_X * Settings.xScale;
     }
 
-    /** Top edge of the mark-mode button, aligned with the eye button label. */
-    public static float markButtonY() {
-        return PathInfoPanel.CONTENT_Y - MARK_BTN_OFFSET_Y * Settings.yScale;
+    /** Show/hide the left panel; always drawn so the panel stays reachable. */
+    public static float toggleButtonX() {
+        return PathInfoPanel.CONTENT_X + TOGGLE_OFFSET_X * Settings.xScale;
+    }
+
+    /** Opens the settings overlay. */
+    public static float settingsButtonX() {
+        return PathInfoPanel.CONTENT_X + SETTINGS_OFFSET_X * Settings.xScale;
+    }
+
+    public static float buttonY() {
+        return PathInfoPanel.CONTENT_Y - BTN_OFFSET_Y * Settings.yScale;
     }
 
     public static boolean insideMarkButton(float x, float y) {
-        float bx = markButtonX();
-        float by = markButtonY();
-        return x >= bx
-                && x <= bx + MARK_BTN_W * Settings.xScale
-                && y <= by
-                && y >= by - MARK_BTN_H * Settings.yScale;
+        return !hidden() && insideButton(markButtonX(), x, y);
+    }
+
+    public static boolean insideToggleButton(float x, float y) {
+        return insideButton(toggleButtonX(), x, y);
+    }
+
+    public static boolean insideSettingsButton(float x, float y) {
+        return insideButton(settingsButtonX(), x, y);
+    }
+
+    private static boolean insideButton(float left, float x, float y) {
+        float top = buttonY();
+        return x >= left
+                && x <= left + BTN_W * Settings.xScale
+                && y <= top
+                && y >= top - BTN_H * Settings.yScale;
     }
 }

@@ -5,13 +5,13 @@ import basemod.interfaces.StartGameSubscriber;
 import com.evacipated.cardcrawl.modthespire.lib.SpireInitializer;
 
 /**
- * Entry point. The fixes themselves are ModTheSpire patches; this only resets
- * the per-run mark-mode state.
+ * Entry point: loads the persisted settings, then lets the patches take over.
  */
 @SpireInitializer
 public class NavSysFixInit implements StartGameSubscriber {
 
     public NavSysFixInit() {
+        Config.load();
         BaseMod.subscribe(this);
     }
 
@@ -22,5 +22,6 @@ public class NavSysFixInit implements StartGameSubscriber {
     @Override
     public void receiveStartGame() {
         MarkMode.on = false;
+        RoutePainter.invalidate();
     }
 }

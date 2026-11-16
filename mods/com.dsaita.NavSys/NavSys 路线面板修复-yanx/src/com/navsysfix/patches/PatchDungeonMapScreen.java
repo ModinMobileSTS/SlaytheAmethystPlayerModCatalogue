@@ -11,17 +11,18 @@ import com.megacrit.cardcrawl.map.MapRoomNode;
 import com.megacrit.cardcrawl.screens.DungeonMapScreen;
 import com.navsysfix.MarkMode;
 import com.navsysfix.PanelUi;
+import com.navsysfix.SettingsOverlay;
 
 import java.util.ArrayList;
 
 /**
- * Makes mark mode work with a finger.
+ * Makes mark mode work with a finger, and keeps every tap on our own UI from
+ * being read as a map step.
  *
  * Map travel is decided by MapRoomNode.update() reading DungeonMapScreen.clicked,
  * and DungeonMapScreen.updateMouse() only sets that flag at the very end of
  * DungeonMapScreen.update(). A postfix therefore sees the click before any node
- * does, which is exactly the window needed to turn a tap into a marker toggle
- * and swallow the travel.
+ * does - the window needed to turn a tap into a marker toggle and swallow it.
  */
 @SpirePatch2(clz = DungeonMapScreen.class, method = "update", paramtypez = {})
 public class PatchDungeonMapScreen {
@@ -41,13 +42,17 @@ public class PatchDungeonMapScreen {
         float x = InputHelper.mX;
         float y = InputHelper.mY;
 
-        // A tap on the NavSys panel is a UI action, never a map step.
-        if (PanelUi.insideMarkButton(x, y) || PanelUi.rowAt(x, y) >= 0) {
+        // A tap on the NavSys UI is never a map step.
+        if (SettingsOverlay.covers(x, y)
+                || PanelUi.insideSettingsButton(x, y)
+                || PanelUi.insideToggleButton(x, y)
+                || PanelUi.insideMarkButton(x, y)
+                || PanelUi.rowAt(x, y) >= 0) {
             consume(__instance);
             return;
         }
 
-        if (!MarkMode.on) {
+        if (!MarkMode.on || PanelUi.hidden()) {
             return;
         }
         // Never swallow the first room choice, or the act cannot be started.
@@ -64,7 +69,6 @@ public class PatchDungeonMapScreen {
         consume(__instance);
     }
 
-    /** Clears the click so no MapRoomNode sees it on the next update. */
     private static void consume(DungeonMapScreen screen) {
         screen.clicked = false;
         screen.clickTimer = 0.0f;

@@ -14,22 +14,23 @@ import com.megacrit.cardcrawl.dungeons.AbstractDungeon;
 import com.megacrit.cardcrawl.helpers.FontHelper;
 import com.megacrit.cardcrawl.helpers.Hitbox;
 import com.megacrit.cardcrawl.helpers.input.InputHelper;
+import com.navsysfix.Config;
 import com.navsysfix.MarkMode;
 import com.navsysfix.PanelUi;
 import com.navsysfix.Reflect;
+import com.navsysfix.RoutePainter;
+import com.navsysfix.SettingsOverlay;
 
 import java.util.List;
 
 /**
- * Repairs three problems around NavSys' own render pass:
+ * NavSys' render pass, repaired and extended:
  *
- * 1. Leaving the map screen while the eye button was active left the camera
- *    stuck at 4x, because the zoom is only restored inside receiveStartAct.
- * 2. The panel hitboxes were built once, with a 12px vertical offset and the
- *    scale of that frame, so they drifted off the painted rows and were
- *    completely wrong after a resolution or orientation change.
- * 3. There was no touch path: rows could only be selected and nodes only
- *    marked with the right mouse button, which a phone never produces.
+ *   - the camera no longer stays at 4x after leaving the map screen;
+ *   - panel hitboxes are re-derived every frame and rows the panel is not
+ *     showing are parked off-screen;
+ *   - the two coloured routes are painted on top of the map;
+ *   - [M] mark mode, [S]/[H] panel toggle and [C] settings work on touch.
  */
 @SpirePatch2(clz = NavSysMod.class, method = "receiveRender", paramtypez = {SpriteBatch.class})
 public class PatchReceiveRender {
@@ -48,14 +49,13 @@ public class PatchReceiveRender {
         if (AbstractDungeon.screen != AbstractDungeon.CurrentScreen.MAP) {
             return;
         }
+        SpriteBatch sb = (SpriteBatch) __args[0];
         handlePanelInput();
-        drawMarkModeButton((SpriteBatch) __args[0]);
+        RoutePainter.paint(__instance, sb);
+        drawButtons(sb);
+        SettingsOverlay.draw(sb);
     }
 
-    /**
-     * The eye button forces the camera to 4x while the map is open, but nothing
-     * undoes that when the player leaves the map without pressing it again.
-     */
     private static void restoreCameraWhenLeavingMap(NavSysMod mod) {
         if (!Reflect.fullMapView(mod)) {
             return;
@@ -73,29 +73,25 @@ public class PatchReceiveRender {
         Reflect.setFullMapView(mod, false);
     }
 
-    /**
-     * Re-derives every row hitbox from the live panel geometry instead of the
-     * "CONTENT_Y - (12 + 30 * i)" formula used when the boxes were created.
-     * Runs before the mod's own hitbox loop, so hover state is already correct
-     * in the same frame, and nothing is cached across resolution changes.
-     */
     private static void alignPanelHitboxes(NavSysMod mod) {
         List<Hitbox> boxes = Reflect.hitboxes(mod);
         int limit = Math.min(boxes.size(), PanelUi.MAX_ROWS);
+        int visible = PanelUi.rowCount();
         for (int i = 0; i < limit; i++) {
             Hitbox hb = boxes.get(i);
             if (hb == null) {
                 continue;
             }
-            hb.resize(PanelUi.ROW_WIDTH, PanelUi.ROW_HEIGHT);
-            hb.translate(PathInfoPanel.CONTENT_X, PanelUi.rowBottom(i));
+            if (i < visible) {
+                hb.resize(PanelUi.ROW_WIDTH, PanelUi.ROW_HEIGHT);
+                hb.translate(PathInfoPanel.CONTENT_X, PanelUi.rowBottom(i));
+            } else {
+                hb.resize(0.0f, 0.0f);
+                hb.translate(-10000.0f, -10000.0f);
+            }
         }
     }
 
-    /**
-     * Touch parity for the two actions NavSys only exposed through the right
-     * mouse button: selecting a result row and toggling mark mode.
-     */
     private static void handlePanelInput() {
         if (!InputHelper.justClickedLeft) {
             return;
@@ -103,22 +99,45 @@ public class PatchReceiveRender {
         float x = InputHelper.mX;
         float y = InputHelper.mY;
 
+        if (SettingsOverlay.handleTap(x, y)) {
+            return;
+        }
+        if (PanelUi.insideSettingsButton(x, y)) {
+            SettingsOverlay.open = !SettingsOverlay.open;
+            return;
+        }
+        if (PanelUi.insideToggleButton(x, y)) {
+            Config.showPanel = !Config.showPanel;
+            Config.save();
+            return;
+        }
         if (PanelUi.insideMarkButton(x, y)) {
             MarkMode.on = !MarkMode.on;
             return;
         }
-
         int row = PanelUi.rowAt(x, y);
         if (row >= 0) {
             PathInfoPanel.selectedIndex = PathInfoPanel.selectedIndex == row ? -1 : row;
         }
     }
 
-    private static void drawMarkModeButton(SpriteBatch sb) {
+    private static void drawButtons(SpriteBatch sb) {
         sb.setColor(Color.WHITE);
-        String label = MarkMode.on ? "[M ON]" : "[M]";
-        Color color = MarkMode.on ? Settings.GOLD_COLOR : Settings.CREAM_COLOR;
-        FontHelper.renderFontLeftTopAligned(sb, FontHelper.blockInfoFont, label,
-                PanelUi.markButtonX(), PanelUi.markButtonY(), color);
+        if (PanelUi.hidden()) {
+            FontHelper.renderFontLeftTopAligned(sb, FontHelper.blockInfoFont, "NavSys",
+                    PanelUi.markButtonX(), PanelUi.buttonY(), Settings.CREAM_COLOR);
+            FontHelper.renderFontLeftTopAligned(sb, FontHelper.blockInfoFont, "[S]",
+                    PanelUi.toggleButtonX(), PanelUi.buttonY(), Settings.GOLD_COLOR);
+            FontHelper.renderFontLeftTopAligned(sb, FontHelper.blockInfoFont, "[C]",
+                    PanelUi.settingsButtonX(), PanelUi.buttonY(), Settings.CREAM_COLOR);
+            return;
+        }
+        Color markColor = MarkMode.on ? Settings.GOLD_COLOR : Settings.CREAM_COLOR;
+        FontHelper.renderFontLeftTopAligned(sb, FontHelper.blockInfoFont,
+                MarkMode.on ? "[M ON]" : "[M]", PanelUi.markButtonX(), PanelUi.buttonY(), markColor);
+        FontHelper.renderFontLeftTopAligned(sb, FontHelper.blockInfoFont, "[H]",
+                PanelUi.toggleButtonX(), PanelUi.buttonY(), Settings.CREAM_COLOR);
+        FontHelper.renderFontLeftTopAligned(sb, FontHelper.blockInfoFont, "[C]",
+                PanelUi.settingsButtonX(), PanelUi.buttonY(), Settings.CREAM_COLOR);
     }
 }
