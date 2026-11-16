@@ -334,6 +334,19 @@ Card Forge 中文汉化，并重写雷神之锤的选卡界面：固定格位消
 
 ---
 
+## com\.dsaita\.NavSys
+
+### NavSys 路线面板修复
+
+修复 NavSys 地图路线面板的多处缺陷并补上触屏操作。修复：离开地图屏后 4x 缩放不还原；当前节点为空时空指针导致面板与高亮失效；面板行点击热区与绘制行错位、分辨率变化后失效；房间构成相同但路径不同的路线被去重丢弃；compareTo 与 equals 不一致导致排序不确定；ShapeRenderer 未释放；clearCurrentAct 会清空其他章节标记；损坏的标记数据导致每帧解析异常。新增：点击面板行选中路线，\[M\] 标记模式下点击地图节点可标记而不前进。
+
+- **补丁版本**：`1.0.1`
+- **作者**：yanx
+- **适用版本**：`1.1.0`
+- **下载**：[下载](https://raw.githubusercontent.com/ModinMobileSTS/SlaytheAmethystPlayerModCatalogue/main/mods/com.dsaita.NavSys/NavSys%20%E8%B7%AF%E7%BA%BF%E9%9D%A2%E6%9D%BF%E4%BF%AE%E5%A4%8D-yanx/amethyst.ai.patch.com.dsaita.navsys.patch-1794815217126-ed53f487.jar)
+
+---
+
 ## estaliaspire1
 
 ### 艾斯塔利亚启动修复
