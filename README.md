@@ -160,6 +160,19 @@ Replay The Spire 自带中文已基本完整，本补丁补齐仍显示英文的
 
 ---
 
+## TheNohDancer
+
+### 能乐舞者中文翻译
+
+The Noh Dancer（Kokoro）模组自带 zhs 翻译不完整，仍有英文残留。本补丁在其字符串加载完成后用覆盖 JSON 重新加载：挑战模式运行修饰符（怒火无边等）、UI 字符串（挑战模式选择、关键词图标裁剪文本）、幻想乡联动角色对话（GensokyoModExtra）、淡漠姿势说明；并在主菜单初始化后将设置面板三个英文按钮和模组徽章名称/描述替换为中文。仅在简体中文环境下生效。
+
+- **补丁版本**：`1.0.0`
+- **作者**：T3Getty
+- **适用版本**：`1.1.1`
+- **下载**：[下载](https://raw.githubusercontent.com/ModinMobileSTS/SlaytheAmethystPlayerModCatalogue/main/mods/TheNohDancer/%E8%83%BD%E4%B9%90%E8%88%9E%E8%80%85%E4%B8%AD%E6%96%87%E7%BF%BB%E8%AF%91-T3Getty/amethyst.ai.patch.thenohdancer.patch-1794819040986-5625394a.jar)
+
+---
+
 ## TimeKeeperMod
 
 ### TimeKeeper皮肤立绘修复
