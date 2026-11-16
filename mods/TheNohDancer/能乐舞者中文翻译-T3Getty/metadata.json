@@ -1,0 +1,18 @@
+{
+  "schemaVersion": 1,
+  "name": "能乐舞者中文翻译",
+  "description": "The Noh Dancer（Kokoro）模组自带 zhs 翻译不完整，仍有英文残留。本补丁在其字符串加载完成后用覆盖 JSON 重新加载：挑战模式运行修饰符（怒火无边等）、UI 字符串（挑战模式选择、关键词图标裁剪文本）、幻想乡联动角色对话（GensokyoModExtra）、淡漠姿势说明；并在主菜单初始化后将设置面板三个英文按钮和模组徽章名称/描述替换为中文。仅在简体中文环境下生效。",
+  "version": "1.0.0",
+  "author": {
+    "name": "T3Getty",
+    "email": "2385908573@qq.com"
+  },
+  "target": {
+    "modId": "TheNohDancer",
+    "workshopId": "2451464697",
+    "versions": [
+      "1.1.1"
+    ]
+  },
+  "jar": "amethyst.ai.patch.thenohdancer.patch-1794819040986-5625394a.jar"
+}
