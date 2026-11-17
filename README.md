@@ -90,6 +90,19 @@
 
 ---
 
+## RainWorld
+
+### Spine附件缺失崩溃修复
+
+修复 RainWorld 角色 Spine 骨架在合并/切换皮肤后因缺少 ear2 等附件而抛出 IllegalArgumentException（Attachment not found）导致游戏崩溃的问题：为 Skeleton\.setAttachment\(String,String\) 增加前缀守卫，附件或槽位不存在时跳过调用并写入一次日志，其余情况完全保持原版行为。
+
+- **补丁版本**：`0.1.1`
+- **作者**：NIF
+- **适用版本**：`4.0.0`
+- **下载**：[下载](https://raw.githubusercontent.com/ModinMobileSTS/SlaytheAmethystPlayerModCatalogue/main/mods/RainWorld/Spine%E9%99%84%E4%BB%B6%E7%BC%BA%E5%A4%B1%E5%B4%A9%E6%BA%83%E4%BF%AE%E5%A4%8D-NIF/amethyst.ai.patch.rainworld.patch-1794898577552-c0f5614b.jar)
+
+---
+
 ## ReplayTheSpireMod
 
 ### Replay 漏译补全
