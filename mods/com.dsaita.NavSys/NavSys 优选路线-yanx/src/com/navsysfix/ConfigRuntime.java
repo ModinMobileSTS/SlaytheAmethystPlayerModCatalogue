@@ -25,7 +25,6 @@ public final class ConfigRuntime {
             defaults.setProperty("showPanel", String.valueOf(NavSysConfigPanel.showPanel));
             defaults.setProperty("showSafeRoute", String.valueOf(NavSysConfigPanel.showSafeRoute));
             defaults.setProperty("showAggroRoute", String.valueOf(NavSysConfigPanel.showAggroRoute));
-            defaults.setProperty("markMode", String.valueOf(NavSysConfigPanel.markMode));
             defaults.setProperty("tintPercent", String.valueOf(NavSysConfigPanel.tintPercent));
             defaults.setProperty("safeR", String.valueOf(NavSysConfigPanel.safeR));
             defaults.setProperty("safeG", String.valueOf(NavSysConfigPanel.safeG));
@@ -39,7 +38,6 @@ public final class ConfigRuntime {
             NavSysConfigPanel.showPanel = config.getBool("showPanel");
             NavSysConfigPanel.showSafeRoute = config.getBool("showSafeRoute");
             NavSysConfigPanel.showAggroRoute = config.getBool("showAggroRoute");
-            NavSysConfigPanel.markMode = config.getBool("markMode");
             NavSysConfigPanel.tintPercent = clampPercent(config.getInt("tintPercent"));
             NavSysConfigPanel.safeR = clamp(config.getInt("safeR"));
             NavSysConfigPanel.safeG = clamp(config.getInt("safeG"));
@@ -61,7 +59,6 @@ public final class ConfigRuntime {
             basemod.BaseMod.logger.info("NavSysFix config: panel=" + NavSysConfigPanel.showPanel
                     + " safe=" + NavSysConfigPanel.showSafeRoute
                     + " aggro=" + NavSysConfigPanel.showAggroRoute
-                    + " markMode=" + NavSysConfigPanel.markMode
                     + " tint=" + NavSysConfigPanel.tintPercent
                     + " safeRGB=" + NavSysConfigPanel.safeR + "/" + NavSysConfigPanel.safeG + "/" + NavSysConfigPanel.safeB
                     + " aggroRGB=" + NavSysConfigPanel.aggroR + "/" + NavSysConfigPanel.aggroG + "/" + NavSysConfigPanel.aggroB);

@@ -31,8 +31,6 @@ public class NavSysConfigPanel extends EasyConfigPanel {
     public static boolean showSafeRoute = true;
     /** Red line: the route that seeks combat. */
     public static boolean showAggroRoute = true;
-    /** Tap a map node to toggle its marker instead of travelling there. */
-    public static boolean markMode = false;
 
     /** How strongly the route colour stains the icon (0 = invisible, 100 = solid). */
     public static int tintPercent = 70;
@@ -50,7 +48,7 @@ public class NavSysConfigPanel extends EasyConfigPanel {
 
     public NavSysConfigPanel(String modID, String configName) {
         super(modID, labels(), configName);
-        // 11 rows of 50px: with the default 8px padding they would spill onto a
+        // 10 rows of 50px: with the default 8px padding they would spill onto a
         // second page (and show paging arrows), so tighten the gap instead.
         setPadding(2.0f);
         setNumberRange("tintPercent", 0.0f, 100.0f);
@@ -68,7 +66,6 @@ public class NavSysConfigPanel extends EasyConfigPanel {
         dict.put("showPanel", "显示左侧路线列表面板（默认关）");
         dict.put("showSafeRoute", "显示安全路线（金线）");
         dict.put("showAggroRoute", "显示激进路线（红线）");
-        dict.put("markMode", "标记模式：点击地图节点打标记，不会移动");
         dict.put("tintPercent", "染色浓度 0-100（越高越明显，100=整个图标变色）");
         dict.put("safeR", "安全线 红色 0-255");
         dict.put("safeG", "安全线 绿色 0-255");
