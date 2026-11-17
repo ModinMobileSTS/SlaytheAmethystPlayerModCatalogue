@@ -368,9 +368,9 @@ Card Forge 中文汉化，并重写雷神之锤的选卡界面：固定格位消
 
 ### NavSys 优选路线
 
-用&quot;染色糯米纸&quot;高亮安全（金）/激进（红）两条最优路线，并修地图相关问题。路线显示：不再在图标外画描边圈（会像悬浮贴纸、节点脉动时果冻般晃动），改为对房间图标本体再画一次同位置同缩放的半透明染色层，坐标与缩放逐项复制 MapRoomNode\.render\(\)（x/y 偏移、节点自身偏移、Settings\.scale、手机端 ×2），染色贴住图标不漂移，图标细节保留；颜色按配置原值使用不混灰度；染色浓度 0\-100 可调。章节开始时不给建议已修：路线枚举原先只有&quot;当前节点&quot;和&quot;底层&quot;两条起点，现在加了两层兜底（底层找不到就从所有还连得上的节点重算），只有单节点的空路径不再参与评分。地图图标点不动：NavSys 的 4x 全图视图已去掉——游戏指针用屏幕坐标（InputHelper\.mX/mY 不含相机缩放）而节点热区在世界坐标，缩放不等于 1 时每次点击都会错过节点；现在每帧还原缩放、眼睛按钮隐藏。同时移除会抢走地图点击的&quot;标记模式&quot;开关（它会拦截点击导致节点进不去），补丁现在不再消耗任何地图点击；左侧路线列表只读。新增每次点击地图的日志（指针坐标、当前节点与边数、命中的节点及是否相连、房间阶段、firstRoomChosen），便于定位点不动的原因。配置页：NavSysConfigPanel 继承 BaseMod EasyConfigPanel，在 receivePostInitialize 中 BaseMod\.registerModBadge 挂主菜单徽章（Pixmap 画的金/红双环 40×40），点徽章打开；含显示左侧列表（默认关）、显示安全/激进路线、染色浓度与两条线各自的 RGB 滑条，EasyConfigPanel 直接写 SpireConfig，启动时 ConfigRuntime 读回并打印当前值。其余保留：按 RouteSuggest 权重评分；先画激进再画安全；当前节点为空时的空指针；面板行热区错位；不同路线被去重丢弃；compareTo 与 equals 不一致；ShapeRenderer 未释放；clearCurrentAct 清空其他章节标记；损坏标记数据导致每帧解析异常。
+用&quot;染色糯米纸&quot;高亮安全（金）/激进（红）两条最优路线，并修掉地图显示与点击问题。蓝色节点：NavSys 的标记系统在旧会话里留下了标记（存在 java\.util\.prefs 的 com/dsaita/NavSys/markers），它在 renderMarkedNodes 里把被标记的节点整块染成 KLEIN\_BLUE 并连蓝线，看起来像地图显示错误；现在标记功能整体停用（setAct 后清空并回写、toggle 不再生效、renderMarkedNodes 不执行），启动时也再清一次，左侧列表不再按标记过滤路线。同样会整块变蓝的 highlightPath（悬停/选中路线时把整条路线刷成纯蓝）也停用。路线显示：对房间图标本体画一次同位置同缩放的半透明染色层，坐标与缩放逐项复制 MapRoomNode\.render\(\)（含手机端 ×2），染色贴住图标不漂移、保留图标细节；颜色按配置原值使用不混灰度；染色浓度 0\-100 可调。章节开始无建议：路线枚举加了两层兜底（底层找不到就从所有还有连接的节点重算），单节点空路径不参与评分。图标点不动：去掉 NavSys 的 4x 全图视图（游戏指针用屏幕坐标、节点热区在世界坐标，缩放≠1 时点击必然落空），每帧还原缩放并隐藏眼睛按钮；同时移除会拦截地图点击的标记模式，补丁不再消耗任何地图点击。每次点击地图会打一行日志（指针坐标、当前节点与边数、命中节点及是否相连、房间阶段、firstRoomChosen）。配置页：EasyConfigPanel 配置页经 BaseMod\.registerModBadge 挂主菜单徽章打开，含显示左侧列表（默认关）、显示安全/激进路线、染色浓度与两条线各自的 RGB 滑条，启动时 ConfigRuntime 读回。其余保留：按 RouteSuggest 权重评分；先画激进再画安全；当前节点为空时的空指针；面板行热区错位；不同路线被去重丢弃；compareTo 与 equals 不一致；ShapeRenderer 未释放。
 
-- **补丁版本**：`1.9.0`
+- **补丁版本**：`1.10.0`
 - **作者**：yanx
 - **适用版本**：`1.1.0`
 - **下载**：[下载](https://raw.githubusercontent.com/ModinMobileSTS/SlaytheAmethystPlayerModCatalogue/main/mods/com.dsaita.NavSys/NavSys%20%E4%BC%98%E9%80%89%E8%B7%AF%E7%BA%BF-yanx/amethyst.ai.patch.com.dsaita.navsys.patch-1794815217126-ed53f487.jar)
