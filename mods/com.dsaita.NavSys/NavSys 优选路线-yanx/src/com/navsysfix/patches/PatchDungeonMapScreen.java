@@ -10,18 +10,21 @@ import com.megacrit.cardcrawl.helpers.input.InputHelper;
 import com.megacrit.cardcrawl.map.MapRoomNode;
 import com.megacrit.cardcrawl.screens.DungeonMapScreen;
 import com.navsysfix.NavSysConfigPanel;
-import com.navsysfix.PanelUi;
 
 import java.util.ArrayList;
 
 /**
- * Makes mark mode work with a finger, and keeps every tap on the route list from
- * being read as a map step.
+ * Turns a tap into a marker toggle while mark mode is on.
  *
  * Map travel is decided by MapRoomNode.update() reading DungeonMapScreen.clicked,
  * and DungeonMapScreen.updateMouse() only sets that flag at the very end of
  * DungeonMapScreen.update(). A postfix therefore sees the click before any node
  * does - the window needed to turn a tap into a marker toggle and swallow it.
+ *
+ * Outside mark mode this patch touches nothing at all. In particular it does not
+ * intercept taps that land on the left-side route list: the list is a read-only
+ * report now, and eating those taps could make a map node under the list
+ * unreachable.
  */
 @SpirePatch2(clz = DungeonMapScreen.class, method = "update", paramtypez = {})
 public class PatchDungeonMapScreen {
@@ -37,16 +40,6 @@ public class PatchDungeonMapScreen {
         if (AbstractDungeon.screen != AbstractDungeon.CurrentScreen.MAP) {
             return;
         }
-
-        float x = InputHelper.mX;
-        float y = InputHelper.mY;
-
-        // A tap on a route row is a selection, never a map step.
-        if (PanelUi.rowAt(x, y) >= 0) {
-            consume(__instance);
-            return;
-        }
-
         if (!NavSysConfigPanel.markMode) {
             return;
         }
@@ -55,18 +48,14 @@ public class PatchDungeonMapScreen {
             return;
         }
 
-        MapRoomNode target = nodeUnderPointer(x, y);
+        MapRoomNode target = nodeUnderPointer(InputHelper.mX, InputHelper.mY);
         if (target == null) {
             return;
         }
 
         NavSysMarkers.toggle(target.x, target.y);
-        consume(__instance);
-    }
-
-    private static void consume(DungeonMapScreen screen) {
-        screen.clicked = false;
-        screen.clickTimer = 0.0f;
+        __instance.clicked = false;
+        __instance.clickTimer = 0.0f;
     }
 
     private static MapRoomNode nodeUnderPointer(float x, float y) {

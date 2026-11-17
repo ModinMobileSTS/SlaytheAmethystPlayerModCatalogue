@@ -10,7 +10,6 @@ import com.evacipated.cardcrawl.modthespire.lib.SpirePrefixPatch;
 import com.megacrit.cardcrawl.core.CardCrawlGame;
 import com.megacrit.cardcrawl.dungeons.AbstractDungeon;
 import com.megacrit.cardcrawl.helpers.Hitbox;
-import com.megacrit.cardcrawl.helpers.input.InputHelper;
 import com.navsysfix.PanelUi;
 import com.navsysfix.Reflect;
 import com.navsysfix.RoutePainter;
@@ -20,7 +19,12 @@ import java.util.List;
 /**
  * NavSys' render pass, repaired and extended:
  *
- *   - the camera no longer stays at 4x after leaving the map screen;
+ *   - the camera never keeps NavSys' 4x view. That view cannot work: the game
+ *     reads the pointer in screen coordinates (InputHelper.mX/mY ignore the
+ *     camera zoom) while node hitboxes live in world coordinates, so as soon as
+ *     the zoom is not 1 every tap misses its node and the map becomes
+ *     unclickable. The zoom is therefore undone on the next frame instead of
+ *     lingering until the map is closed;
  *   - panel hitboxes are re-derived every frame and rows the panel is not
  *     showing are parked off-screen;
  *   - the two coloured routes are painted on top of the map.
@@ -32,7 +36,7 @@ public class PatchReceiveRender {
 
     @SpirePrefixPatch
     public static void Prefix(NavSysMod __instance) {
-        restoreCameraWhenLeavingMap(__instance);
+        undoFullMapView(__instance);
         alignPanelHitboxes(__instance);
     }
 
@@ -45,23 +49,16 @@ public class PatchReceiveRender {
             return;
         }
         SpriteBatch sb = (SpriteBatch) __args[0];
-        handleRowTap();
         RoutePainter.paint(__instance, sb);
     }
 
     /**
-     * Puts the camera back when the 4x map view is no longer wanted: on leaving
-     * the map screen, and also as soon as the left panel is hidden - the eye
-     * button lives in that panel, so a leftover 4x zoom could not be undone.
+     * Puts the camera back whenever the 4x view is on. While it is on, every map
+     * tap lands somewhere else than the node under the finger, which reads as
+     * "the icons cannot be clicked".
      */
-    private static void restoreCameraWhenLeavingMap(NavSysMod mod) {
+    private static void undoFullMapView(NavSysMod mod) {
         if (!Reflect.fullMapView(mod)) {
-            return;
-        }
-        boolean stillWanted = CardCrawlGame.isInARun()
-                && AbstractDungeon.screen == AbstractDungeon.CurrentScreen.MAP
-                && !PanelUi.hidden();
-        if (stillWanted) {
             return;
         }
         OrthographicCamera camera = Reflect.camera();
@@ -88,17 +85,6 @@ public class PatchReceiveRender {
                 hb.resize(0.0f, 0.0f);
                 hb.translate(-10000.0f, -10000.0f);
             }
-        }
-    }
-
-    /** Tapping a route row selects it in the list. */
-    private static void handleRowTap() {
-        if (!InputHelper.justClickedLeft) {
-            return;
-        }
-        int row = PanelUi.rowAt(InputHelper.mX, InputHelper.mY);
-        if (row >= 0) {
-            PathInfoPanel.selectedIndex = PathInfoPanel.selectedIndex == row ? -1 : row;
         }
     }
 }

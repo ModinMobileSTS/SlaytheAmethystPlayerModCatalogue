@@ -1,8 +1,8 @@
 {
   "schemaVersion": 1,
   "name": "NavSys 优选路线",
-  "description": "用\"染色糯米纸\"方式高亮两条最优路线，并把开关收进模组配置页。路线显示：去掉在图标外面套描边圈的做法（那样看着像悬浮贴纸，节点脉动时还会果冻般晃动），改为对房间图标本体再画一次同位置、同缩放的半透明染色层——坐标与缩放完全复制 MapRoomNode.render()（含 x/y 偏移、节点自身偏移、Settings.scale 与手机端 ×2），所以染色贴着图标不会漂移；图标本身的明暗细节保留，眼睛、面具、问号等都还看得见；颜色按配置原值使用，不再向灰度混合，避免灰完之后发暗看不清。配置页：NavSysConfigPanel 继承 BaseMod EasyConfigPanel，在 receivePostInitialize 中通过 BaseMod.registerModBadge 挂上主菜单徽章（运行时用 Pixmap 画的金/红双环 40×40 图标），点徽章打开设置页，含显示左侧路线列表面板（默认关）、显示安全路线、显示激进路线、标记模式、染色浓度 0-100，以及安全线与激进线各自的 RGB 滑条；改动由 EasyConfigPanel 直接写入 SpireConfig，启动时 ConfigRuntime 读回生效。其余保留：按 RouteSuggest 权重计算安全/激进最优路线；先画激进再画安全，重叠处安全在上；路线枚举改为深度优先；离开地图屏后 4x 缩放不还原；当前节点为空时的空指针；面板行热区错位与分辨率变化失效；不同路线被去重丢弃；compareTo 与 equals 不一致；ShapeRenderer 未释放；clearCurrentAct 清空其他章节标记；损坏标记数据造成的每帧解析异常。",
-  "version": "1.7.0",
+  "description": "用\"染色糯米纸\"高亮安全（金）/激进（红）两条最优路线，并修掉两个卡住地图的问题。路线显示：去掉在图标外画描边圈的做法（会像悬浮贴纸、节点脉动时果冻般晃动），改为对房间图标本体再画一次同位置同缩放的半透明染色层，坐标与缩放逐项复制 MapRoomNode.render()（x/y 偏移、节点自身偏移、Settings.scale、手机端 ×2），染色贴住图标不漂移，图标细节保留；颜色按配置原值使用不混灰度；染色浓度 0-100 可调。章节开始时不给建议：路线枚举原先只有\"当前节点\"和\"底层\"两条起点，现在加了两层兜底（底层找不到就用所有还连得上的节点重算），只有单节点的空路径不再参与评分。地图图标点不动：NavSys 的 4x 全图视图必须去掉——游戏读取指针用的是屏幕坐标（InputHelper.mX/mY 不含相机缩放），而节点热区在世界坐标，只要缩放不等于 1，每一次点击都会错过节点；现在每帧把缩放还原、眼睛按钮隐藏。左侧路线列表改为只读，不再抢地图点击。配置页：NavSysConfigPanel 继承 BaseMod EasyConfigPanel，在 receivePostInitialize 中 BaseMod.registerModBadge 挂主菜单徽章（Pixmap 画的金/红双环 40×40），点徽章打开；含显示左侧列表（默认关）、显示安全/激进路线、标记模式、染色浓度与两条线的 RGB 滑条，EasyConfigPanel 直接写 SpireConfig，ConfigRuntime 启动时读回并打印一次当前值。其余保留：按 RouteSuggest 权重评分；先画激进再画安全；离开地图屏后缩放还原；当前节点为空时的空指针；面板行热区错位；不同路线被去重丢弃；compareTo 与 equals 不一致；ShapeRenderer 未释放；clearCurrentAct 清空其他章节标记；损坏标记数据导致每帧解析异常。",
+  "version": "1.8.0",
   "author": {
     "name": "yanx",
     "email": "yaninme@163.com"

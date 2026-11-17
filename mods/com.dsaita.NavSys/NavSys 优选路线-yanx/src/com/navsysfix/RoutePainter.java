@@ -56,6 +56,7 @@ public final class RoutePainter {
     private static MapRoomNode lastNode;
     private static int lastAct = -1;
     private static boolean dirty = true;
+    private static boolean failureLogged;
 
     private RoutePainter() {
     }
@@ -65,10 +66,22 @@ public final class RoutePainter {
     }
 
     public static void paint(NavSysMod mod, SpriteBatch sb) {
+        try {
+            paintUnsafe(mod, sb);
+        } catch (Throwable t) {
+            // Drawing must never take the map screen down; report once instead.
+            if (!failureLogged) {
+                failureLogged = true;
+                log("route painting failed: " + t);
+            }
+        }
+    }
+
+    private static void paintUnsafe(NavSysMod mod, SpriteBatch sb) {
         MapRoomNode current = AbstractDungeon.getCurrMapNode();
         int act = AbstractDungeon.actNum;
         if (dirty || current != lastNode || act != lastAct) {
-            recompute();
+            recompute(current, act);
             lastNode = current;
             lastAct = act;
             dirty = false;
@@ -100,9 +113,32 @@ public final class RoutePainter {
                 NavSysConfigPanel.aggroB / 255.0f, 1.0f);
     }
 
-    private static void recompute() {
-        safePath = RouteScoring.bestRoute(RouteScoring.Kind.SAFE);
-        aggroPath = RouteScoring.bestRoute(RouteScoring.Kind.AGGRESSIVE);
+    private static void recompute(MapRoomNode current, int act) {
+        try {
+            safePath = RouteScoring.bestRoute(RouteScoring.Kind.SAFE);
+            aggroPath = RouteScoring.bestRoute(RouteScoring.Kind.AGGRESSIVE);
+        } catch (Throwable t) {
+            safePath = null;
+            aggroPath = null;
+            log("route search failed: " + t);
+        }
+        // One line per refresh: makes it obvious in the log whether a missing
+        // line on the map came from "no route found" or from a drawing problem.
+        log("act=" + act + " firstRoomChosen=" + AbstractDungeon.firstRoomChosen
+                + " current=" + (current == null ? "null" : (current.x + "," + current.y))
+                + " safe=" + (safePath == null ? "none" : String.valueOf(safePath.size()))
+                + " aggro=" + (aggroPath == null ? "none" : String.valueOf(aggroPath.size())));
+    }
+
+    private static void log(String message) {
+        logText("NavSysFix: " + message);
+    }
+
+    private static void logText(String message) {
+        try {
+            basemod.BaseMod.logger.info(message);
+        } catch (Throwable ignored) {
+        }
     }
 
     private static void apply(NavSysMod mod, SpriteBatch sb, List<MapRoomNode> path, Color color) {

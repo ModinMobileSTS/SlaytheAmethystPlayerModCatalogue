@@ -4,24 +4,21 @@ import com.dsaita.NavSys.ui.EyeButton;
 import com.evacipated.cardcrawl.modthespire.lib.SpirePatch2;
 import com.evacipated.cardcrawl.modthespire.lib.SpirePrefixPatch;
 import com.evacipated.cardcrawl.modthespire.lib.SpireReturn;
-import com.navsysfix.PanelUi;
 
 /**
- * The eye button belongs to the left-side UI, so it disappears together with
- * the panel. Otherwise collapsing the panel would leave a lone "[O]" floating
- * over the map with nothing to explain it.
+ * The eye button is gone for good.
  *
- * While collapsed the button reports "not clicked", and any active 4x view is
- * restored by the receiveRender patch as soon as the map closes.
+ * It only toggled NavSys' 4x map view, and that view breaks map input: the game
+ * reads the pointer in screen coordinates while node hitboxes live in world
+ * coordinates, so any zoom other than 1 makes every tap miss its node - the map
+ * looks fine but cannot be clicked. The button is hidden and the patch on
+ * receiveRender also undoes the zoom if it ever ends up on.
  */
 @SpirePatch2(clz = EyeButton.class, method = "drawAndUpdate", paramtypez = {com.badlogic.gdx.graphics.g2d.SpriteBatch.class, boolean.class})
 public class PatchEyeButton {
 
     @SpirePrefixPatch
     public static SpireReturn Prefix() {
-        if (PanelUi.hidden()) {
-            return SpireReturn.Return(false);
-        }
-        return SpireReturn.Continue();
+        return SpireReturn.Return(false);
     }
 }

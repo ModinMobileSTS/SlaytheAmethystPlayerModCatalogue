@@ -35,6 +35,10 @@ public final class RouteScoring {
         List<MapRoomNode> best = null;
         int bestScore = Integer.MIN_VALUE;
         for (List<MapRoomNode> path : RouteEnumerator.enumerate()) {
+            if (path == null || path.size() < 2) {
+                // A one-node path cannot be drawn and is not a suggestion.
+                continue;
+            }
             int score = score(path, kind);
             if (best == null || score > bestScore
                     || (score == bestScore && isPreferred(path, best))) {

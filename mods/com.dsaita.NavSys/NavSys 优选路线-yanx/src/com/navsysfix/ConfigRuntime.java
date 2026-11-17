@@ -51,7 +51,22 @@ public final class ConfigRuntime {
             // A broken or unreadable config must never block mod loading;
             // the field defaults keep the patch usable.
         }
+        logSettings();
         RoutePainter.invalidate();
+    }
+
+    /** One line at boot, so a wrong saved value is visible in the log. */
+    private static void logSettings() {
+        try {
+            basemod.BaseMod.logger.info("NavSysFix config: panel=" + NavSysConfigPanel.showPanel
+                    + " safe=" + NavSysConfigPanel.showSafeRoute
+                    + " aggro=" + NavSysConfigPanel.showAggroRoute
+                    + " markMode=" + NavSysConfigPanel.markMode
+                    + " tint=" + NavSysConfigPanel.tintPercent
+                    + " safeRGB=" + NavSysConfigPanel.safeR + "/" + NavSysConfigPanel.safeG + "/" + NavSysConfigPanel.safeB
+                    + " aggroRGB=" + NavSysConfigPanel.aggroR + "/" + NavSysConfigPanel.aggroG + "/" + NavSysConfigPanel.aggroB);
+        } catch (Throwable ignored) {
+        }
     }
 
     private static int clamp(int value) {
