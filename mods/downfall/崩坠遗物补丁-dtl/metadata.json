@@ -1,0 +1,18 @@
+{
+  "schemaVersion": 1,
+  "name": "崩坠遗物补丁",
+  "description": "为 Downfall 新增附属遗物「巫师长袍」：稀有品阶，每回合开始时获得 3 点崩坠原生「法力」（地精法师的 Gremlin:Wiz 状态，与法师杖、巫师帽、法力词条联动），在遗物自身回合开始阶段给予，第一回合也会触发。以共享方式注册，所有角色可携带，方便联机开局遗物配置；带中英文本地化，贴图沿用崩坠已有的斗篷遗物。",
+  "version": "1.2.0",
+  "author": {
+    "name": "dtl",
+    "email": "2652226316@qq.com"
+  },
+  "target": {
+    "modId": "downfall",
+    "workshopId": "1610056683",
+    "versions": [
+      "6.0.20"
+    ]
+  },
+  "jar": "amethyst.ai.patch.downfall.patch-1794932358720-f7f767a3.jar"
+}
