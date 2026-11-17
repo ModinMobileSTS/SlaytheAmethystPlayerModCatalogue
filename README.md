@@ -397,6 +397,15 @@ Card Forge 中文汉化，并重写雷神之锤的选卡界面：固定格位消
 - **适用版本**：`6.0.20`
 - **下载**：[下载](https://raw.githubusercontent.com/ModinMobileSTS/SlaytheAmethystPlayerModCatalogue/main/mods/downfall/%E5%B4%A9%E5%9D%A0%E5%8F%B2%E8%8E%B1%E5%A7%86%E5%87%9D%E6%BB%9E%E8%83%BD%E9%87%8F%E7%90%83%E7%AD%89%E6%A0%8F%E4%BD%8Dbug%E4%BF%AE%E5%A4%8D-dtl/amethyst.ai.patch.downfall.patch-1794848217678-de4538b6.jar)
 
+### 崩坠遗物补丁
+
+为 Downfall 新增附属遗物「巫师长袍」：稀有品阶，每回合开始时获得 3 点崩坠原生「法力」（地精法师的 Gremlin:Wiz 状态，与法师杖、巫师帽、法力词条联动），在遗物自身回合开始阶段给予，第一回合也会触发。以共享方式注册，所有角色可携带，方便联机开局遗物配置；带中英文本地化，贴图沿用崩坠已有的斗篷遗物。
+
+- **补丁版本**：`1.2.0`
+- **作者**：dtl
+- **适用版本**：`6.0.20`
+- **下载**：[下载](https://raw.githubusercontent.com/ModinMobileSTS/SlaytheAmethystPlayerModCatalogue/main/mods/downfall/%E5%B4%A9%E5%9D%A0%E9%81%97%E7%89%A9%E8%A1%A5%E4%B8%81-dtl/amethyst.ai.patch.downfall.patch-1794932358720-f7f767a3.jar)
+
 ---
 
 ## estaliaspire1
