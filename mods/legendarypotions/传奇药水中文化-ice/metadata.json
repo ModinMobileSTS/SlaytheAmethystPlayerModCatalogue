@@ -1,0 +1,18 @@
+{
+  "schemaVersion": 1,
+  "name": "传奇药水中文化",
+  "description": "为 Legendary Potions 添加完整简体中文本地化，覆盖药水、遗物、关键词及模组附带的字符串资源，并修正硬编码的药水名称与 Slow 提示文本。",
+  "version": "1.0.0",
+  "author": {
+    "name": "ice",
+    "email": "admin@example.com"
+  },
+  "target": {
+    "modId": "legendarypotions",
+    "workshopId": "3512443033",
+    "versions": [
+      "1.1.0"
+    ]
+  },
+  "jar": "amethyst.ai.patch.legendarypotions.patch-1794888408067-a38766b9.jar"
+}
