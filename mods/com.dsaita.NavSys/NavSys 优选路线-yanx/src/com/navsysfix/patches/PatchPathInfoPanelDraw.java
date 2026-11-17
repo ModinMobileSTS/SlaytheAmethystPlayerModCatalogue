@@ -3,7 +3,6 @@ package com.navsysfix.patches;
 import com.badlogic.gdx.graphics.Color;
 import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
-import com.dsaita.NavSys.NavSysMarkers;
 import com.dsaita.NavSys.pathing.PathInfo;
 import com.dsaita.NavSys.ui.PathInfoPanel;
 import com.evacipated.cardcrawl.modthespire.lib.SpirePatch2;
@@ -12,24 +11,24 @@ import com.evacipated.cardcrawl.modthespire.lib.SpireReturn;
 import com.megacrit.cardcrawl.core.Settings;
 import com.megacrit.cardcrawl.helpers.FontHelper;
 import com.megacrit.cardcrawl.helpers.ImageMaster;
-import com.megacrit.cardcrawl.map.MapRoomNode;
 import com.navsysfix.PanelUi;
-import com.navsysfix.Reflect;
 
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
-import java.util.Set;
 
 /**
  * Replaces PathInfoPanel.draw().
  *
- * Two behaviour changes over the original:
+ * Behaviour changes over the original:
  *   - it always presents the two best routes instead of up to fifteen rows, so
  *     the panel keeps a stable, readable size and the two "current" options are
  *     always the ones on screen;
- *   - it respects the collapse button, drawing nothing at all while the
- *     left-side UI is hidden.
+ *   - it draws nothing at all while the left-side UI is hidden;
+ *   - it no longer filters the list by NavSys' node markers. Markers are gone
+ *     with mark mode, and filtering by them could leave the list empty (or show
+ *     a different route than the one drawn on the map) whenever a stale entry
+ *     was still stored.
  *
  * The title, icons and number columns are reproduced exactly as before
  * (elite / rest / merchant / enemy / event), only the row selection differs.
@@ -55,70 +54,27 @@ public class PatchPathInfoPanelDraw {
 
         List<PathInfo> shown = new ArrayList<>();
         if (!PanelUi.hidden() && incoming != null) {
-            List<PathInfo> filtered = filterByMarkers(incoming);
-            shown = bestRoutes(filtered);
-            render(sb, filtered.size(), shown);
+            List<PathInfo> all = collect(incoming);
+            shown = bestRoutes(all);
+            render(sb, all.size(), shown);
         }
         PanelUi.visibleRows = shown.size();
         return SpireReturn.Return(shown);
     }
 
-    /** Same filtering rule as before: keep routes containing every marked node. */
-    private static List<PathInfo> filterByMarkers(List<?> incoming) {
+    private static List<PathInfo> collect(List<?> incoming) {
         List<PathInfo> result = new ArrayList<>();
-        Set<String> marks = NavSysMarkers.getMarkedNodes();
-        boolean noMarks = marks == null || marks.isEmpty();
         for (Object candidate : incoming) {
-            if (!(candidate instanceof PathInfo)) {
-                continue;
-            }
-            PathInfo info = (PathInfo) candidate;
-            if (noMarks || containsAllMarks(info, marks)) {
-                result.add(info);
+            if (candidate instanceof PathInfo) {
+                result.add((PathInfo) candidate);
             }
         }
         return result;
     }
 
-    private static boolean containsAllMarks(PathInfo info, Set<String> marks) {
-        for (String key : marks) {
-            int[] coords = parseNodeKey(key);
-            if (coords == null) {
-                continue;
-            }
-            boolean found = false;
-            for (MapRoomNode node : Reflect.nodesOf(info)) {
-                if (node != null && node.x == coords[0] && node.y == coords[1]) {
-                    found = true;
-                    break;
-                }
-            }
-            if (!found) {
-                return false;
-            }
-        }
-        return true;
-    }
-
-    /** Marker keys look like "act:x:y"; returns {x, y} or null. */
-    private static int[] parseNodeKey(String key) {
-        if (key == null) {
-            return null;
-        }
-        String[] parts = key.split(":");
-        if (parts.length != 3) {
-            return null;
-        }
-        try {
-            return new int[]{Integer.parseInt(parts[1]), Integer.parseInt(parts[2])};
-        } catch (NumberFormatException e) {
-            return null;
-        }
-    }
-
     /** Best routes first, duplicates removed, at most VISIBLE_ROUTES entries. */
-    private static List<PathInfo> bestRoutes(List<PathInfo> filtered) {
-        List<PathInfo> sorted = new ArrayList<>(filtered);
+    private static List<PathInfo> bestRoutes(List<PathInfo> all) {
+        List<PathInfo> sorted = new ArrayList<>(all);
         Collections.sort(sorted);
 
         List<PathInfo> unique = new ArrayList<>();

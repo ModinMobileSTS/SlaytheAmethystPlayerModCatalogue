@@ -25,7 +25,20 @@ public class NavSysFixInit implements PostInitializeSubscriber {
 
     public NavSysFixInit() {
         ConfigRuntime.load();
+        clearLeftoverMarkers();
         BaseMod.subscribe(this);
+    }
+
+    /**
+     * NavSys' node markers are no longer used, but older sessions may have left
+     * entries behind; those were drawn as solid blue icons on the map.
+     */
+    private static void clearLeftoverMarkers() {
+        try {
+            com.dsaita.NavSys.NavSysMarkers.getMarkedNodes().clear();
+            com.navsysfix.Reflect.saveMarkers();
+        } catch (Throwable ignored) {
+        }
     }
 
     public static void initialize() {
