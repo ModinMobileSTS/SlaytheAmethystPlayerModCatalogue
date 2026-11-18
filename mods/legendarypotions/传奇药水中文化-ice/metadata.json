@@ -1,8 +1,8 @@
 {
   "schemaVersion": 1,
   "name": "传奇药水中文化",
-  "description": "为 Legendary Potions 添加完整简体中文本地化，覆盖药水、遗物、关键词及模组附带的字符串资源，并修正硬编码的药水名称与 Slow 提示文本。",
-  "version": "1.0.0",
+  "description": "汉化 Legendary Potions 的药水、遗物、模组徽章和附带文本；调整红色野兽雕像提示排版及添水译名，并修正药水卡牌译名。",
+  "version": "1.0.2",
   "author": {
     "name": "ice",
     "email": "admin@example.com"
