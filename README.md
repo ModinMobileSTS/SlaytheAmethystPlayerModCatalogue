@@ -419,6 +419,15 @@ Card Forge 中文汉化，并重写雷神之锤的选卡界面：固定格位消
 - **适用版本**：`6.0.20`
 - **下载**：[下载](https://raw.githubusercontent.com/ModinMobileSTS/SlaytheAmethystPlayerModCatalogue/main/mods/downfall/%E5%B4%A9%E5%9D%A0%E9%81%97%E7%89%A9%E8%A1%A5%E4%B8%81-dtl/amethyst.ai.patch.downfall.patch-1794932358720-f7f767a3.jar)
 
+### 联机崩坠地图、崩坠模式不生效修复
+
+修复联机大厅勾选“崩坠地图”后看不翻图/不进入崩坠流程的问题，并修复翻转地图的图标错位。1\) 大厅设置（勾选框或自定义模组“崩坠”）在开局与地图生成前同步到 Downfall 的 evilMode，绕过被汉化补丁替换掉的大厅出发按钮；2\) 地图生成结束时检测联机模组的节点抖动同步是否覆盖了 Downfall 给节点加的 400\*scale 上移量，若被覆盖则补回并重建地图连线点阵，使火堆不再压住底部 Boss 图标或溢出地图底边，联机崩坠地图与单机崩坠模式一致。
+
+- **补丁版本**：`1.1.0`
+- **作者**：dtl
+- **适用版本**：`6.0.20`
+- **下载**：[下载](https://raw.githubusercontent.com/ModinMobileSTS/SlaytheAmethystPlayerModCatalogue/main/mods/downfall/%E8%81%94%E6%9C%BA%E5%B4%A9%E5%9D%A0%E5%9C%B0%E5%9B%BE%E3%80%81%E5%B4%A9%E5%9D%A0%E6%A8%A1%E5%BC%8F%E4%B8%8D%E7%94%9F%E6%95%88%E4%BF%AE%E5%A4%8D-dtl/amethyst.ai.patch.downfall.patch-1795097180731-e8e73565.jar)
+
 ---
 
 ## estaliaspire1
