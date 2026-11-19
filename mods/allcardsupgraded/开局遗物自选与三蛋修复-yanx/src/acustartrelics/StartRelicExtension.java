@@ -43,16 +43,17 @@ public class StartRelicExtension implements PostInitializeSubscriber, PostDungeo
         StartRelicSettings.init();
         try {
             ModPanel panel = new ModPanel();
-            panel.addUIElement(new ModLabel(Texts.TITLE, 330f, 852f, Color.WHITE, panel, me -> {
+            panel.addUIElement(new ModLabel(Texts.TITLE, PanelLayout.x(50f), PanelLayout.y(678f), Color.WHITE, panel, me -> {
             }));
-            panel.addUIElement(new ModLabel(Texts.HINT, 330f, 818f, Color.LIGHT_GRAY, panel, me -> {
+            panel.addUIElement(new ModLabel(Texts.HINT, PanelLayout.x(50f), PanelLayout.y(636f), Color.LIGHT_GRAY, panel, me -> {
             }));
             panel.addUIElement(new RelicPickerElement(panel));
 
-            ModToggleButton toggle = new ModToggleButton(330f, 240f, StartRelicSettings.isEnabled(), true, panel,
+            ModToggleButton toggle = new ModToggleButton(PanelLayout.x(1130f), PanelLayout.y(662f),
+                    StartRelicSettings.isEnabled(), true, panel,
                     button -> StartRelicSettings.setEnabled(button.enabled));
             panel.addUIElement(toggle);
-            panel.addUIElement(new ModLabel(Texts.TOGGLE, 396f, 252f, Color.WHITE, panel, me -> {
+            panel.addUIElement(new ModLabel(Texts.TOGGLE, PanelLayout.x(1186f), PanelLayout.y(674f), Color.WHITE, panel, me -> {
             }));
 
             Texture badge = ImageMaster.loadImage(BADGE_IMG);

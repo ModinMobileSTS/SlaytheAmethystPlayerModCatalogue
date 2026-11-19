@@ -17,31 +17,40 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * mod 设置面板里的遗物图标网格：上方一排稀有度筛选，中间 12 列 × 4 行图标，
- * 下方翻页/清空，点击切换选中。所有坐标都是「设计坐标」，渲染与判定时乘 Settings.scale，
- * 与 BaseMod 自带控件保持一致。
+ * mod 设置面板里的遗物图标网格。位置全部相对 ModPanel 的背景图（见 PanelLayout），
+ * 因此任何分辨率/缩放下都落在面板内框里。
+ * 布局（面板图片内像素，y 向上）：
+ * 标题/开关 678、提示 636、筛选页签 570、图标 14 列 × 4 行（82 起，间距 88，y 500/408/316/224）、
+ * 悬停名 148、已选数量 112、翻页/清空按钮 46。
  */
 public class RelicPickerElement implements IUIElement {
 
-    private static final int COLS = 12;
-    private static final int PAGE_SIZE = COLS * 4;
+    private static final int COLS = 14;
+    private static final int ROWS = 4;
+    private static final int PAGE_SIZE = COLS * ROWS;
 
-    private static final float ICON = 70f;
-    private static final float SPACING = 78f;
-    private static final float GRID_LEFT = 340f;
-    private static final float GRID_TOP = 712f;
+    private static final float ICON = 84f;
+    private static final float SPACING = 88f;
+    private static final float GRID_X = 50f + ICON / 2f;
+    private static final float GRID_TOP = 500f;
+    private static final float GRID_ROW_STEP = 92f;
 
-    private static final float FILTER_Y = 760f;
-    private static final float FILTER_W = 92f;
-    private static final float FILTER_H = 44f;
-    private static final float FILTER_GAP = 4f;
+    private static final float FILTER_X = 50f;
+    private static final float FILTER_Y = 570f;
+    private static final float FILTER_W = 110f;
+    private static final float FILTER_H = 46f;
+    private static final float FILTER_STEP = 118f;
 
-    private static final float BTN_W = 120f;
+    private static final float BTN_W = 150f;
     private static final float BTN_H = 50f;
-    private static final float BTN_Y = 372f;
-    private static final float PREV_X = 330f;
-    private static final float NEXT_X = 470f;
-    private static final float CLEAR_X = 610f;
+    private static final float BTN_Y = 46f;
+    private static final float PREV_X = 50f;
+    private static final float NEXT_X = 220f;
+    private static final float CLEAR_X = 390f;
+    private static final float PAGE_X = 560f;
+
+    private static final float COUNT_Y = 112f;
+    private static final float HOVER_Y = 148f;
 
     private static final int BTN_PREV = 0;
     private static final int BTN_NEXT = 1;
@@ -66,9 +75,10 @@ public class RelicPickerElement implements IUIElement {
     private final List<AbstractRelic> filtered = new ArrayList<AbstractRelic>();
     private final List<AbstractRelic> pageRelics = new ArrayList<AbstractRelic>();
 
-    private final Color selectedFill = new Color(0.26f, 0.92f, 0.42f, 0.26f);
+    private final Color selectedFill = new Color(0.26f, 0.92f, 0.42f, 0.22f);
     private final Color selectedBorder = new Color(0.36f, 1f, 0.5f, 0.95f);
     private final Color hoverFill = new Color(1f, 1f, 1f, 0.16f);
+    private final Color idlePlate = new Color(0.10f, 0.12f, 0.16f, 0.55f);
     private final Color buttonColor = new Color(0.13f, 0.15f, 0.19f, 0.90f);
     private final Color buttonActive = new Color(0.24f, 0.44f, 0.30f, 0.95f);
 
@@ -80,11 +90,11 @@ public class RelicPickerElement implements IUIElement {
     private int pressedButton = -1;
 
     public RelicPickerElement(ModPanel panel) {
-        pageLabel = new ModLabel("", 750f, 388f, Color.LIGHT_GRAY, panel, me -> {
+        pageLabel = new ModLabel("", PanelLayout.x(PAGE_X), PanelLayout.y(BTN_Y + 16f), Color.LIGHT_GRAY, panel, me -> {
         });
-        countLabel = new ModLabel("", 330f, 336f, Color.LIGHT_GRAY, panel, me -> {
+        countLabel = new ModLabel("", PanelLayout.x(FILTER_X), PanelLayout.y(COUNT_Y), Color.LIGHT_GRAY, panel, me -> {
         });
-        hoverLabel = new ModLabel("", 330f, 300f, Color.GOLD, panel, me -> {
+        hoverLabel = new ModLabel("", PanelLayout.x(FILTER_X), PanelLayout.y(HOVER_Y), Color.GOLD, panel, me -> {
         });
         panel.addUIElement(pageLabel);
         panel.addUIElement(countLabel);
@@ -127,21 +137,31 @@ public class RelicPickerElement implements IUIElement {
         hoverLabel.text = hovered == null ? "" : hovered.name;
     }
 
-    private static float cellX(int index) {
-        return GRID_LEFT + (index % COLS) * SPACING;
+    private static float designX(float imgX) {
+        return PanelLayout.x(imgX);
     }
 
-    private static float cellY(int index) {
-        return GRID_TOP - (index / COLS) * SPACING;
+    private static float designY(float imgY) {
+        return PanelLayout.y(imgY);
     }
 
-    private static float filterX(int index) {
-        return 330f + index * (FILTER_W + FILTER_GAP);
+    private static float cellImgX(int index) {
+        return GRID_X + (index % COLS) * SPACING;
     }
 
-    private static boolean inRect(float mouseX, float mouseY, float x, float y, float w, float h) {
+    private static float cellImgY(int index) {
+        return GRID_TOP - (index / COLS) * GRID_ROW_STEP;
+    }
+
+    private static float filterImgX(int index) {
+        return FILTER_X + index * FILTER_STEP;
+    }
+
+    private static boolean inRect(float mouseX, float mouseY, float imgX, float imgY, float w, float h) {
         float s = Settings.scale;
-        return mouseX >= x * s && mouseX <= (x + w) * s && mouseY >= y * s && mouseY <= (y + h) * s;
+        float left = designX(imgX) * s;
+        float bottom = designY(imgY) * s;
+        return mouseX >= left && mouseX <= left + w * s && mouseY >= bottom && mouseY <= bottom + h * s;
     }
 
     @Override
@@ -151,7 +171,7 @@ public class RelicPickerElement implements IUIElement {
 
         int hoverEntry = -1;
         for (int i = 0; i < pageRelics.size(); i++) {
-            if (inRect(mx, my, cellX(i) - ICON / 2f, cellY(i) - ICON / 2f, ICON, ICON)) {
+            if (inRect(mx, my, cellImgX(i) - ICON / 2f, cellImgY(i) - ICON / 2f, ICON, ICON)) {
                 hoverEntry = i;
                 break;
             }
@@ -160,7 +180,7 @@ public class RelicPickerElement implements IUIElement {
 
         int hoverButton = -1;
         for (int i = 0; i < Texts.FILTERS.length; i++) {
-            if (inRect(mx, my, filterX(i), FILTER_Y, FILTER_W, FILTER_H)) {
+            if (inRect(mx, my, filterImgX(i), FILTER_Y, FILTER_W, FILTER_H)) {
                 hoverButton = BTN_FILTER_BASE + i;
                 break;
             }
@@ -236,18 +256,20 @@ public class RelicPickerElement implements IUIElement {
 
         for (int i = 0; i < Texts.FILTERS.length; i++) {
             boolean active = i == filter;
-            drawPlate(sb, filterX(i), FILTER_Y, FILTER_W, FILTER_H, active ? buttonActive : buttonColor);
+            drawPlate(sb, filterImgX(i), FILTER_Y, FILTER_W, FILTER_H, active ? buttonActive : buttonColor);
             FontHelper.renderFontCentered(sb, FontHelper.buttonLabelFont, Texts.FILTERS[i],
-                    (filterX(i) + FILTER_W / 2f) * s, (FILTER_Y + FILTER_H / 2f) * s,
+                    (designX(filterImgX(i)) + FILTER_W / 2f) * s, (designY(FILTER_Y) + FILTER_H / 2f) * s,
                     active ? Color.WHITE : Color.LIGHT_GRAY);
         }
 
         for (int i = 0; i < pageRelics.size(); i++) {
             AbstractRelic relic = pageRelics.get(i);
-            float x = (cellX(i) - ICON / 2f) * s;
-            float y = (cellY(i) - ICON / 2f) * s;
-
+            float x = (designX(cellImgX(i)) - ICON / 2f) * s;
+            float y = (designY(cellImgY(i)) - ICON / 2f) * s;
             boolean selected = StartRelicSettings.isSelected(relic.relicId);
+
+            sb.setColor(idlePlate);
+            sb.draw(ImageMaster.WHITE_SQUARE_IMG, x, y, size, size);
             if (selected) {
                 sb.setColor(selectedFill);
                 sb.draw(ImageMaster.WHITE_SQUARE_IMG, x, y, size, size);
@@ -273,17 +295,17 @@ public class RelicPickerElement implements IUIElement {
         sb.setColor(Color.WHITE);
     }
 
-    private void drawPlate(SpriteBatch sb, float x, float y, float w, float h, Color color) {
+    private void drawPlate(SpriteBatch sb, float imgX, float imgY, float w, float h, Color color) {
         float s = Settings.scale;
         sb.setColor(color);
-        sb.draw(ImageMaster.WHITE_SQUARE_IMG, x * s, y * s, w * s, h * s);
+        sb.draw(ImageMaster.WHITE_SQUARE_IMG, designX(imgX) * s, designY(imgY) * s, w * s, h * s);
     }
 
-    private void drawButton(SpriteBatch sb, float x, String text) {
+    private void drawButton(SpriteBatch sb, float imgX, String text) {
         float s = Settings.scale;
-        drawPlate(sb, x, BTN_Y, BTN_W, BTN_H, buttonColor);
+        drawPlate(sb, imgX, BTN_Y, BTN_W, BTN_H, buttonColor);
         FontHelper.renderFontCentered(sb, FontHelper.buttonLabelFont, text,
-                (x + BTN_W / 2f) * s, (BTN_Y + BTN_H / 2f) * s, Color.WHITE);
+                (designX(imgX) + BTN_W / 2f) * s, (designY(BTN_Y) + BTN_H / 2f) * s, Color.WHITE);
     }
 
     private void drawBorder(SpriteBatch sb, float x, float y, float size, Color color, float thickness) {
