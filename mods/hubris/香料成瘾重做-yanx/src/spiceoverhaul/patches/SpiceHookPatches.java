@@ -44,7 +44,7 @@ public class SpiceHookPatches {
             if (hard) {
                 SpiceData.gainLayer();
             }
-            SpiceData.addRecovery(hard ? 2 : 1);
+            SpiceData.gainCombatMaxHp(hard);
         }
     }
 

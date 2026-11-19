@@ -6,10 +6,10 @@ import com.evacipated.cardcrawl.modthespire.lib.SpireInitializer;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonPrimitive;
 
-/** Persists the Spice recovery counter inside the run save file. */
+/** Persists the "already bottomed out once" flag inside the run save file. */
 @SpireInitializer
 public class SpiceSave implements CustomSavableRaw {
-    public static final String KEY = "spiceReworkRecovery";
+    public static final String KEY = "spiceReworkBottomed";
 
     private static final SpiceSave INSTANCE = new SpiceSave();
 
@@ -19,18 +19,18 @@ public class SpiceSave implements CustomSavableRaw {
 
     @Override
     public JsonElement onSaveRaw() {
-        return new JsonPrimitive(SpiceData.recoveryCharge);
+        return new JsonPrimitive(SpiceData.bottomedOnce);
     }
 
     @Override
     public void onLoadRaw(JsonElement json) {
-        int value = 0;
+        boolean value = false;
         try {
             if (json != null && json.isJsonPrimitive()) {
-                value = json.getAsInt();
+                value = json.getAsBoolean();
             }
         } catch (Throwable ignored) {
         }
-        SpiceData.recoveryCharge = Math.max(0, Math.min(SpiceData.RECOVERY_NEED, value));
+        SpiceData.bottomedOnce = value;
     }
 }

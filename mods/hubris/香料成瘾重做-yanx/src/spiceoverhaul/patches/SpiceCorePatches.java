@@ -1,13 +1,20 @@
 package spiceoverhaul.patches;
 
 import com.evacipated.cardcrawl.mod.hubris.relics.Spice;
+import com.evacipated.cardcrawl.mod.stslib.actions.tempHp.AddTemporaryHPAction;
 import com.evacipated.cardcrawl.modthespire.lib.SpirePatch2;
+import com.evacipated.cardcrawl.modthespire.lib.SpirePostfixPatch;
 import com.evacipated.cardcrawl.modthespire.lib.SpirePrefixPatch;
 import com.evacipated.cardcrawl.modthespire.lib.SpireReturn;
 import com.megacrit.cardcrawl.actions.common.ApplyPowerAction;
+import com.megacrit.cardcrawl.actions.common.MakeTempCardInDrawPileAction;
+import com.megacrit.cardcrawl.cards.AbstractCard;
+import com.megacrit.cardcrawl.cards.curses.Necronomicurse;
 import com.megacrit.cardcrawl.characters.AbstractPlayer;
 import com.megacrit.cardcrawl.dungeons.AbstractDungeon;
 import com.megacrit.cardcrawl.powers.DexterityPower;
+import com.megacrit.cardcrawl.powers.MetallicizePower;
+import com.megacrit.cardcrawl.powers.RegenPower;
 import com.megacrit.cardcrawl.powers.StrengthPower;
 import spiceoverhaul.SpiceData;
 
@@ -49,16 +56,33 @@ public class SpiceCorePatches {
             if (p == null || stacks < 1) {
                 return SpireReturn.Return();
             }
+            SpiceData.BattleStats stats = SpiceData.battleStats(stacks);
             __instance.flash();
-            int str = SpiceData.strength(stacks);
-            int dex = SpiceData.dexterity(stacks);
-            if (str > 0) {
+            if (stats.strength > 0) {
                 AbstractDungeon.actionManager.addToBottom(new ApplyPowerAction(
-                        p, p, new StrengthPower(p, str), str));
+                        p, p, new StrengthPower(p, stats.strength), stats.strength));
             }
-            if (dex > 0) {
+            if (stats.dexterity > 0) {
                 AbstractDungeon.actionManager.addToBottom(new ApplyPowerAction(
-                        p, p, new DexterityPower(p, dex), dex));
+                        p, p, new DexterityPower(p, stats.dexterity), stats.dexterity));
+            }
+            if (stats.metallicize > 0) {
+                AbstractDungeon.actionManager.addToBottom(new ApplyPowerAction(
+                        p, p, new MetallicizePower(p, stats.metallicize), stats.metallicize));
+            }
+            if (stats.regen > 0) {
+                AbstractDungeon.actionManager.addToBottom(new ApplyPowerAction(
+                        p, p, new RegenPower(p, stats.regen), stats.regen));
+            }
+            if (stats.tempHp > 0) {
+                AbstractDungeon.actionManager.addToBottom(new AddTemporaryHPAction(p, p, stats.tempHp));
+            }
+            if (SpiceData.curseActive()) {
+                AbstractCard curse = new Necronomicurse();
+                curse.isInnate = true;
+                curse.selfRetain = true;
+                AbstractDungeon.actionManager.addToBottom(
+                        new MakeTempCardInDrawPileAction(curse, 1, true, true));
             }
             return SpireReturn.Return();
         }
@@ -69,6 +93,18 @@ public class SpiceCorePatches {
         @SpirePrefixPatch
         public static SpireReturn<String> Prefix(Spice __instance) {
             return SpireReturn.Return(SpiceData.description(__instance));
+        }
+    }
+
+    /**
+     * Once max HP has bottomed out the parent mod must not turn relic rewards
+     * into Spice any more; only campfire crafting can add stacks then.
+     */
+    @SpirePatch2(clz = Spice.class, method = "replaceWithSpice", paramtypez = {})
+    public static class NoSpiceRewardsAtFloor {
+        @SpirePostfixPatch
+        public static boolean Postfix(boolean __result) {
+            return SpiceData.normalSpiceBlocked() ? false : __result;
         }
     }
 }
