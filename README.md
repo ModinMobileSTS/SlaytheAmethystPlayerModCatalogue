@@ -423,6 +423,15 @@ Card Forge 中文汉化，并重写雷神之锤的选卡界面：固定格位消
 - **适用版本**：`6.0.20`
 - **下载**：[下载](https://raw.githubusercontent.com/ModinMobileSTS/SlaytheAmethystPlayerModCatalogue/main/mods/downfall/%E5%B4%A9%E5%9D%A0%E5%8F%B2%E8%8E%B1%E5%A7%86%E5%87%9D%E6%BB%9E%E8%83%BD%E9%87%8F%E7%90%83%E7%AD%89%E6%A0%8F%E4%BD%8Dbug%E4%BF%AE%E5%A4%8D-dtl/amethyst.ai.patch.downfall.patch-1794848217678-de4538b6.jar)
 
+### 崩坠联机兼容修复
+
+修复联机游玩崩坠（Downfall）时的三个问题：1\) 大厅勾选“崩坠地图”后地图不翻转、不进入崩坠流程：在开局与地图生成前把大厅设置（勾选框或自定义模组“崩坠”）同步到 Downfall 的 evilMode，绕过被汉化补丁替换掉的大厅出发按钮；2\) 翻转地图节点错位：地图生成结束时检测联机模组的节点抖动同步是否覆盖了 Downfall 给节点加的 400\*scale 上移量，被覆盖则补回并重建连线点阵，避免火堆压住底部 Boss 图标或溢出地图底边；3\) 逃跑商人血量错乱与心脏商店看不到队友：商人改用“剩余血量比例”在两个客户端间保持一致，保留崩坠“残血继承”的反制玩法，避免出现 400/800、0 血开打；商店与篝火中把“同一地图格子、阶段编号相差 1”的队友编号对齐到本地（坐标与幕一律不改、战斗不生效），使队友重新绘制且交易名单恢复。
+
+- **补丁版本**：`1.3.0`
+- **作者**：dtl
+- **适用版本**：`6.0.20`
+- **下载**：[下载](https://raw.githubusercontent.com/ModinMobileSTS/SlaytheAmethystPlayerModCatalogue/main/mods/downfall/%E5%B4%A9%E5%9D%A0%E8%81%94%E6%9C%BA%E5%85%BC%E5%AE%B9%E4%BF%AE%E5%A4%8D-dtl/amethyst.ai.patch.downfall.patch-1795097180731-e8e73565.jar)
+
 ### 崩坠遗物补丁
 
 为 Downfall 新增附属遗物「巫师长袍」：稀有品阶，每回合开始时获得 3 点崩坠原生「法力」（地精法师的 Gremlin:Wiz 状态，与法师杖、巫师帽、法力词条联动），在遗物自身回合开始阶段给予，第一回合也会触发。以共享方式注册，所有角色可携带，方便联机开局遗物配置；带中英文本地化，贴图沿用崩坠已有的斗篷遗物。
@@ -431,15 +440,6 @@ Card Forge 中文汉化，并重写雷神之锤的选卡界面：固定格位消
 - **作者**：dtl
 - **适用版本**：`6.0.20`
 - **下载**：[下载](https://raw.githubusercontent.com/ModinMobileSTS/SlaytheAmethystPlayerModCatalogue/main/mods/downfall/%E5%B4%A9%E5%9D%A0%E9%81%97%E7%89%A9%E8%A1%A5%E4%B8%81-dtl/amethyst.ai.patch.downfall.patch-1794932358720-f7f767a3.jar)
-
-### 联机崩坠地图、崩坠模式不生效修复
-
-修复联机游玩崩坠（Downfall）时的三个问题：1\) 大厅勾选“崩坠地图”后地图不翻转、不进入崩坠流程：在开局与地图生成前把大厅设置（勾选框或自定义模组“崩坠”）同步到 Downfall 的 evilMode，绕过被汉化补丁替换掉的大厅出发按钮；2\) 翻转地图节点错位：地图生成结束时检测联机模组的节点抖动同步是否覆盖了 Downfall 给节点加的 400\*scale 上移量，被覆盖则补回并重建连线点阵，避免火堆压住底部 Boss 图标或溢出地图底边；3\) 逃跑商人血量错乱与心脏商店看不到队友：商人改用“剩余血量比例”在两个客户端间保持一致，保留崩坠“残血继承”的反制玩法，避免出现 400/800、0 血开打；商店与篝火中把“同一地图格子、阶段编号相差 1”的队友编号对齐到本地（坐标与幕一律不改、战斗不生效），使队友重新绘制且交易名单恢复。
-
-- **补丁版本**：`1.3.0`
-- **作者**：dtl
-- **适用版本**：`6.0.20`
-- **下载**：[下载](https://raw.githubusercontent.com/ModinMobileSTS/SlaytheAmethystPlayerModCatalogue/main/mods/downfall/%E8%81%94%E6%9C%BA%E5%B4%A9%E5%9D%A0%E5%9C%B0%E5%9B%BE%E3%80%81%E5%B4%A9%E5%9D%A0%E6%A8%A1%E5%BC%8F%E4%B8%8D%E7%94%9F%E6%95%88%E4%BF%AE%E5%A4%8D-dtl/amethyst.ai.patch.downfall.patch-1795097180731-e8e73565.jar)
 
 ---
 
