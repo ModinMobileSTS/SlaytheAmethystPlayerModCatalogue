@@ -242,9 +242,9 @@ The Noh Dancer（Kokoro）模组自带 zhs 翻译不完整，仍有英文残留�
 
 ### 开局遗物自选与三蛋修复
 
-在 mod 设置面板里自选开局遗物：内容按 BaseMod 面板背景的绘制公式重新对齐（运行时换算面板矩形，内缩 40px 布局），14 列 × 4 行图标网格、8 个稀有度筛选页签、翻页与清空、右上角启用开关，配置写入 startRelics\.ini；开局第 0 层发放所选遗物并从遗物池移除。同时修复父 mod 三蛋逻辑：跳过 grantEggsAndUpgradeStartingDeck，改为只在开局发放、hasRelic 去重、三蛋从全部 5 个遗物池移除。
+在 mod 设置面板里自选开局遗物：面板内先自绘一层深色底板（含描边与标题分隔线），标题/稀有度筛选页签/12 列 × 4 行图标网格/翻页清空/状态文字都画在这层底板上，遗物图案按格子 1\.4 倍绘制去掉贴图透明留白；配置写入 startRelics\.ini，开局第 0 层发放所选遗物并从遗物池移除。同时修复父 mod 三蛋逻辑：跳过 grantEggsAndUpgradeStartingDeck，改为只在开局发放、hasRelic 去重、三蛋从全部 5 个遗物池移除。
 
-- **补丁版本**：`0.4.0`
+- **补丁版本**：`0.6.0`
 - **作者**：yanx
 - **适用版本**：`1.0.5`
 - **下载**：[下载](https://raw.githubusercontent.com/ModinMobileSTS/SlaytheAmethystPlayerModCatalogue/main/mods/allcardsupgraded/%E5%BC%80%E5%B1%80%E9%81%97%E7%89%A9%E8%87%AA%E9%80%89%E4%B8%8E%E4%B8%89%E8%9B%8B%E4%BF%AE%E5%A4%8D-yanx/amethyst.ai.patch.allcardsupgraded.patch-1794761964489-b1688790.jar)
