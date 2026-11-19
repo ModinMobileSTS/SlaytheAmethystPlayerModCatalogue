@@ -51,6 +51,19 @@
 
 ---
 
+## Goldenglow
+
+### 浮标与卡牌数值调整
+
+浮标与卡牌调整：浮标充能球被动（伤害/格挡）3、激发6；锁定攻击升级版改为1层跟踪锁定并给予2个浮标；心电感应费用1、伤害15→5（升级后8）；浮标回收费用2→1（升级后0）；信标的愤怒重做为费用2（升级后1）：激发所有浮标，然后用浮标填满玩家的空充能球栏位，并同步改写卡面说明（中/英/韩）。
+
+- **补丁版本**：`1.3.0`
+- **作者**：暴龙
+- **适用版本**：`1.1.1`
+- **下载**：[下载](https://raw.githubusercontent.com/ModinMobileSTS/SlaytheAmethystPlayerModCatalogue/main/mods/Goldenglow/%E6%B5%AE%E6%A0%87%E4%B8%8E%E5%8D%A1%E7%89%8C%E6%95%B0%E5%80%BC%E8%B0%83%E6%95%B4-%E6%9A%B4%E9%BE%99/amethyst.ai.patch.goldenglow.patch-1795056314634-683fc973.jar)
+
+---
+
 ## HighwaymanMod
 
 ### Highwayman 简体中文汉化
