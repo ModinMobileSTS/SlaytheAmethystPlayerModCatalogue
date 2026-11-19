@@ -1,0 +1,18 @@
+{
+  "schemaVersion": 1,
+  "name": "联机崩坠地图、崩坠模式不生效修复",
+  "description": "修复联机大厅勾选“崩坠地图”后看不翻图/不进入崩坠流程的问题，并修复翻转地图的图标错位。1) 大厅设置（勾选框或自定义模组“崩坠”）在开局与地图生成前同步到 Downfall 的 evilMode，绕过被汉化补丁替换掉的大厅出发按钮；2) 地图生成结束时检测联机模组的节点抖动同步是否覆盖了 Downfall 给节点加的 400*scale 上移量，若被覆盖则补回并重建地图连线点阵，使火堆不再压住底部 Boss 图标或溢出地图底边，联机崩坠地图与单机崩坠模式一致。",
+  "version": "1.1.0",
+  "author": {
+    "name": "dtl",
+    "email": "2652226316@qq.com"
+  },
+  "target": {
+    "modId": "downfall",
+    "workshopId": "1610056683",
+    "versions": [
+      "6.0.20"
+    ]
+  },
+  "jar": "amethyst.ai.patch.downfall.patch-1795097180731-e8e73565.jar"
+}
