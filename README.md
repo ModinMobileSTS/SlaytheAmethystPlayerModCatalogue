@@ -186,6 +186,19 @@ Replay The Spire 自带中文已基本完整，本补丁补齐仍显示英文的
 
 ---
 
+## Stellive
+
+### 帕斯泰尔中文补丁
+
+简体中文汉化帕斯泰尔的卡牌、角色、遗物、状态、事件与教程；补译重绘原版牌、卡牌标签及署名、教程按钮和选牌提示，并翻译运行时模组资料。
+
+- **补丁版本**：`1.4.6`
+- **作者**：ice
+- **适用版本**：`1.0.6`
+- **下载**：[下载](https://raw.githubusercontent.com/ModinMobileSTS/SlaytheAmethystPlayerModCatalogue/main/mods/Stellive/%E5%B8%95%E6%96%AF%E6%B3%B0%E5%B0%94%E4%B8%AD%E6%96%87%E8%A1%A5%E4%B8%81-ice/amethyst.ai.patch.stellive.patch-1794891538184-6ccfe961.jar)
+
+---
+
 ## TheNecrobinder
 
 ### 亡灵契约师汉化修复
@@ -673,6 +686,19 @@ JesterMod 的简体中文汉化。修正卡牌与遗物文本渲染：小丑专�
 - **作者**：apricityx
 - **适用版本**：`0.0.6`
 - **下载**：[下载](https://raw.githubusercontent.com/ModinMobileSTS/SlaytheAmethystPlayerModCatalogue/main/mods/simplemap/Simple%20Map%20%E5%B4%A9%E5%9D%A0%E5%9C%B0%E5%9B%BE%E9%80%82%E9%85%8D-apricityx/amethyst.ai.patch.simplemap.patch-1794147939680-fdaa0bbe.jar)
+
+---
+
+## skulmod
+
+### 小骨中文补丁
+
+补全 Skul 模组的简体中文内容，修正卡牌动态增强说明，并汉化小骨介绍与其设置面板的徽章提示。
+
+- **补丁版本**：`1.0.5`
+- **作者**：ice
+- **适用版本**：`2.2.1`
+- **下载**：[下载](https://raw.githubusercontent.com/ModinMobileSTS/SlaytheAmethystPlayerModCatalogue/main/mods/skulmod/%E5%B0%8F%E9%AA%A8%E4%B8%AD%E6%96%87%E8%A1%A5%E4%B8%81-ice/amethyst.ai.patch.skulmod.patch-1795016207747-aabb8a1a.jar)
 
 ---
 
