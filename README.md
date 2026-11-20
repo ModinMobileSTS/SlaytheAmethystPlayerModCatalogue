@@ -583,6 +583,19 @@ JesterMod 的简体中文汉化。修正卡牌与遗物文本渲染：小丑专�
 
 ---
 
+## natsu
+
+### 纳苏：未被遗忘者中文
+
+汉化卡牌、角色、遗物、力量与机制关键词；简体中文选人界面和百科大全中的角色
+
+- **补丁版本**：`0.4.6`
+- **作者**：ice
+- **适用版本**：`0.2.8`
+- **下载**：[下载](https://raw.githubusercontent.com/ModinMobileSTS/SlaytheAmethystPlayerModCatalogue/main/mods/natsu/%E7%BA%B3%E8%8B%8F%EF%BC%9A%E6%9C%AA%E8%A2%AB%E9%81%97%E5%BF%98%E8%80%85%E4%B8%AD%E6%96%87-ice/amethyst.ai.patch.natsu.patch-1794898105193-90fcde20.jar)
+
+---
+
 ## ninja
 
 ### 欧内死手特效
