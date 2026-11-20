@@ -1,0 +1,18 @@
+{
+  "schemaVersion": 1,
+  "name": "小骨中文补丁",
+  "description": "补全 Skul 模组的简体中文内容，修正卡牌动态增强说明，并汉化小骨介绍与其设置面板的徽章提示。",
+  "version": "1.0.5",
+  "author": {
+    "name": "ice",
+    "email": "admin@example.com"
+  },
+  "target": {
+    "modId": "skulmod",
+    "workshopId": "3025811995",
+    "versions": [
+      "2.2.1"
+    ]
+  },
+  "jar": "amethyst.ai.patch.skulmod.patch-1795016207747-aabb8a1a.jar"
+}
