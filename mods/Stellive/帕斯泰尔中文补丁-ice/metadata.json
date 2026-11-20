@@ -1,0 +1,18 @@
+{
+  "schemaVersion": 1,
+  "name": "帕斯泰尔中文补丁",
+  "description": "简体中文汉化帕斯泰尔的卡牌、角色、遗物、状态、事件与教程；补译重绘原版牌、卡牌标签及署名、教程按钮和选牌提示，并翻译运行时模组资料。",
+  "version": "1.4.6",
+  "author": {
+    "name": "ice",
+    "email": "admin@example.com"
+  },
+  "target": {
+    "modId": "Stellive",
+    "workshopId": "3362099228",
+    "versions": [
+      "1.0.6"
+    ]
+  },
+  "jar": "amethyst.ai.patch.stellive.patch-1794891538184-6ccfe961.jar"
+}
