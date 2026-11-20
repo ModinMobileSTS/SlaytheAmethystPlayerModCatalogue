@@ -1,0 +1,18 @@
+{
+  "schemaVersion": 1,
+  "name": "纳苏：未被遗忘者中文",
+  "description": "汉化卡牌、角色、遗物、力量与机制关键词；简体中文选人界面和百科大全中的角色",
+  "version": "0.4.6",
+  "author": {
+    "name": "ice",
+    "email": "admin@example.com"
+  },
+  "target": {
+    "modId": "natsu",
+    "workshopId": "3839955197",
+    "versions": [
+      "0.2.8"
+    ]
+  },
+  "jar": "amethyst.ai.patch.natsu.patch-1794898105193-90fcde20.jar"
+}
