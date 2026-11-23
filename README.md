@@ -51,6 +51,19 @@
 
 ---
 
+## Gensokyo
+
+### 东方Project联机兼容修复
+
+修复 Gensokyo 与 Together in Spire 联机时的兼容性问题：对怪物/玩家遍历、随机目标与渲染的 Gensokyo 钩子安全降级；为符卡站位、爪牙死亡及格挡遍历钩子增加联机空值保护；并按游戏实际屏幕缩放比例修正联机同步重建怪物的坐标，避免非 16:9 或移动端缩放下战斗怪物整体错位。单人模式行为不变。
+
+- **补丁版本**：`0.3.0`
+- **作者**：T3Getty
+- **适用版本**：`4.0.0`
+- **下载**：[下载](https://raw.githubusercontent.com/ModinMobileSTS/SlaytheAmethystPlayerModCatalogue/main/mods/Gensokyo/%E4%B8%9C%E6%96%B9Project%E8%81%94%E6%9C%BA%E5%85%BC%E5%AE%B9%E4%BF%AE%E5%A4%8D-T3Getty/amethyst.ai.patch.gensokyo.patch-1795412480614-c9c1d62c.jar)
+
+---
+
 ## Goldenglow
 
 ### 浮标与卡牌数值调整
