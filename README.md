@@ -90,6 +90,19 @@
 
 ---
 
+## KimMoca
+
+### 金莫卡汉化
+
+简体中文汉化 Slay the KimMoca：覆盖卡牌、遗物、能力、事件、角色、球体、药水和关键词文本，并修正运行时硬编码韩文片段、徽章提示、设置开关与选牌提示
+
+- **补丁版本**：`0.1.6`
+- **作者**：ice
+- **适用版本**：`v1.0.2`
+- **下载**：[下载](https://raw.githubusercontent.com/ModinMobileSTS/SlaytheAmethystPlayerModCatalogue/main/mods/KimMoca/%E9%87%91%E8%8E%AB%E5%8D%A1%E6%B1%89%E5%8C%96-ice/amethyst.ai.patch.kimmoca.patch-1795158093334-aeb54ef9.jar)
+
+---
+
 ## PickAllBossRelics
 
 ### Pick All Boss Relics 修复
