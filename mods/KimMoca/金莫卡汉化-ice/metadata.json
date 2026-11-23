@@ -1,0 +1,18 @@
+{
+  "schemaVersion": 1,
+  "name": "金莫卡汉化",
+  "description": "简体中文汉化 Slay the KimMoca：覆盖卡牌、遗物、能力、事件、角色、球体、药水和关键词文本，并修正运行时硬编码韩文片段、徽章提示、设置开关与选牌提示",
+  "version": "0.1.6",
+  "author": {
+    "name": "ice",
+    "email": "admin@example.com"
+  },
+  "target": {
+    "modId": "KimMoca",
+    "workshopId": "3288072468",
+    "versions": [
+      "v1.0.2"
+    ]
+  },
+  "jar": "amethyst.ai.patch.kimmoca.patch-1795158093334-aeb54ef9.jar"
+}
