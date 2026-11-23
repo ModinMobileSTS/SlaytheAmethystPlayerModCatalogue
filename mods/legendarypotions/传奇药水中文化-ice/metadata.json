@@ -1,8 +1,8 @@
 {
   "schemaVersion": 1,
   "name": "传奇药水中文化",
-  "description": "汉化 Legendary Potions 的药水、遗物、模组徽章和附带文本；调整红色野兽雕像提示排版及添水译名，并修正药水卡牌译名。",
-  "version": "1.0.2",
+  "description": "汉化 Legendary Potions 的界面文本并修正提示排版；修复 Loadout 添加女巫遗物时因奖励界面冲突卡死的问题，在该场景下直接发放对应的传奇药水。",
+  "version": "1.0.3",
   "author": {
     "name": "ice",
     "email": "admin@example.com"
