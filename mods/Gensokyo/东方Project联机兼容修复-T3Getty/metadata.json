@@ -1,0 +1,18 @@
+{
+  "schemaVersion": 1,
+  "name": "东方Project联机兼容修复",
+  "description": "修复 Gensokyo 与 Together in Spire 联机时的兼容性问题：对怪物/玩家遍历、随机目标与渲染的 Gensokyo 钩子安全降级；为符卡站位、爪牙死亡及格挡遍历钩子增加联机空值保护；并按游戏实际屏幕缩放比例修正联机同步重建怪物的坐标，避免非 16:9 或移动端缩放下战斗怪物整体错位。单人模式行为不变。",
+  "version": "0.3.0",
+  "author": {
+    "name": "T3Getty",
+    "email": "2385908573@qq.com"
+  },
+  "target": {
+    "modId": "Gensokyo",
+    "workshopId": "1943540698",
+    "versions": [
+      "4.0.0"
+    ]
+  },
+  "jar": "amethyst.ai.patch.gensokyo.patch-1795412480614-c9c1d62c.jar"
+}
