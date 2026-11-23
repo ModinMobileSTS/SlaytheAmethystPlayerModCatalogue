@@ -28,7 +28,7 @@ public class ArtHintPatch {
             return;
         }
         FontHelper.renderFontLeftTopAligned(sb, FontHelper.tipBodyFont,
-                "F6  \\u5207\\u6362\\u6b64\\u724c\\u5f02\\u753b",
+                "F6  切换此牌异画",
                 52.0f * Settings.scale,
                 (float) Settings.HEIGHT - 66.0f * Settings.scale,
                 Color.WHITE);

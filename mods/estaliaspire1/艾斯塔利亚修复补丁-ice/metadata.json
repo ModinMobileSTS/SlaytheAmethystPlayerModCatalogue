@@ -1,0 +1,18 @@
+{
+  "schemaVersion": 1,
+  "name": "艾斯塔利亚修复补丁",
+  "description": "关键词说明按卡面描述统一注入所有卡牌，覆盖手牌、选牌、百科、预览及科技卡；保留异画即时切换、重复百科按钮、异画小图与战斗贴图440x440修复。",
+  "version": "0.7.5",
+  "author": {
+    "name": "ice",
+    "email": "admin@example.com"
+  },
+  "target": {
+    "modId": "estaliaspire1",
+    "workshopId": "3837177197",
+    "versions": [
+      "1.2.14"
+    ]
+  },
+  "jar": "amethyst.ai.patch.estaliaspire1.patch-1794759961567-c42b8c4c.jar"
+}
