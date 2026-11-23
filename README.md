@@ -275,6 +275,15 @@ The Noh Dancer（Kokoro）模组自带 zhs 翻译不完整，仍有英文残留�
 - **适用版本**：`1.3.1`
 - **下载**：[下载](https://raw.githubusercontent.com/ModinMobileSTS/SlaytheAmethystPlayerModCatalogue/main/mods/anniv7/%E5%B0%96%E5%A1%94%E5%92%96%E5%95%A1%E5%8E%85%E6%B1%89%E5%8C%96-%E6%B0%B4%E6%AF%8D2%E5%8F%B7/amethyst.ai.patch.anniv7.patch-1794666714568-7c71ea40.jar)
 
+### 尖塔咖啡厅进入崩溃修复
+
+修复 Spire Cafe 进入咖啡厅房间时崩溃的问题：修正生态化身顾客在可用生物群系少于 3 个时 rollBiomes 的列表越界异常，并为房间生成流程增加容错——已看记录为空时重建、canSpawn 抛异常时视为不可出现、候选列表被过滤空时逐级放宽、互动对象构造失败时改用同类型可用对象、名字/作者缺失不再抛异常、商人商店生成失败不再中断进入。
+
+- **补丁版本**：`0.1.2`
+- **作者**：T3Getty
+- **适用版本**：`1.3.1`
+- **下载**：[下载](https://raw.githubusercontent.com/ModinMobileSTS/SlaytheAmethystPlayerModCatalogue/main/mods/anniv7/%E5%B0%96%E5%A1%94%E5%92%96%E5%95%A1%E5%8E%85%E8%BF%9B%E5%85%A5%E5%B4%A9%E6%BA%83%E4%BF%AE%E5%A4%8D-T3Getty/amethyst.ai.patch.anniv7.patch-1795401953659-7100e947.jar)
+
 ---
 
 ## annualmember
