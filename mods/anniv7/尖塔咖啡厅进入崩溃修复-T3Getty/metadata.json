@@ -1,0 +1,18 @@
+{
+  "schemaVersion": 1,
+  "name": "尖塔咖啡厅进入崩溃修复",
+  "description": "修复 Spire Cafe 进入咖啡厅房间时崩溃的问题：修正生态化身顾客在可用生物群系少于 3 个时 rollBiomes 的列表越界异常，并为房间生成流程增加容错——已看记录为空时重建、canSpawn 抛异常时视为不可出现、候选列表被过滤空时逐级放宽、互动对象构造失败时改用同类型可用对象、名字/作者缺失不再抛异常、商人商店生成失败不再中断进入。",
+  "version": "0.1.2",
+  "author": {
+    "name": "T3Getty",
+    "email": "2385908573@qq.com"
+  },
+  "target": {
+    "modId": "anniv7",
+    "workshopId": "3410083760",
+    "versions": [
+      "1.3.1"
+    ]
+  },
+  "jar": "amethyst.ai.patch.anniv7.patch-1795401953659-7100e947.jar"
+}
