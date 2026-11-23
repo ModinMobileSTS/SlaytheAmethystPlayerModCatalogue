@@ -622,9 +622,9 @@ JesterMod 的简体中文汉化。修正卡牌与遗物文本渲染：小丑专�
 
 ### 传奇药水中文化
 
-汉化 Legendary Potions 的药水、遗物、模组徽章和附带文本；调整红色野兽雕像提示排版及添水译名，并修正药水卡牌译名。
+汉化 Legendary Potions 的界面文本并修正提示排版；修复 Loadout 添加女巫遗物时因奖励界面冲突卡死的问题，在该场景下直接发放对应的传奇药水。
 
-- **补丁版本**：`1.0.2`
+- **补丁版本**：`1.0.3`
 - **作者**：ice
 - **适用版本**：`1.1.0`
 - **下载**：[下载](https://raw.githubusercontent.com/ModinMobileSTS/SlaytheAmethystPlayerModCatalogue/main/mods/legendarypotions/%E4%BC%A0%E5%A5%87%E8%8D%AF%E6%B0%B4%E4%B8%AD%E6%96%87%E5%8C%96-ice/amethyst.ai.patch.legendarypotions.patch-1794888408067-a38766b9.jar)
