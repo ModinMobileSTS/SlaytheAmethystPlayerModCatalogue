@@ -412,6 +412,19 @@ Card Forge 中文汉化，并重写雷神之锤的选卡界面：固定格位消
 
 ---
 
+## challengethespire
+
+### 挑战高塔存读档与房间切换修复
+
+修复挑战模式存读档后怪物被替换、以及读档或选牌选遗物后无法进入下一房间的问题：在每次生成地图前重置被洗牌原地修改的精英/Boss 列表以保证地图可复现；为挑战房间加上与原版一致的怪物生成保护；修正挑战模式打开地图时的屏幕状态，避免奖励界面残留导致卡住。
+
+- **补丁版本**：`0.1.0`
+- **作者**：T3Getty
+- **适用版本**：`1.6.0`
+- **下载**：[下载](https://raw.githubusercontent.com/ModinMobileSTS/SlaytheAmethystPlayerModCatalogue/main/mods/challengethespire/%E6%8C%91%E6%88%98%E9%AB%98%E5%A1%94%E5%AD%98%E8%AF%BB%E6%A1%A3%E4%B8%8E%E6%88%BF%E9%97%B4%E5%88%87%E6%8D%A2%E4%BF%AE%E5%A4%8D-T3Getty/amethyst.ai.patch.challengethespire.patch-1795417222011-0ae4c157.jar)
+
+---
+
 ## chronomuncher
 
 ### 时序·信徒中文补丁
