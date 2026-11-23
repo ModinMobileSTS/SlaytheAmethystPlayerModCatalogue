@@ -3,6 +3,7 @@ package challengethespire.presentation;
 import com.megacrit.cardcrawl.cards.AbstractCard;
 import com.megacrit.cardcrawl.core.CardCrawlGame;
 import com.megacrit.cardcrawl.dungeons.AbstractDungeon;
+import com.megacrit.cardcrawl.helpers.ModHelper;
 import com.megacrit.cardcrawl.helpers.MonsterHelper;
 import com.megacrit.cardcrawl.relics.AbstractRelic;
 import com.megacrit.cardcrawl.rewards.RewardItem;
@@ -49,6 +50,12 @@ public class RushBossRoom extends MonsterRoomBoss {
                 continue;
             }
             r.incrementGold(100);
+        }
+        // The parent mod's MonsterRoomBossRush is not a MonsterRoomBoss, so with Vintage
+        // enabled it also receives the extra reward relic from MonsterRoom.dropReward().
+        // Mirror that here despite the boss room type used for the presentation.
+        if (ModHelper.isModEnabled("Vintage")) {
+            this.addRelicToRewards(this.returnRandomRelicTier());
         }
         this.addRelicToRewards(this.returnRandomRelicTier());
     }

@@ -1,0 +1,18 @@
+{
+  "schemaVersion": 1,
+  "name": "挑战高塔Boss Rush奖励与流程修复",
+  "description": "保留 Boss Rush 的原版 Boss 房间演出，同时补回模组自身的大型选牌与战斗后遗物奖励；修复 Boss 战后点击继续进入 Boss 宝箱房而无法前往下一个房间的问题，终局节点改由模组的胜利房间结束。",
+  "version": "0.3.0",
+  "author": {
+    "name": "T3Getty",
+    "email": "2385908573@qq.com"
+  },
+  "target": {
+    "modId": "challengethespire",
+    "workshopId": "1696570507",
+    "versions": [
+      "1.6.0"
+    ]
+  },
+  "jar": "amethyst.ai.patch.challengethespire.patch-1795417222011-0ae4c157.jar"
+}

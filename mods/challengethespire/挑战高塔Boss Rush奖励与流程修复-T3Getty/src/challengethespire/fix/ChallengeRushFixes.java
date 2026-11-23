@@ -8,6 +8,9 @@ import com.megacrit.cardcrawl.dungeons.AbstractDungeon;
 import com.megacrit.cardcrawl.helpers.ModHelper;
 import com.megacrit.cardcrawl.rooms.AbstractRoom;
 import com.megacrit.cardcrawl.screens.DungeonMapScreen;
+import challengethespire.presentation.RushModFlowPatch;
+import challengeTheSpire.MonsterRoomBossRush;
+import challengeTheSpire.MonsterRoomEliteHunting;
 import java.lang.reflect.Field;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -101,7 +104,7 @@ public final class ChallengeRushFixes {
     @SpirePatch2(cls = BOSS_RUSH_ROOM, method = "onPlayerEntry", paramtypez = {})
     public static class BossRushEntryGuard {
         @SpirePrefixPatch
-        public static SpireReturn before(AbstractRoom __instance) {
+        public static SpireReturn before(MonsterRoomBossRush __instance) {
             if (hasMonsters(__instance)) {
                 keepExistingEncounter(__instance);
                 return SpireReturn.Return(null);
@@ -114,7 +117,7 @@ public final class ChallengeRushFixes {
     @SpirePatch2(cls = ELITE_RUSH_ROOM, method = "onPlayerEntry", paramtypez = {})
     public static class EliteRushEntryGuard {
         @SpirePrefixPatch
-        public static SpireReturn before(AbstractRoom __instance) {
+        public static SpireReturn before(MonsterRoomEliteHunting __instance) {
             if (hasMonsters(__instance)) {
                 keepExistingEncounter(__instance);
                 return SpireReturn.Return(null);
@@ -141,20 +144,30 @@ public final class ChallengeRushFixes {
     @SpirePatch2(clz = DungeonMapScreen.class, method = "open", paramtypez = {boolean.class})
     public static class RushMapOpenCleanup {
         @SpirePrefixPatch
-        public static void before(DungeonMapScreen __instance, Object[] __args) {
+        public static SpireReturn before(DungeonMapScreen __instance, Object[] __args) {
             boolean doScrollingAnimation = __args != null && __args.length > 0
                     && Boolean.TRUE.equals(__args[0]);
             if (!isRushChallenge() || doScrollingAnimation || AbstractDungeon.screen == null) {
-                return;
+                return SpireReturn.Continue();
             }
             AbstractDungeon.CurrentScreen screen = AbstractDungeon.screen;
-            if (screen == AbstractDungeon.CurrentScreen.COMBAT_REWARD
-                    || screen == AbstractDungeon.CurrentScreen.BOSS_REWARD
-                    || screen == AbstractDungeon.CurrentScreen.GRID
-                    || screen == AbstractDungeon.CurrentScreen.CARD_REWARD) {
-                AbstractDungeon.closeCurrentScreen();
-                AbstractDungeon.previousScreen = AbstractDungeon.CurrentScreen.COMBAT_REWARD;
+            if (screen != AbstractDungeon.CurrentScreen.COMBAT_REWARD
+                    && screen != AbstractDungeon.CurrentScreen.BOSS_REWARD
+                    && screen != AbstractDungeon.CurrentScreen.GRID
+                    && screen != AbstractDungeon.CurrentScreen.CARD_REWARD) {
+                return SpireReturn.Continue();
             }
+            // After the last rush fight the map has nowhere to go: finish the challenge the way
+            // the parent mod does instead of leaving the player on a dead-end map.
+            if (screen == AbstractDungeon.CurrentScreen.COMBAT_REWARD
+                    && RushModFlowPatch.isRushMonsterRoom()
+                    && RushModFlowPatch.isFinalRushNode()) {
+                RushModFlowPatch.goToRushVictory(AbstractDungeon.overlayMenu.proceedButton);
+                return SpireReturn.Return(null);
+            }
+            AbstractDungeon.closeCurrentScreen();
+            AbstractDungeon.previousScreen = AbstractDungeon.CurrentScreen.COMBAT_REWARD;
+            return SpireReturn.Continue();
         }
     }
 }
