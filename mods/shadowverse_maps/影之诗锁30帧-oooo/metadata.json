@@ -1,0 +1,18 @@
+{
+  "schemaVersion": 1,
+  "name": "影之诗锁30帧",
+  "description": "只把游戏帧率上限锁到 30 FPS；不改贴图、不改分辨率、不改特效。",
+  "version": "0.12.0",
+  "author": {
+    "name": "oooo",
+    "email": "2644819932@qq.com"
+  },
+  "target": {
+    "modId": "shadowverse_maps",
+    "workshopId": "3352388540",
+    "versions": [
+      "0.1.4"
+    ]
+  },
+  "jar": "amethyst.ai.patch.shadowverse_maps.patch-1795415962905-85af01d2.jar"
+}
