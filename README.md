@@ -724,6 +724,19 @@ JesterMod 的简体中文汉化。修正卡牌与遗物文本渲染：小丑专�
 
 ---
 
+## shadowverse\_maps
+
+### 影之诗锁30帧
+
+只把游戏帧率上限锁到 30 FPS；不改贴图、不改分辨率、不改特效。
+
+- **补丁版本**：`0.12.0`
+- **作者**：oooo
+- **适用版本**：`0.1.4`
+- **下载**：[下载](https://raw.githubusercontent.com/ModinMobileSTS/SlaytheAmethystPlayerModCatalogue/main/mods/shadowverse_maps/%E5%BD%B1%E4%B9%8B%E8%AF%97%E9%94%8130%E5%B8%A7-oooo/amethyst.ai.patch.shadowverse_maps.patch-1795415962905-85af01d2.jar)
+
+---
+
 ## simplemap
 
 ### Simple Map 崩坠地图适配
