@@ -1,0 +1,17 @@
+{
+  "schemaVersion": 1,
+  "name": "炮姐修复补丁",
+  "description": "修复卡牌显示与文字描述\n修改了部分卡牌效果",
+  "version": "0.4.2",
+  "author": {
+    "name": "ice",
+    "email": "admin@example.com"
+  },
+  "target": {
+    "modId": "TheRailgun",
+    "versions": [
+      "1.1.1"
+    ]
+  },
+  "jar": "amethyst.ai.patch.therailgun.patch-1795488826242-2eff0a3d.jar"
+}
