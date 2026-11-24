@@ -16,9 +16,13 @@ import com.megacrit.cardcrawl.rooms.MonsterRoomBoss;
  * <p>The parent mod's MonsterRoomBossRush extends the ordinary MonsterRoom, so the vanilla
  * {@code instanceof MonsterRoomBoss} checks never fire. That suppresses the boss battle music,
  * the boss background variations, the ambiance fade and the boss presentation cues. This class
- * keeps the parent mod's encounter and reward behaviour while restoring the boss room type.</p>
+ * keeps the parent mod's encounter and relic rewards while restoring the boss room type, and pays
+ * out a flat {@value #RUSH_GOLD} gold per room instead of the boss gold plus the mod's bonus.</p>
  */
 public class RushBossRoom extends MonsterRoomBoss {
+    /** Gold a rush room pays out; the vanilla boss amount plus the parent mod's bonus was ~200. */
+    private static final int RUSH_GOLD = 100;
+
     private final String encounterID;
 
     public RushBossRoom(String encounterID) {
@@ -49,7 +53,10 @@ public class RushBossRoom extends MonsterRoomBoss {
             if (r.type != RewardItem.RewardType.GOLD) {
                 continue;
             }
-            r.incrementGold(100);
+            // The game pays 100 +-5 gold for a boss room (75 on ascension 13+) and the parent mod
+            // added another 100 on top of it, so a rush room paid roughly 200 gold. Flatten the
+            // reward to RUSH_GOLD instead; the gold bonus modifiers are recalculated from it.
+            r.incrementGold(RUSH_GOLD - r.goldAmt);
         }
         // The parent mod's MonsterRoomBossRush is not a MonsterRoomBoss, so with Vintage
         // enabled it also receives the extra reward relic from MonsterRoom.dropReward().
