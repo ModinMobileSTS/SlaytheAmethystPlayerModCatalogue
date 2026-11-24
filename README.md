@@ -427,14 +427,14 @@ Card Forge 中文汉化，并重写雷神之锤的选卡界面：固定格位消
 
 ## challengethespire
 
-### 挑战高塔Boss Rush奖励与流程修复
+### 挑战高塔补丁
 
-保留 Boss Rush 的原版 Boss 房间演出，同时补回模组自身的大型选牌与战斗后遗物奖励；修复 Boss 战后点击继续进入 Boss 宝箱房而无法前往下一个房间的问题，终局节点改由模组的胜利房间结束。
+解决sl后无法进入下一个房间，sl后出现其他怪物的问题
 
-- **补丁版本**：`0.3.0`
+- **补丁版本**：`0.6.1`
 - **作者**：T3Getty
 - **适用版本**：`1.6.0`
-- **下载**：[下载](https://raw.githubusercontent.com/ModinMobileSTS/SlaytheAmethystPlayerModCatalogue/main/mods/challengethespire/%E6%8C%91%E6%88%98%E9%AB%98%E5%A1%94Boss%20Rush%E5%A5%96%E5%8A%B1%E4%B8%8E%E6%B5%81%E7%A8%8B%E4%BF%AE%E5%A4%8D-T3Getty/amethyst.ai.patch.challengethespire.patch-1795417222011-0ae4c157.jar)
+- **下载**：[下载](https://raw.githubusercontent.com/ModinMobileSTS/SlaytheAmethystPlayerModCatalogue/main/mods/challengethespire/%E6%8C%91%E6%88%98%E9%AB%98%E5%A1%94%E8%A1%A5%E4%B8%81-T3Getty/amethyst.ai.patch.challengethespire.patch-1795417222011-0ae4c157.jar)
 
 ---
 
