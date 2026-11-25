@@ -1,0 +1,18 @@
+{
+  "schemaVersion": 1,
+  "name": "Bundle Of Food 遗物无法选中修复",
+  "description": "修复 boss 宝箱遗物选择界面中模组遗物无法选中的问题。原因是 bundlecore 在该界面追加的第四个（任务）遗物会复用同一实例，而 AbstractRelic.spawn 只复位 isObtained、不复位 isDone；实例一旦被获得过，重新显示时引擎按“已获得”分支处理，点按只会打开遗物详情弹窗。补丁在 BossRelicSelectScreen.open 结束时把界面内所有遗物的 isDone / isObtained 复位，使其恢复可选中与确认获得。",
+  "version": "1.0.0",
+  "author": {
+    "name": "lution",
+    "email": "admin@example.com"
+  },
+  "target": {
+    "modId": "bundle_of_food",
+    "workshopId": "2883637756",
+    "versions": [
+      "5.2.3"
+    ]
+  },
+  "jar": "amethyst.ai.patch.bundle_of_food.patch-1794974802216-7c02b268.jar"
+}
