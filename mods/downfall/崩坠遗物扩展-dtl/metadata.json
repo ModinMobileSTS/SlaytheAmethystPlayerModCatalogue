@@ -1,0 +1,18 @@
+{
+  "schemaVersion": 1,
+  "name": "崩坠遗物扩展",
+  "description": "增加了三遗物，分别是巫师长袍、前世记忆、知识库。\n在联机自定义房间可以设置。\n贡献者——dtl",
+  "version": "1.3.0",
+  "author": {
+    "name": "dtl",
+    "email": "2652226316@qq.com"
+  },
+  "target": {
+    "modId": "downfall",
+    "workshopId": "1610056683",
+    "versions": [
+      "6.0.20"
+    ]
+  },
+  "jar": "amethyst.ai.patch.downfall.patch-1794932358720-f7f767a3.jar"
+}
