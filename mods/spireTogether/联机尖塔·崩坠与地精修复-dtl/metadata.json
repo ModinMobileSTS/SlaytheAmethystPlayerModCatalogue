@@ -1,0 +1,17 @@
+{
+  "schemaVersion": 1,
+  "name": "联机尖塔·崩坠与地精修复",
+  "description": "合并三个联机补丁：修复崩坠开关、读档、地图点位和心脏开场初始遗物及荒疫漏发；防止提前结算误判地精小队未登场成员阵亡；地精大块头按参战人数累计全队技能牌，保留原版力量增幅。",
+  "version": "2.0.0",
+  "author": {
+    "name": "dtl",
+    "email": "2652226316@qq.com"
+  },
+  "target": {
+    "modId": "spireTogether",
+    "versions": [
+      "6.4.20"
+    ]
+  },
+  "jar": "amethyst.ai.patch.spiretogether.patch-1795344223517-5793bf3f.jar"
+}
