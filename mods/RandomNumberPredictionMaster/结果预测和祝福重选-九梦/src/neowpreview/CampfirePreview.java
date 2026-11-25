@@ -132,7 +132,7 @@ public final class CampfirePreview {
                     return p;
                 });
         if (!payload.isEmpty()) {
-            RelicUpgradePreview.drawCentered(sb, payload);
+            RelicUpgradePreview.drawCentered(sb, payload.cards);
         }
     }
 }

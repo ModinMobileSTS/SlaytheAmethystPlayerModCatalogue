@@ -6,6 +6,9 @@ import com.megacrit.cardcrawl.cards.AbstractCard;
 import com.megacrit.cardcrawl.core.Settings;
 import com.megacrit.cardcrawl.dungeons.AbstractDungeon;
 import com.megacrit.cardcrawl.helpers.PotionHelper;
+import com.megacrit.cardcrawl.helpers.PowerTip;
+import com.megacrit.cardcrawl.helpers.TipHelper;
+import com.megacrit.cardcrawl.helpers.input.InputHelper;
 import com.megacrit.cardcrawl.potions.AbstractPotion;
 import com.megacrit.cardcrawl.random.Random;
 import com.megacrit.cardcrawl.relics.AbstractRelic;
@@ -14,15 +17,17 @@ import java.util.Collections;
 import java.util.List;
 
 /**
- * 「拿到手才知道结果」类遗物的悬停预览：悬停遗物时直接画出它实际会给出的东西。
+ * 「拿到手才知道结果」类遗物的悬停预览：悬停遗物时显示它实际会给出的东西。
  *
  * <p>覆盖：磨刀石（升级两张攻击牌）、战纹涂料（升级两张技能牌）、潘多拉之盒（替换所有初始打击／防御）、
  * 召唤铃（普通／罕见／稀有遗物各一件）、坩埚（五瓶随机药水）、天球仪（四组卡牌奖励）、
  * 小房子（随机升级一张牌 + 一瓶随机药水）。</p>
  *
+ * <p>显示方式与原版一致：卡牌结果直接画牌面（升级后的样子），遗物与药水结果走原版提示框
+ * （名称 + 效果），并且与原版该遗物自己的说明排在一起。</p>
+ *
  * <p>所有推算只用随机数副本（miscRng / cardRng / cardRandomRng / potionRng / relicRng）与遗物池副本，
- * 不消耗真随机数、也不动真的池子，算完立刻还原。结果按「遗物实例 + 状态串」缓存，
- * 悬停期间不重复计算。</p>
+ * 不消耗真随机数、也不动真的池子，算完立刻还原。结果按「遗物实例 + 状态串」缓存。</p>
  */
 public final class RelicUpgradePreview {
 
@@ -49,28 +54,67 @@ public final class RelicUpgradePreview {
     }
 
     /**
-     * 悬停遗物时调用。
+     * 在画面开始渲染时（原版排队提示之前）调用：把「遗物自己的说明 + 预测出的遗物／药水详情」
+     * 一起交给原版提示框排队，这样原版只显示一份、内容完整。
      *
-     * @param anchorX      遗物图标中心 X
-     * @param anchorTopY   遗物图标上边
+     * <p>结果里只有卡面时（磨刀石、潘多拉之盒等）不抢排队，原版提示照常显示。</p>
+     */
+    public static void queueTips(AbstractRelic relic) {
+        if (relic == null || AbstractDungeon.player == null || !handles(relic)) {
+            return;
+        }
+        if (AbstractDungeon.player.hasRelic(relic.relicId)) {
+            return;
+        }
+        Payload payload = payload(relic);
+        if (payload.relics.isEmpty() && payload.potions.isEmpty()) {
+            return;
+        }
+        ArrayList<PowerTip> tips = new ArrayList<>();
+        if (relic.tips != null && !relic.tips.isEmpty()) {
+            tips.addAll(relic.tips);
+        } else {
+            tips.add(new PowerTip(relic.name, relic.description));
+        }
+        for (AbstractRelic detail : payload.relics) {
+            if (detail != null) {
+                tips.add(new PowerTip(detail.name, detail.description));
+            }
+        }
+        for (AbstractPotion potion : payload.potions) {
+            if (potion != null) {
+                tips.add(new PowerTip(potion.name, potion.description));
+            }
+        }
+        if (tips.isEmpty()) {
+            return;
+        }
+        TipHelper.queuePowerTips(InputHelper.mX + 60.0f * Settings.scale,
+                InputHelper.mY + 60.0f * Settings.scale, tips);
+    }
+
+    /**
+     * 悬停遗物时调用：把预测出的卡面画在遗物图标附近（1–2 张贴着画，更多就整屏居中折行）。
+     *
+     * @param anchorX       遗物图标中心 X
+     * @param anchorTopY    遗物图标上边
      * @param anchorBottomY 遗物图标下边
      */
     public static void render(SpriteBatch sb, AbstractRelic relic, float anchorX, float anchorTopY, float anchorBottomY) {
         if (sb == null || AbstractDungeon.player == null || !handles(relic)) {
             return;
         }
-        // 已经拿到手了就不再预测（顶栏悬停自己已有的遗物不显示）
         if (AbstractDungeon.player.hasRelic(relic.relicId)) {
             return;
         }
         Payload payload = payload(relic);
-        if (payload.isEmpty()) {
+        if (payload.cards.isEmpty()) {
             return;
         }
-        if (payload.relics.isEmpty() && payload.potions.isEmpty() && payload.cards.size() <= 2) {
+        if (payload.cards.size() <= 2 && payload.relics.isEmpty() && payload.potions.isEmpty()) {
             drawCardsNearRelic(sb, payload.cards, anchorX, anchorTopY, anchorBottomY);
         } else {
-            drawCentered(sb, payload);
+            drawCentered(sb, payload.cards);
         }
     }
 
@@ -301,7 +345,7 @@ public final class RelicUpgradePreview {
         }
     }
 
-    // ------------------------------------------------------------------ 绘制
+    // ------------------------------------------------------------------ 绘制（卡面）
 
     /** 一到两张牌：贴着遗物图标画，上方放不下就画到下方。 */
     private static void drawCardsNearRelic(SpriteBatch sb, List<AbstractCard> cards, float anchorX,
@@ -343,26 +387,27 @@ public final class RelicUpgradePreview {
     }
 
     /**
-     * 结果较大（潘多拉之盒、天球仪、召唤铃、坩埚、小房子）：画在屏幕偏上方，
-     * 按宽度折行、必要时等比缩小，下方三分之一留给遗物图标和按钮（不被挡住）。
+     * 卡牌较多（潘多拉之盒、天球仪等）：画在屏幕偏上方，按宽度折行、必要时等比缩小，
+     * 下方三分之一留给遗物图标和按钮（不被挡住）。
      */
-    static void drawCentered(SpriteBatch sb, Payload payload) {
+    static void drawCentered(SpriteBatch sb, List<AbstractCard> cards) {
+        if (cards == null || cards.isEmpty()) {
+            return;
+        }
         float marginX = Settings.WIDTH * 0.06f;
         float maxW = Settings.WIDTH - marginX * 2.0f;
         float maxH = Settings.HEIGHT * 0.60f;
         float blockCenterY = Settings.HEIGHT * 0.68f;
         float gap = 10.0f * Settings.scale;
-        int cardCount = payload.cards.size();
-        int iconCount = payload.relics.size() + payload.potions.size();
+        int cardCount = cards.size();
         float scale = Config.imageScale();
         int perRow = 1;
         int rows = 0;
         for (int attempt = 0; attempt < 8; ++attempt) {
             perRow = perRow(cardCount, scale, maxW, gap);
-            rows = cardCount == 0 ? 0 : (cardCount + perRow - 1) / perRow;
-            float needW = Math.max(rowWidth(Math.min(cardCount, perRow), scale, gap),
-                    iconRowWidth(iconCount, scale, gap));
-            float needH = blockHeight(rows, iconCount, scale, gap);
+            rows = (cardCount + perRow - 1) / perRow;
+            float needW = rowWidth(Math.min(cardCount, perRow), scale, gap);
+            float needH = blockHeight(rows, scale, gap);
             if ((needW <= maxW && needH <= maxH) || scale <= 0.28f) {
                 break;
             }
@@ -371,43 +416,28 @@ public final class RelicUpgradePreview {
         }
         float cardW = AbstractCard.IMG_WIDTH * scale;
         float cardH = AbstractCard.IMG_HEIGHT * scale;
-        float iconSide = 120.0f * scale;
         float centerX = Settings.WIDTH * 0.5f;
-        float y = blockCenterY + blockHeight(rows, iconCount, scale, gap) * 0.5f;
+        float y = blockCenterY + blockHeight(rows, scale, gap) * 0.5f;
         sb.setColor(Color.WHITE);
-        if (cardCount > 0) {
-            int index = 0;
-            for (int row = 0; row < rows; ++row) {
-                int inRow = Math.min(perRow, cardCount - index);
-                float rowW = inRow * cardW + (inRow - 1) * gap;
-                float x = centerX - rowW * 0.5f;
-                float cy = y - cardH * 0.5f;
-                for (int i = 0; i < inRow; ++i) {
-                    AbstractCard card = payload.cards.get(index++);
-                    if (card != null) {
-                        card.current_x = x + cardW * 0.5f;
-                        card.current_y = cy;
-                        card.drawScale = scale;
-                        card.targetDrawScale = scale;
-                        card.angle = 0.0f;
-                        card.render(sb);
-                    }
-                    x += cardW + gap;
+        int index = 0;
+        for (int row = 0; row < rows; ++row) {
+            int inRow = Math.min(perRow, cardCount - index);
+            float rowW = inRow * cardW + (inRow - 1) * gap;
+            float x = centerX - rowW * 0.5f;
+            float cy = y - cardH * 0.5f;
+            for (int i = 0; i < inRow; ++i) {
+                AbstractCard card = cards.get(index++);
+                if (card != null) {
+                    card.current_x = x + cardW * 0.5f;
+                    card.current_y = cy;
+                    card.drawScale = scale;
+                    card.targetDrawScale = scale;
+                    card.angle = 0.0f;
+                    card.render(sb);
                 }
-                y -= cardH + gap;
+                x += cardW + gap;
             }
-        }
-        if (iconCount > 0) {
-            float x = centerX - iconRowWidth(iconCount, scale, gap) * 0.5f;
-            float cy = y - iconSide * 0.5f;
-            for (AbstractRelic relic : payload.relics) {
-                drawRelicIcon(sb, relic, x + iconSide * 0.5f, cy, iconSide);
-                x += iconSide + gap;
-            }
-            for (AbstractPotion potion : payload.potions) {
-                drawPotionIcon(sb, potion, x + iconSide * 0.5f, cy, iconSide);
-                x += iconSide + gap;
-            }
+            y -= cardH + gap;
         }
     }
 
@@ -427,48 +457,18 @@ public final class RelicUpgradePreview {
         return count * AbstractCard.IMG_WIDTH * scale + (count - 1) * gap;
     }
 
-    private static float iconRowWidth(int iconCount, float scale, float gap) {
-        if (iconCount <= 0) {
+    private static float blockHeight(int rows, float scale, float gap) {
+        if (rows <= 0) {
             return 0.0f;
         }
-        return iconCount * 120.0f * scale + (iconCount - 1) * gap;
-    }
-
-    private static float blockHeight(int rows, int iconCount, float scale, float gap) {
         float h = rows * AbstractCard.IMG_HEIGHT * scale;
         if (rows > 1) {
             h += (rows - 1) * gap;
         }
-        if (iconCount > 0) {
-            if (rows > 0) {
-                h += gap;
-            }
-            h += 120.0f * scale;
-        }
         return h;
     }
 
-    private static void drawRelicIcon(SpriteBatch sb, AbstractRelic relic, float centerX, float centerY, float side) {
-        if (relic == null || relic.img == null) {
-            return;
-        }
-        sb.setColor(Color.WHITE);
-        sb.draw(relic.img, centerX - side * 0.5f, centerY - side * 0.5f, side, side);
-    }
-
-    private static void drawPotionIcon(SpriteBatch sb, AbstractPotion potion, float centerX, float centerY, float side) {
-        if (potion == null) {
-            return;
-        }
-        potion.posX = centerX;
-        potion.posY = centerY;
-        potion.scale = side / 64.0f;
-        potion.hb.move(centerX, centerY);
-        sb.setColor(Color.WHITE);
-        potion.render(sb);
-    }
-
-    /** 一次预测的结果：牌面、遗物图标、药水图标。 */
+    /** 一次预测的结果：牌面、遗物、药水。 */
     static final class Payload {
         final List<AbstractCard> cards = new ArrayList<>();
         final List<AbstractRelic> relics = new ArrayList<>();
