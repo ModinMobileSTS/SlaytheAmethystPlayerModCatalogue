@@ -1,0 +1,18 @@
+{
+  "schemaVersion": 1,
+  "name": "Mod配置整数解析防闪退",
+  "description": "针对 java.lang.NumberFormatException: null at Integer.parseInt 闪退：为 SpireConfig 的 getInt/getFloat 增加空值、空白与非数字回退，配置项缺失时按 0 处理而不是抛异常，并把缺失的配置键写入日志便于定位 Mod。",
+  "version": "1.0.1",
+  "author": {
+    "name": "久帝的地狱单骑",
+    "email": "3552084419@qq.com"
+  },
+  "target": {
+    "modId": "AnonMod",
+    "workshopId": "3248151544",
+    "versions": [
+      "1.1.6"
+    ]
+  },
+  "jar": "amethyst.ai.patch.anonmod.patch-1795661975612-bbbba4c1.jar"
+}
