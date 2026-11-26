@@ -59,8 +59,8 @@ scripts/catalogue.py         # 标准库实现的校验器与索引生成器
 - `name` / `description`：补丁名和简介，分别不超过 120 / 4000 个字符。
 - `author.name` / `author.email`：作者名称和邮箱，供公开展示与 Git 提交署名。
 - `target.modId`：适用的原模组 ID，不是补丁 JAR 自己的 modid。
-- `target.workshopId`：原模组的 Steam Workshop ID，必须用**十进制字符串**，避免大整数精度丢失。
-  同一 modid 的条目必须映射到同一个 Workshop ID。
+- `target.workshopId`：可省略。若提供原模组的 Steam Workshop ID，必须使用**正十进制字符串**，
+  避免大整数精度丢失。同一 modid 已提供的 ID 必须一致。
 - `target.versions`：适用的原模组版本列表，按原模组版本字符串精确匹配，不解析 semver 区间。
   `["*"]` 表示作者声明适用全部版本，不能与其他版本混用。
 - `version`：补丁自己的版本，与原模组版本分开。
@@ -130,7 +130,7 @@ https://raw.githubusercontent.com/ModinMobileSTS/SlaytheAmethystPlayerModCatalog
 根 `index.json` 使用 **`schemaVersion: 3`**，包含补丁总数 `count` 和 **`mods` 对象**。
 `mods` 的键为大小写精确匹配的目标 modid，每组包含：
 
-- `workshopId`：目标模组的 Workshop ID，字符串。
+- `workshopId`：目标模组的 Workshop ID（字符串）；若该 modid 的所有条目均未提供 ID，则为 `null`。
 - `count`：该模组的补丁总数，包含示例，不能直接作为兼容补丁徽标的数量。
 - `versions`：以版本字符串为键、**不含示例的可用补丁数**为值的对象；`*` 表示通配版本。
   一条补丁声明多个版本时，分别计入对应版本；通配补丁仅计入 `*`，不复制到精确版本。
@@ -170,7 +170,9 @@ https://raw.githubusercontent.com/ModinMobileSTS/SlaytheAmethystPlayerModCatalog
 
 全仓库的补丁记录全部放在这个文件内，各补丁只在其 modid 组下记录一次。
 上传元数据的 `schemaVersion` 仍为 1。`patches` 中每个补丁条目复制完整上传元数据
-（含 `description`），并附加：
+（含 `description`）。每次生成时，只要任一补丁提供了 Workshop ID，就会在索引内给同一 modid
+缺失 ID 的补丁补齐 `target.workshopId`；没有可用 ID 时该字段仍省略。不改写原始 `metadata.json`。
+索引同时附加：
 
 - `patchModId`：从 JAR 读取的补丁 modid；
 - `download_url`：直接指向该条目 JAR 的下载地址（中文、空格等已进行 URL 编码）；

@@ -205,11 +205,37 @@ class CatalogueTests(unittest.TestCase):
             with self.subTest(email=email), self.assertRaises(catalogue.CatalogueError):
                 catalogue.validate_metadata(self.metadata)
 
-    def test_workshop_id_must_be_string_not_json_number(self):
-        for value in (1605833019, "0", "-1", "1.2", "", "1" * 21):
+    def test_workshop_id_when_provided_must_be_positive_decimal_string(self):
+        for value in (None, 1605833019, "0", "-1", "1.2", "", "1" * 21):
             self.metadata["target"]["workshopId"] = value
             with self.subTest(value=value), self.assertRaises(catalogue.CatalogueError):
                 catalogue.validate_metadata(self.metadata)
+
+    def test_workshop_id_backfills_when_same_mod_id_supplies_it(self):
+        with_id = copy.deepcopy(self.metadata)
+        with_id["name"] = "Later Patch"  # Scanned after the upload without an ID.
+        workshop_id = self.metadata["target"].pop("workshopId")
+        self.metadata["example"] = False
+        source = self.add_patch() / "metadata.json"
+        original = source.read_bytes()
+        unrelated = copy.deepcopy(with_id)
+        unrelated["target"].update(modId="AnotherMod", workshopId="12345")
+        self.add_patch(unrelated)
+
+        self.assertEqual(self.generate(), 2)
+        group = self.index()
+        self.assertIsNone(group["workshopId"])
+        self.assertNotIn("workshopId", group["patches"][0]["target"])
+        self.assertEqual(group["versions"], {"5.56.0": 1})
+
+        self.add_patch(with_id)
+        self.assertEqual(self.generate(), 3)
+        group = self.index()
+        self.assertEqual(group["workshopId"], workshop_id)
+        self.assertEqual([entry["target"]["workshopId"] for entry in group["patches"]],
+                         [workshop_id, workshop_id])
+        self.assertEqual(source.read_bytes(), original)
+        self.assertEqual(self.generate(check=True), 3)
 
     def test_exact_versions_and_single_wildcard(self):
         for versions in (["1.0", "2.0"], ["*"]):

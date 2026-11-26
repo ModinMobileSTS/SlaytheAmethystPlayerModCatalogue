@@ -80,11 +80,13 @@ def validate_metadata(metadata: object) -> dict:
     path_segment(author["name"], "author.name")
     email = text(author["email"], "author.email", 254)
     require(EMAIL.fullmatch(email) is not None, "invalid author.email")
-    target = object_fields(metadata["target"], {"modId", "workshopId", "versions"})
+    target = object_fields(metadata["target"], {"modId", "versions"}, {"workshopId"})
     path_segment(target["modId"], "target.modId")
     require(target["modId"].casefold() != "index", "modId 'index' is reserved for root index.json")
-    require(isinstance(target["workshopId"], str) and WORKSHOP_ID.fullmatch(target["workshopId"]) is not None,
-            "workshopId must be a positive decimal string")
+    if "workshopId" in target:
+        workshop_id = target["workshopId"]
+        require(isinstance(workshop_id, str) and WORKSHOP_ID.fullmatch(workshop_id) is not None,
+                "workshopId must be a positive decimal string")
     versions = target["versions"]
     require(isinstance(versions, list) and 1 <= len(versions) <= 100, "target.versions must be a nonempty array")
     for version in versions:
@@ -218,9 +220,10 @@ def collect(root: Path, repository: str, ref: str) -> tuple[dict[str, bytes], in
         require(identity not in casefold_paths, f"case-insensitive path collision: {relative}")
         casefold_paths.add(identity)
         mod_id = metadata["target"]["modId"]
-        workshop_id = metadata["target"]["workshopId"]
-        require(workshop_by_mod.get(mod_id, workshop_id) == workshop_id, f"conflicting Workshop IDs for {mod_id}")
-        workshop_by_mod[mod_id] = workshop_id
+        workshop_id = metadata["target"].get("workshopId")
+        if workshop_id is not None:
+            require(workshop_by_mod.setdefault(mod_id, workshop_id) == workshop_id,
+                    f"conflicting Workshop IDs for {mod_id}")
         jar_info = validate_jar(patch_dir / metadata["jar"], metadata)
         jar_path = (relative / metadata["jar"]).as_posix()
         entry = {
@@ -234,14 +237,18 @@ def collect(root: Path, repository: str, ref: str) -> tuple[dict[str, bytes], in
     mod_groups = {}
     for mod_id, entries in sorted(grouped.items()):
         entries.sort(key=lambda entry: (entry["name"], entry["author"]["name"]))
+        workshop_id = workshop_by_mod.get(mod_id)
         versions: dict[str, int] = {}
         for entry in entries:
+            # Resolve against the full group, independent of metadata scan order.
+            if workshop_id is not None:
+                entry["target"].setdefault("workshopId", workshop_id)
             if entry.get("example", False):
                 continue
             for version in entry["target"]["versions"]:
                 versions[version] = versions.get(version, 0) + 1
         mod_groups[mod_id] = {
-            "workshopId": workshop_by_mod[mod_id], "count": len(entries),
+            "workshopId": workshop_id, "count": len(entries),
             "versions": dict(sorted(versions.items())), "patches": entries,
         }
     count = sum(map(len, grouped.values()))
