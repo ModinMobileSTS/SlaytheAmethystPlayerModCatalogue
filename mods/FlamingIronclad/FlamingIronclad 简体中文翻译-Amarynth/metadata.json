@@ -1,0 +1,17 @@
+{
+  "schemaVersion": 1,
+  "name": "FlamingIronclad 简体中文翻译",
+  "description": "为 FlamingIronclad 补充简体中文文本（卡牌、能力、遗物、药水、事件、角色、UI 与关键词），游戏语言为简体中文时自动生效；补齐原本没有任何文本的卡牌 RefractoryArmor（名称“耐火装甲”）；并修复能力“炼狱”在中文下抽到“灼伤”时不触发获得力量的问题。",
+  "version": "1.1.1",
+  "author": {
+    "name": "Amarynth",
+    "email": "zajunforever@qq.com"
+  },
+  "target": {
+    "modId": "FlamingIronclad",
+    "versions": [
+      "0.0.0"
+    ]
+  },
+  "jar": "amethyst.ai.patch.flamingironclad.patch-1795699966838-a36d04e5.jar"
+}
