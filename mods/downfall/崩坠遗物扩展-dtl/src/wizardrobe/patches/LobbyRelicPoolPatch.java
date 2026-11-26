@@ -5,6 +5,7 @@ import com.evacipated.cardcrawl.modthespire.lib.SpirePostfixPatch;
 import com.megacrit.cardcrawl.characters.AbstractPlayer;
 import com.megacrit.cardcrawl.helpers.RelicLibrary;
 import com.megacrit.cardcrawl.relics.AbstractRelic;
+import wizardrobe.relics.CompileDirective;
 import wizardrobe.relics.KnowledgeBase;
 import wizardrobe.relics.PastLifeMemory;
 
@@ -19,6 +20,7 @@ public final class LobbyRelicPoolPatch {
     @SpirePostfixPatch
     public static void Postfix(Object[] __args) {
         ArrayList<?> pool = (ArrayList<?>) __args[0];
-        pool.removeIf(id -> KnowledgeBase.ID.equals(id) || PastLifeMemory.ID.equals(id));
+        pool.removeIf(id -> KnowledgeBase.ID.equals(id) || PastLifeMemory.ID.equals(id)
+                || CompileDirective.ID.equals(id));
     }
 }

@@ -11,6 +11,7 @@ import com.megacrit.cardcrawl.dungeons.AbstractDungeon;
 import com.megacrit.cardcrawl.localization.RelicStrings;
 import com.megacrit.cardcrawl.relics.AbstractRelic;
 import com.megacrit.cardcrawl.rooms.AbstractRoom;
+import wizardrobe.relics.CompileDirective;
 import wizardrobe.relics.KnowledgeBase;
 import wizardrobe.relics.PastLifeMemory;
 import wizardrobe.relics.WizardRobe;
@@ -58,6 +59,7 @@ public class WizardRobeMod implements EditStringsSubscriber, EditRelicsSubscribe
         BaseMod.addRelic(new WizardRobe(), RelicType.SHARED);
         BaseMod.addRelic(new KnowledgeBase(), RelicType.SHARED);
         BaseMod.addRelic(new PastLifeMemory(), RelicType.SHARED);
+        BaseMod.addRelic(new CompileDirective(), RelicType.SHARED);
     }
 
     @Override

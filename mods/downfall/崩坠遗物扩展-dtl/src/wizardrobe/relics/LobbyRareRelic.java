@@ -8,8 +8,11 @@ abstract class LobbyRareRelic extends CustomRelic {
     private static final String ART = "wizardrobe/images/relics/";
 
     protected LobbyRareRelic(String id, String artName) {
-        super(id, TextureLoader.getTexture(ART + artName + ".png"),
-                TextureLoader.getTexture(ART + artName + "Outline.png"),
+        this(id, ART + artName + ".png", ART + artName + "Outline.png");
+    }
+
+    protected LobbyRareRelic(String id, String imagePath, String outlinePath) {
+        super(id, TextureLoader.getTexture(imagePath), TextureLoader.getTexture(outlinePath),
                 RelicTier.RARE, LandingSound.MAGICAL);
     }
 
