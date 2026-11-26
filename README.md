@@ -3,6 +3,19 @@
 玩家分享的 AI 补丁模组目录，供 Slay the Amethyst 浏览、下载和分享适用的模组补丁。
 
 <!-- MOD_LIST_START -->
+## AnonMod
+
+### Mod配置整数解析防闪退
+
+针对 java\.lang\.NumberFormatException: null at Integer\.parseInt 闪退：为 SpireConfig 的 getInt/getFloat 增加空值、空白与非数字回退，配置项缺失时按 0 处理而不是抛异常，并把缺失的配置键写入日志便于定位 Mod。
+
+- **补丁版本**：`1.0.1`
+- **作者**：久帝的地狱单骑
+- **适用版本**：`1.1.6`
+- **下载**：[下载](https://raw.githubusercontent.com/ModinMobileSTS/SlaytheAmethystPlayerModCatalogue/main/mods/AnonMod/Mod%E9%85%8D%E7%BD%AE%E6%95%B4%E6%95%B0%E8%A7%A3%E6%9E%90%E9%98%B2%E9%97%AA%E9%80%80-%E4%B9%85%E5%B8%9D%E7%9A%84%E5%9C%B0%E7%8B%B1%E5%8D%95%E9%AA%91/amethyst.ai.patch.anonmod.patch-1795661975612-bbbba4c1.jar)
+
+---
+
 ## BlueLaboratory
 
 ### 蓝色实验室中文汉化
@@ -35,6 +48,19 @@
 - **作者**：枫陵
 - **适用版本**：`2.3.0`
 - **下载**：[下载](https://raw.githubusercontent.com/ModinMobileSTS/SlaytheAmethystPlayerModCatalogue/main/mods/DNKmod/DNKmod%20%E6%B1%89%E5%8C%96%E4%B8%8E%E9%87%91%E5%B8%81%E5%80%8D%E7%8E%87-%E6%9E%AB%E9%99%B5/amethyst.ai.patch.dnkmod.patch-1793374002735-342aafcd.jar)
+
+---
+
+## FlamingIronclad
+
+### FlamingIronclad 简体中文翻译
+
+为 FlamingIronclad 补充简体中文文本（卡牌、能力、遗物、药水、事件、角色、UI 与关键词），游戏语言为简体中文时自动生效；补齐原本没有任何文本的卡牌 RefractoryArmor（名称“耐火装甲”）；并修复能力“炼狱”在中文下抽到“灼伤”时不触发获得力量的问题。
+
+- **补丁版本**：`1.1.1`
+- **作者**：Amarynth
+- **适用版本**：`0.0.0`
+- **下载**：[下载](https://raw.githubusercontent.com/ModinMobileSTS/SlaytheAmethystPlayerModCatalogue/main/mods/FlamingIronclad/FlamingIronclad%20%E7%AE%80%E4%BD%93%E4%B8%AD%E6%96%87%E7%BF%BB%E8%AF%91-Amarynth/amethyst.ai.patch.flamingironclad.patch-1795699966838-a36d04e5.jar)
 
 ---
 
@@ -139,6 +165,19 @@
 - **作者**：NIF
 - **适用版本**：`4.0.0`
 - **下载**：[下载](https://raw.githubusercontent.com/ModinMobileSTS/SlaytheAmethystPlayerModCatalogue/main/mods/RainWorld/Spine%E9%99%84%E4%BB%B6%E7%BC%BA%E5%A4%B1%E5%B4%A9%E6%BA%83%E4%BF%AE%E5%A4%8D-NIF/amethyst.ai.patch.rainworld.patch-1794898577552-c0f5614b.jar)
+
+---
+
+## RandomNumberPredictionMaster
+
+### 结果预测和祝福重选
+
+悬停即在原版提示框/卡面上显示各类随机结果，并支持涅奥祝福撤回重选。所有推算只用随机数副本，不消耗游戏随机数，结果按状态缓存。一、涅奥祝福：悬停显示卡牌整组、药水详情、遗物详情与诅咒代价；选完可用「更改祝福」撤回重选，撤回点只写本模组配置、不改存档，强杀读档后仍可撤回。二、变牌：单张在确认界面用真实结果替换随机翻牌，多选时悬浮在悬停牌旁。三、遗物（商店、遗物奖励、Boss 遗物三选一里悬停）：磨刀石／战纹涂料显示实际会被升级的两张牌；潘多拉之盒显示替换初始打击与防御的牌；召唤铃显示普通／罕见／稀有各是哪一件；坩埚显示五瓶随机药水；天球仪显示四组卡牌奖励；小房子显示随机升级的那张牌与那瓶药水。四、篝火：悬停「挖」显示会挖到的遗物；带睡梦捕手时悬停「休息」显示附加的三张卡牌奖励。五、事件预测：微光、决斗、拾荒史莱姆、死亡冒险家、诅咒之书、换脸商人、蓝衣女子、成瘾者、大鱼、心灵绽放、神秘圆球、大图书馆、感知石、我们又见面了、陵墓、篝火精灵、尖端设计师、全知头骨。六、设置：图片大小滑条（50%–200%，默认 80，100% 为原版大小）、「涅奥始终有四个选项」开关（默认关，实时生效）、重置为默认。
+
+- **补丁版本**：`0.28.3`
+- **作者**：九梦
+- **适用版本**：`1.0.0`
+- **下载**：[下载](https://raw.githubusercontent.com/ModinMobileSTS/SlaytheAmethystPlayerModCatalogue/main/mods/RandomNumberPredictionMaster/%E7%BB%93%E6%9E%9C%E9%A2%84%E6%B5%8B%E5%92%8C%E7%A5%9D%E7%A6%8F%E9%87%8D%E9%80%89-%E4%B9%9D%E6%A2%A6/amethyst.ai.patch.randomnumberpredictionmaster.patch-1795464400798-f6aa7163.jar)
 
 ---
 
@@ -248,6 +287,21 @@ The Noh Dancer（Kokoro）模组自带 zhs 翻译不完整，仍有英文残留�
 - **作者**：T3Getty
 - **适用版本**：`1.1.1`
 - **下载**：[下载](https://raw.githubusercontent.com/ModinMobileSTS/SlaytheAmethystPlayerModCatalogue/main/mods/TheNohDancer/%E8%83%BD%E4%B9%90%E8%88%9E%E8%80%85%E4%B8%AD%E6%96%87%E7%BF%BB%E8%AF%91-T3Getty/amethyst.ai.patch.thenohdancer.patch-1794819040986-5625394a.jar)
+
+---
+
+## TheRailgun
+
+### 炮姐修复补丁
+
+修复卡牌显示与文字描述
+
+修改了部分卡牌效果
+
+- **补丁版本**：`0.4.2`
+- **作者**：ice
+- **适用版本**：`1.1.1`
+- **下载**：[下载](https://raw.githubusercontent.com/ModinMobileSTS/SlaytheAmethystPlayerModCatalogue/main/mods/TheRailgun/%E7%82%AE%E5%A7%90%E4%BF%AE%E5%A4%8D%E8%A1%A5%E4%B8%81-ice/amethyst.ai.patch.therailgun.patch-1795488826242-2eff0a3d.jar)
 
 ---
 
@@ -379,6 +433,19 @@ Bloodstains 新增的「血迹」卡牌（致敬《黑暗之魂》系列）此�
 
 ---
 
+## bundle\_of\_food
+
+### Bundle Of Food 遗物无法选中修复
+
+修复 boss 宝箱遗物选择界面中模组遗物无法选中的问题。原因是 bundlecore 在该界面追加的第四个（任务）遗物会复用同一实例，而 AbstractRelic\.spawn 只复位 isObtained、不复位 isDone；实例一旦被获得过，重新显示时引擎按“已获得”分支处理，点按只会打开遗物详情弹窗。补丁在 BossRelicSelectScreen\.open 结束时把界面内所有遗物的 isDone / isObtained 复位，使其恢复可选中与确认获得。
+
+- **补丁版本**：`1.0.0`
+- **作者**：lution
+- **适用版本**：`5.2.3`
+- **下载**：[下载](https://raw.githubusercontent.com/ModinMobileSTS/SlaytheAmethystPlayerModCatalogue/main/mods/bundle_of_food/Bundle%20Of%20Food%20%E9%81%97%E7%89%A9%E6%97%A0%E6%B3%95%E9%80%89%E4%B8%AD%E4%BF%AE%E5%A4%8D-lution/amethyst.ai.patch.bundle_of_food.patch-1794974802216-7c02b268.jar)
+
+---
+
 ## card\-forge
 
 ### Card Forge 汉化
@@ -493,14 +560,14 @@ Card Forge 中文汉化，并重写雷神之锤的选卡界面：固定格位消
 - **适用版本**：`6.0.20`
 - **下载**：[下载](https://raw.githubusercontent.com/ModinMobileSTS/SlaytheAmethystPlayerModCatalogue/main/mods/downfall/%E5%B4%A9%E5%9D%A0%E8%81%94%E6%9C%BA%E5%85%BC%E5%AE%B9%E4%BF%AE%E5%A4%8D-dtl/amethyst.ai.patch.downfall.patch-1795097180731-e8e73565.jar)
 
-### 崩坠遗物补丁
+### 崩坠遗物扩展
 
-为 Downfall 新增附属遗物「巫师长袍」：稀有品阶，每回合开始时获得 3 点崩坠原生「法力」（地精法师的 Gremlin:Wiz 状态，与法师杖、巫师帽、法力词条联动），在遗物自身回合开始阶段给予，第一回合也会触发。以共享方式注册，所有角色可携带，方便联机开局遗物配置；带中英文本地化，贴图沿用崩坠已有的斗篷遗物。
+新增联机房间初始遗物「智械指令分支\-编译」：每完成一次方法编译获得 3 点格挡，预览和额外副本不重复触发。与「知识库」「前世记忆」一样保留房间配置选项，不进入随机遗物池。「知识库」额外提供青铜人偶选牌奖励；「前世记忆」在编码和打出方法时分别给予 1 点和 3 点活力。保留「巫师长袍」。
 
-- **补丁版本**：`1.2.0`
+- **补丁版本**：`1.4.0`
 - **作者**：dtl
 - **适用版本**：`6.0.20`
-- **下载**：[下载](https://raw.githubusercontent.com/ModinMobileSTS/SlaytheAmethystPlayerModCatalogue/main/mods/downfall/%E5%B4%A9%E5%9D%A0%E9%81%97%E7%89%A9%E8%A1%A5%E4%B8%81-dtl/amethyst.ai.patch.downfall.patch-1794932358720-f7f767a3.jar)
+- **下载**：[下载](https://raw.githubusercontent.com/ModinMobileSTS/SlaytheAmethystPlayerModCatalogue/main/mods/downfall/%E5%B4%A9%E5%9D%A0%E9%81%97%E7%89%A9%E6%89%A9%E5%B1%95-dtl/amethyst.ai.patch.downfall.patch-1794932358720-f7f767a3.jar)
 
 ---
 
@@ -521,9 +588,9 @@ Card Forge 中文汉化，并重写雷神之锤的选卡界面：固定格位消
 
 ### 恐惧与饥饿神明牌加强
 
-Fear And Hunger 的神明牌需同时支付能量与心眼，但原数值明显配不上代价。本补丁不改变心眼需求与描述文本，只调整22张神明牌及配套牌的数值并降低部分高费牌费用：伤害术20伤/失去6力量；黑雾缭绕降为1费、8群体伤害、2失明；恶念魔球12×4；费洛蒙10格挡/2虚弱；爱之低语回复上限14；治愈低语8再生；引火术4伤/3灼伤；燃烧降为1费、10伤/8灼伤；灼烧大地降为1费、每回合5灼伤；深根收拔7伤/2缓慢；光合作用8回复；鲜血圣剑打击15伤；水上行走每心眼5格挡；月陨降为2费、48伤；落羽10伤；红色电弧降为1费、每类灵魂10点流失；飞蛾群降为1费、每张灵魂6点流失；朗基努斯打击17伤；水蛭虹吸6伤；乌鸦群9出血；蝗虫群降为1费、4出血；蜂刺降为1费、2伤/4中毒。升级加成与主日月灼等机制保持不变。
+Fear And Hunger 神明牌数值平衡（不改变心眼需求与描述文本，只改数值，卡面数字自动同步）。水上行走：每个心眼的格挡由 5 降为 4。蜂刺：费用退回 2 费、伤害 1→2、中毒 3→4（每次命中已中毒敌人返还的心眼可直接抵扣其它牌费用，1 费版本无法平衡）。燃烧：降为 1 费、全体伤害/灼伤退回原值 8/6；灼烧大地：降为 1 费、每回合灼伤退回原值 3；水蛭虹吸：每种负面状态伤害由 6 降为 5；引火术：每心眼伤害 4→6、灼伤 3→4；朗基努斯打击：伤害 17→22。其它神明牌维持原加强值。
 
-- **补丁版本**：`1.0.0`
+- **补丁版本**：`1.3.0`
 - **作者**：lution
 - **适用版本**：`0.0.1`
 - **下载**：[下载](https://raw.githubusercontent.com/ModinMobileSTS/SlaytheAmethystPlayerModCatalogue/main/mods/fnh/%E6%81%90%E6%83%A7%E4%B8%8E%E9%A5%A5%E9%A5%BF%E7%A5%9E%E6%98%8E%E7%89%8C%E5%8A%A0%E5%BC%BA-lution/amethyst.ai.patch.fnh.patch-1794549458046-8d328fac.jar)
@@ -795,6 +862,15 @@ JesterMod 的简体中文汉化。修正卡牌与遗物文本渲染：小丑专�
 - **作者**：apricityx
 - **适用版本**：`6.4.20`
 - **下载**：[下载](https://raw.githubusercontent.com/ModinMobileSTS/SlaytheAmethystPlayerModCatalogue/main/mods/spireTogether/Skindex%E5%85%A8%E7%9A%AE%E8%82%A4%E8%A7%A3%E9%94%81-apricityx/amethyst.ai.patch.spiretogether.patch-1794016797685-8cfa4e44.jar)
+
+### 联机尖塔·崩坠与地精修复
+
+合并三个联机补丁：修复崩坠开关、读档、地图点位和心脏开场初始遗物及荒疫漏发；防止提前结算误判地精小队未登场成员阵亡；地精大块头按参战人数累计全队技能牌，保留原版力量增幅。
+
+- **补丁版本**：`2.0.0`
+- **作者**：dtl
+- **适用版本**：`6.4.20`
+- **下载**：[下载](https://raw.githubusercontent.com/ModinMobileSTS/SlaytheAmethystPlayerModCatalogue/main/mods/spireTogether/%E8%81%94%E6%9C%BA%E5%B0%96%E5%A1%94%C2%B7%E5%B4%A9%E5%9D%A0%E4%B8%8E%E5%9C%B0%E7%B2%BE%E4%BF%AE%E5%A4%8D-dtl/amethyst.ai.patch.spiretogether.patch-1795344223517-5793bf3f.jar)
 
 ---
 
