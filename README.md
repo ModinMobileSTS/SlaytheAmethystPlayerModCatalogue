@@ -5,14 +5,14 @@
 <!-- MOD_LIST_START -->
 ## AnonMod
 
-### Mod配置整数解析防闪退
+### AnonMod配置与刀痕特效闪退修复
 
-针对 java\.lang\.NumberFormatException: null at Integer\.parseInt 闪退：为 SpireConfig 的 getInt/getFloat 增加空值、空白与非数字回退，配置项缺失时按 0 处理而不是抛异常，并把缺失的配置键写入日志便于定位 Mod。
+修复两类闪退：\(1\) 小星星\(LittleStar\)卡牌的 CutEffect 刀痕特效着色器 cuts\.fs 里 \`u\_progress\[i\] &lt; 0\` 用 float 与 int 比较，安卓 GLES 编译器报 \`0:60: S0001: Cannot compare &\#x27;float&\#x27; with &\#x27;int&\#x27;\`，CutEffect\.render 随即抛 RuntimeException 导致 Game crashed；补丁用改成 \`&lt; 0\.0\` 的兼容版着色器替换该静态着色器，若设备仍不接受则跳过特效渲染并标记特效结束，只丢特效不闪退，并写入编译日志。\(2\) 保留原有 SpireConfig\.getInt/getFloat 空值与非法值回退，避免配置项缺失时 Integer\.parseInt\(null\) 抛 NumberFormatException。
 
-- **补丁版本**：`1.0.1`
+- **补丁版本**：`1.1.0`
 - **作者**：久帝的地狱单骑
 - **适用版本**：`1.1.6`
-- **下载**：[下载](https://raw.githubusercontent.com/ModinMobileSTS/SlaytheAmethystPlayerModCatalogue/main/mods/AnonMod/Mod%E9%85%8D%E7%BD%AE%E6%95%B4%E6%95%B0%E8%A7%A3%E6%9E%90%E9%98%B2%E9%97%AA%E9%80%80-%E4%B9%85%E5%B8%9D%E7%9A%84%E5%9C%B0%E7%8B%B1%E5%8D%95%E9%AA%91/amethyst.ai.patch.anonmod.patch-1795661975612-bbbba4c1.jar)
+- **下载**：[下载](https://raw.githubusercontent.com/ModinMobileSTS/SlaytheAmethystPlayerModCatalogue/main/mods/AnonMod/AnonMod%E9%85%8D%E7%BD%AE%E4%B8%8E%E5%88%80%E7%97%95%E7%89%B9%E6%95%88%E9%97%AA%E9%80%80%E4%BF%AE%E5%A4%8D-%E4%B9%85%E5%B8%9D%E7%9A%84%E5%9C%B0%E7%8B%B1%E5%8D%95%E9%AA%91/amethyst.ai.patch.anonmod.patch-1795661975612-bbbba4c1.jar)
 
 ---
 
