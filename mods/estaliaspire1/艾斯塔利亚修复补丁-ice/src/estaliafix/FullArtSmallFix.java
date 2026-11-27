@@ -1,6 +1,7 @@
 package estaliafix;
 
 import basemod.BaseMod;
+import basemod.abstracts.CustomCard;
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.graphics.Pixmap;
 import com.badlogic.gdx.graphics.Texture;
@@ -9,7 +10,9 @@ import com.evacipated.cardcrawl.modthespire.lib.SpirePostfixPatch;
 import com.evacipated.cardcrawl.modthespire.lib.SpirePrefixPatch;
 import com.evacipated.cardcrawl.modthespire.lib.SpireReturn;
 import com.megacrit.cardcrawl.cards.AbstractCard;
+import com.megacrit.cardcrawl.helpers.CardLibrary;
 import com.megacrit.cardcrawl.helpers.ImageMaster;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Locale;
 import java.util.Map;
@@ -24,7 +27,7 @@ import java.util.Map;
  * 看起来就是空白。大图预览能显示，是因为那里的补丁无条件调用 getBackgroundLargeTexture()。
  *
  * 处理：
- * 1) refreshArtwork 之后同步 textureBackgroundSmallImg / textureBackgroundLargeImg 开关；
+ * 1) 异画开关保存后同步 textureBackgroundSmallImg / textureBackgroundLargeImg 开关；
  * 2) 前置拦截两张卡的 getBackgroundSmallTexture：优先父模组自带小图
  *    estalia/ui/fullart/&lt;key&gt;.png，缺失时把 _p.png 大图等比缩小一半并缓存；
  * 3) 大图同样前置拦截，缺 _p.png 时用小图顶替，避免原实现缺图抛异常；
@@ -35,26 +38,15 @@ public class FullArtSmallFix {
     private static final Map<String, Texture> SMALL_CACHE = new HashMap<String, Texture>();
     private static final Map<String, Texture> LARGE_CACHE = new HashMap<String, Texture>();
 
-    @SpirePatch2(clz = estalia.Card.class, method = "refreshArtwork", paramtypez = {})
-    public static class SyncBackgroundFields {
-        @SpirePostfixPatch
-        public static void postfix(estalia.Card __instance) {
-            sync(__instance);
-        }
-    }
-
-    @SpirePatch2(clz = estalia.TechnologyCard.class, method = "refreshArtwork", paramtypez = {})
-    public static class SyncTechnologyBackgroundFields {
-        @SpirePostfixPatch
-        public static void postfix(estalia.TechnologyCard __instance) {
-            sync(__instance);
-        }
-    }
-
-    @SpirePatch2(clz = estalia.Card.class, method = "getBackgroundSmallTexture", paramtypez = {})
+    /**
+     * getBackgroundSmallTexture / getBackgroundLargeTexture 声明在 CustomCard 上，
+     * estalia.Card 与 estalia.TechnologyCard 只是继承，补丁必须打在声明类上。
+     * 非艾丝卡牌由 isFullArt 直接放行。
+     */
+    @SpirePatch2(clz = CustomCard.class, method = "getBackgroundSmallTexture", paramtypez = {})
     public static class SmallBackground {
         @SpirePrefixPatch
-        public static SpireReturn prefix(estalia.Card __instance) {
+        public static SpireReturn prefix(CustomCard __instance) {
             if (!isFullArt(__instance)) {
                 return SpireReturn.Continue();
             }
@@ -62,21 +54,10 @@ public class FullArtSmallFix {
         }
     }
 
-    @SpirePatch2(clz = estalia.TechnologyCard.class, method = "getBackgroundSmallTexture", paramtypez = {})
-    public static class TechnologySmallBackground {
-        @SpirePrefixPatch
-        public static SpireReturn prefix(estalia.TechnologyCard __instance) {
-            if (!isFullArt(__instance)) {
-                return SpireReturn.Continue();
-            }
-            return SpireReturn.Return(smallTexture(__instance));
-        }
-    }
-
-    @SpirePatch2(clz = estalia.Card.class, method = "getBackgroundLargeTexture", paramtypez = {})
+    @SpirePatch2(clz = CustomCard.class, method = "getBackgroundLargeTexture", paramtypez = {})
     public static class LargeBackground {
         @SpirePrefixPatch
-        public static SpireReturn prefix(estalia.Card __instance) {
+        public static SpireReturn prefix(CustomCard __instance) {
             if (!isFullArt(__instance)) {
                 return SpireReturn.Continue();
             }
@@ -84,14 +65,19 @@ public class FullArtSmallFix {
         }
     }
 
-    @SpirePatch2(clz = estalia.TechnologyCard.class, method = "getBackgroundLargeTexture", paramtypez = {})
-    public static class TechnologyLargeBackground {
-        @SpirePrefixPatch
-        public static SpireReturn prefix(estalia.TechnologyCard __instance) {
-            if (!isFullArt(__instance)) {
-                return SpireReturn.Continue();
+    /** 异画开关保存后同步背景图字段，避免要重启游戏才刷新。 */
+    @SpirePatch2(clz = estalia.Mod.class, method = "save", paramtypez = {})
+    public static class SyncOnToggle {
+        @SpirePostfixPatch
+        public static void postfix() {
+            try {
+                for (com.megacrit.cardcrawl.cards.AbstractCard card
+                        : new ArrayList<com.megacrit.cardcrawl.cards.AbstractCard>(CardLibrary.cards.values())) {
+                    sync(card);
+                }
+            } catch (Throwable t) {
+                log("切换异画后同步背景字段失败: " + t);
             }
-            return SpireReturn.Return(largeTexture(__instance));
         }
     }
 

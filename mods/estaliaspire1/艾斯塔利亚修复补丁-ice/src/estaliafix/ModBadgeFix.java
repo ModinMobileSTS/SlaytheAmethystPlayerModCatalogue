@@ -4,8 +4,10 @@ import basemod.BaseMod;
 import basemod.ModBadge;
 import basemod.ModButton;
 import basemod.ModLabel;
+import basemod.ModLabeledButton;
 import basemod.ModPanel;
 import basemod.ReflectionHacks;
+import basemod.helpers.UIElementModificationHelper;
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.graphics.Pixmap;
 import com.badlogic.gdx.graphics.Texture;
@@ -18,44 +20,20 @@ import com.evacipated.cardcrawl.modthespire.lib.SpireReturn;
 import com.evacipated.cardcrawl.modthespire.lib.SpirePostfixPatch;
 
 /**
- * 模组徽章与设置面板的显示修复：
- *
- * 1. 大头像：原模组用 200x200 的人物立绘（estalia/ui/button.png）注册模组徽章，
- *    而 basemod.ModBadge 按贴图原始尺寸 x Settings.scale 绘制，在模组列表里
- *    画出巨大头像遮挡其他条目。原设置由补丁注册为 48x48 图标，艾丝科技
- *    保留父模组注册并缩为 64x64；读取原图失败时退回透明占位图。
- *
- * 2. 设置面板排版：面板里的两个按钮（BlankButton.png 为 128 高）原本
- *    y=540 / y=418，与上下两行文字（y=610 / y=485）重叠、挤在一起。
- *    这里在徽章注册完成后（此时面板元素已全部添加）把按钮与文字重排为
- *    “文字一行、按钮一行”：
- *      生成专属事件 / 生成新增随机遗物（开关，保持原位 720 / 670）
- *      当前语音：…            文字 y=610
- *      [切换语音按钮]          y=460
- *      篝火人物大小：…         文字 y=400
- *      [切换大小按钮]          y=235
- *    全部左对齐 x=350。按钮移动后同步重建点击热区（Hitbox）。
- *
+ * 模组徽章显示修复：原模组注册徽章时贴图尺寸过大，会遮挡模组列表里的其他条目。
+ * 原模组设置徽章由补丁缩为 48x48 图标，艾丝科技徽章缩为 64x64；
+ * 读取原图失败时退回透明占位图。设置面板只调整语音按钮：把它压到与倍数
+ * 选项框相同的高度并下移到说明文字下方，行距参照“人物大小 / 倍数按钮”，
+ * 其余元素保持父模组原样。
  */
 public class ModBadgeFix {
 
     private static final String BADGE_NAME = "教皇 · 艾斯塔利亚";
     private static final String TECHNOLOGY_NAME = "艾丝科技";
-    private static final String BADGE_IMAGE = "estalia/ui/button.png";
+    private static final String BADGE_IMAGE = "estalia/ui/mod_badge.png";
     private static final int SETTINGS_ICON_SIZE = 48;
     private static final int TECHNOLOGY_ICON_SIZE = 64;
     private static boolean registeringSettingsBadge;
-
-    // 原面板坐标（用于识别元素）
-    private static final float OLD_VOICE_BUTTON_Y = 540.0f;
-    private static final float OLD_CAMPFIRE_BUTTON_Y = 418.0f;
-    private static final float OLD_CAMPFIRE_LABEL_Y = 485.0f;
-
-    // 新排版坐标
-    private static final float NEW_VOICE_BUTTON_Y = 460.0f;
-    private static final float NEW_CAMPFIRE_LABEL_Y = 400.0f;
-    private static final float NEW_CAMPFIRE_BUTTON_Y = 235.0f;
-    private static final float ELEMENT_X = 350.0f;
 
     @SpirePatch2(clz = BaseMod.class, method = "registerModBadge",
             paramtypez = {Texture.class, String.class, String.class, String.class, ModPanel.class})
@@ -65,7 +43,7 @@ public class ModBadgeFix {
                                                String desc, ModPanel settingsPanel) {
             if (BADGE_NAME.equals(name)) {
                 if (registeringSettingsBadge) return SpireReturn.Continue();
-                if (settingsPanel != null) relayout(settingsPanel);
+                fixVoiceButton(settingsPanel);
                 Texture icon = downscale(name, SETTINGS_ICON_SIZE);
                 registeringSettingsBadge = true;
                 try {
@@ -104,6 +82,84 @@ public class ModBadgeFix {
         }
     }
 
+    /**
+     * 只处理“当前语音”这一行。原按钮是 128 高的 BlankButton.png，压在说明文字上；
+     * 这里把它压到与倍数按钮同高，并放到说明文字下方，间距沿用人物大小那一排。
+     * 说明性 ModLabel 初始文本为空（每帧的回调才填字），所以按原始 y 坐标识别。
+     */
+    private static void fixVoiceButton(ModPanel panel) {
+        if (panel == null) {
+            return;
+        }
+        try {
+            ModButton voiceButton = null;
+            ModLabel voiceLabel = null;
+            ModLabel sizeLabel = null;
+            ModLabeledButton sizeButton = null;
+            for (Object element : panel.getUIElements()) {
+                if (element instanceof ModLabeledButton) {
+                    if (sizeButton == null) {
+                        sizeButton = (ModLabeledButton) element;
+                    }
+                } else if (element instanceof ModLabel) {
+                    ModLabel label = (ModLabel) element;
+                    float y = label.getY();
+                    String text = label.text == null ? "" : label.text;
+                    if (text.contains("当前语音") || text.isEmpty() && Math.abs(y - 610.0f) < 1.0f) {
+                        voiceLabel = label;
+                    } else if (text.contains("人物大小") || text.isEmpty() && Math.abs(y - 485.0f) < 1.0f) {
+                        sizeLabel = label;
+                    }
+                } else if (element.getClass() == ModButton.class && voiceButton == null) {
+                    voiceButton = (ModButton) element;
+                }
+            }
+            if (voiceButton == null) {
+                return;
+            }
+            Float oldHeight = ReflectionHacks.getPrivate(voiceButton, ModButton.class, "h");
+            if (oldHeight == null) {
+                return;
+            }
+            float newHeight = 46.0f;
+            float gap = 20.0f;
+            if (sizeButton != null) {
+                Float h = ReflectionHacks.getPrivate(sizeButton, ModLabeledButton.class, "h");
+                if (h != null && h.floatValue() > 0.0f) {
+                    newHeight = h.floatValue() / Settings.scale;
+                }
+            }
+            if (voiceLabel != null && sizeLabel != null && sizeButton != null) {
+                float measured = sizeLabel.getY() - (sizeButton.getY() + newHeight);
+                if (measured > 4.0f && measured < 120.0f) {
+                    gap = measured;
+                }
+            }
+            float newY = voiceLabel != null ? voiceLabel.getY() - gap - newHeight : 540.0f;
+            Float oldY = ReflectionHacks.getPrivate(voiceButton, ModButton.class, "y");
+            if (oldY != null && Math.abs(oldY.floatValue() / Settings.scale - newY) < 0.5f
+                    && Math.abs(oldHeight.floatValue() - newHeight) < 0.5f) {
+                return;
+            }
+            Float x = ReflectionHacks.getPrivate(voiceButton, ModButton.class, "x");
+            float scaledX = x == null ? 350.0f * Settings.scale : x.floatValue();
+            float scaledY = newY * Settings.scale;
+            ReflectionHacks.setPrivate(voiceButton, ModButton.class, "x", Float.valueOf(scaledX));
+            ReflectionHacks.setPrivate(voiceButton, ModButton.class, "y", Float.valueOf(scaledY));
+            ReflectionHacks.setPrivate(voiceButton, ModButton.class, "h", Float.valueOf(newHeight));
+            Hitbox hb = ReflectionHacks.getPrivate(voiceButton, ModButton.class, "hb");
+            if (hb != null) {
+                hb.height = Math.max(4.0f, newHeight - 28.0f) * Settings.scale;
+                UIElementModificationHelper.moveHitboxByOriginalParameters(hb,
+                        scaledX + 14.0f * Settings.scale,
+                        scaledY + 14.0f * Settings.scale);
+            }
+            System.out.println("[EstaliaFix] 语音按钮已与倍数按钮同高并单独成行: h=" + newHeight + ", y=" + newY);
+        } catch (Throwable t) {
+            System.out.println("[EstaliaFix] 语音按钮排版失败: " + t);
+        }
+    }
+
     private static Texture downscale(String name, int size) {
         Pixmap source = null;
         Pixmap target = null;
@@ -131,59 +187,4 @@ public class ModBadgeFix {
         }
     }
 
-    private static void relayout(ModPanel panel) {
-        try {
-            ModButton voiceButton = null;
-            ModButton campfireButton = null;
-            ModLabel campfireLabel = null;
-            for (Object element : panel.getUIElements()) {
-                if (element instanceof ModButton) {
-                    float y = buttonY((ModButton) element);
-                    if (Math.abs(y - OLD_VOICE_BUTTON_Y) < 1.0f) {
-                        voiceButton = (ModButton) element;
-                    } else if (Math.abs(y - OLD_CAMPFIRE_BUTTON_Y) < 1.0f) {
-                        campfireButton = (ModButton) element;
-                    }
-                } else if (element.getClass() == ModLabel.class) {
-                    ModLabel label = (ModLabel) element;
-                    if (Math.abs(label.getY() - OLD_CAMPFIRE_LABEL_Y) < 1.0f) {
-                        campfireLabel = label;
-                    }
-                }
-            }
-            if (voiceButton != null) {
-                moveButton(voiceButton, ELEMENT_X, NEW_VOICE_BUTTON_Y);
-            }
-            if (campfireLabel != null) {
-                campfireLabel.setY(NEW_CAMPFIRE_LABEL_Y);
-            }
-            if (campfireButton != null) {
-                moveButton(campfireButton, ELEMENT_X, NEW_CAMPFIRE_BUTTON_Y);
-            }
-            System.out.println("[EstaliaFix] 设置面板已重排：文字与按钮各占一排");
-        } catch (Throwable t) {
-            System.out.println("[EstaliaFix] 设置面板重排失败: " + t);
-        }
-    }
-
-    private static float buttonY(ModButton button) {
-        Float y = ReflectionHacks.getPrivate(button, ModButton.class, "y");
-        return y == null ? 0.0f : y.floatValue() / Settings.scale;
-    }
-
-    private static void moveButton(ModButton button, float x, float y) {
-        Float w = ReflectionHacks.getPrivate(button, ModButton.class, "w");
-        Float h = ReflectionHacks.getPrivate(button, ModButton.class, "h");
-        float width = w == null ? 128.0f : w.floatValue();
-        float height = h == null ? 128.0f : h.floatValue();
-        float scaledX = x * Settings.scale;
-        float scaledY = y * Settings.scale;
-        ReflectionHacks.setPrivate(button, ModButton.class, "x", Float.valueOf(scaledX));
-        ReflectionHacks.setPrivate(button, ModButton.class, "y", Float.valueOf(scaledY));
-        ReflectionHacks.setPrivate(button, ModButton.class, "hb", new Hitbox(
-                scaledX + 14.0f * Settings.scale,
-                scaledY + 14.0f * Settings.scale,
-                (width - 28.0f) * Settings.scale,
-                (height - 28.0f) * Settings.scale));
-    }
 }

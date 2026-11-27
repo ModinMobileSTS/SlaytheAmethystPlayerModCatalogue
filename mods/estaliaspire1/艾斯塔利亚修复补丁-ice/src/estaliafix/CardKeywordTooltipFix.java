@@ -12,6 +12,7 @@ import com.evacipated.cardcrawl.modthespire.lib.SpirePostfixPatch;
 import com.megacrit.cardcrawl.cards.AbstractCard;
 import com.megacrit.cardcrawl.helpers.GameDictionary;
 import com.megacrit.cardcrawl.helpers.PowerTip;
+import com.megacrit.cardcrawl.helpers.TipHelper;
 import com.megacrit.cardcrawl.screens.SingleCardViewPopup;
 import java.util.ArrayList;
 import javassist.CtBehavior;
@@ -40,10 +41,7 @@ public class CardKeywordTooltipFix {
         @SpirePostfixPatch
         public static void postfix() {
             for (String name : KEYWORDS) {
-                String body = GameDictionary.keywords.get("estalia:" + name);
-                if (body != null && !body.isEmpty() && !GameDictionary.keywords.containsKey(name)) {
-                    GameDictionary.keywords.put(name, body);
-                }
+                ensureAlias(name);
             }
         }
     }
@@ -61,12 +59,7 @@ public class CardKeywordTooltipFix {
                     if (!text.contains(name)) {
                         continue;
                     }
-                    if (!GameDictionary.keywords.containsKey(name)) {
-                        String body = GameDictionary.keywords.get("estalia:" + name);
-                        if (body != null && !body.isEmpty()) {
-                            GameDictionary.keywords.put(name, body);
-                        }
-                    }
+                    ensureAlias(name);
                     if (GameDictionary.keywords.containsKey(name) && !__instance.keywords.contains(name)) {
                         __instance.keywords.add(name);
                     }
@@ -95,22 +88,21 @@ public class CardKeywordTooltipFix {
                     if (!text.contains(name)) {
                         continue;
                     }
+                    ensureAlias(name);
                     String body = GameDictionary.keywords.get(name);
-                    if (body == null || body.isEmpty()) {
-                        body = GameDictionary.keywords.get("estalia:" + name);
-                    }
                     if (body == null || body.isEmpty()) {
                         continue;
                     }
+                    String header = TipHelper.capitalize(name);
                     boolean exists = false;
                     for (PowerTip tip : t[0]) {
-                        if (tip != null && name.equals(tip.header)) {
+                        if (tip != null && (header.equals(tip.header) || name.equals(tip.header))) {
                             exists = true;
                             break;
                         }
                     }
                     if (!exists) {
-                        t[0].add(new PowerTip(name, body));
+                        t[0].add(new PowerTip(header, body));
                     }
                 }
             } catch (Throwable e) {
@@ -124,6 +116,17 @@ public class CardKeywordTooltipFix {
                 Matcher matcher = new Matcher.MethodCallMatcher(ArrayList.class, "isEmpty");
                 return LineFinder.findInOrder(ctMethodToPatch, matcher);
             }
+        }
+    }
+
+    /** BaseMod 把键注册成 estalia:潮汐；补一份卡面实际出现的无前缀键。 */
+    private static void ensureAlias(String name) {
+        if (GameDictionary.keywords.containsKey(name)) {
+            return;
+        }
+        String body = GameDictionary.keywords.get("estalia:" + name);
+        if (body != null && !body.isEmpty()) {
+            GameDictionary.keywords.put(name, body);
         }
     }
 
