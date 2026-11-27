@@ -1,0 +1,18 @@
+{
+  "schemaVersion": 1,
+  "name": "AnonMod配置与刀痕特效闪退修复",
+  "description": "修复两类闪退：(1) 小星星(LittleStar)卡牌的 CutEffect 刀痕特效着色器 cuts.fs 里 `u_progress[i] < 0` 用 float 与 int 比较，安卓 GLES 编译器报 `0:60: S0001: Cannot compare 'float' with 'int'`，CutEffect.render 随即抛 RuntimeException 导致 Game crashed；补丁用改成 `< 0.0` 的兼容版着色器替换该静态着色器，若设备仍不接受则跳过特效渲染并标记特效结束，只丢特效不闪退，并写入编译日志。(2) 保留原有 SpireConfig.getInt/getFloat 空值与非法值回退，避免配置项缺失时 Integer.parseInt(null) 抛 NumberFormatException。",
+  "version": "1.1.0",
+  "author": {
+    "name": "久帝的地狱单骑",
+    "email": "3552084419@qq.com"
+  },
+  "target": {
+    "modId": "AnonMod",
+    "workshopId": "3248151544",
+    "versions": [
+      "1.1.6"
+    ]
+  },
+  "jar": "amethyst.ai.patch.anonmod.patch-1795661975612-bbbba4c1.jar"
+}
