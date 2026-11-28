@@ -331,6 +331,21 @@ The Noh Dancer（Kokoro）模组自带 zhs 翻译不完整，仍有英文残留�
 
 ---
 
+## YuAiBloodMusic
+
+### 残血播放修复与音量滑条
+
+修复原版残血播放的四个缺陷：解码失败后永久停播、BGM 压低反射永久失效、新一局续播上一局进度、播放状态与实际音频不同步。
+
+\.新增配置面板音量滑条。
+
+- **补丁版本**：`1.0.2`
+- **作者**：yanx
+- **适用版本**：`1.2.0`
+- **下载**：[下载](https://raw.githubusercontent.com/ModinMobileSTS/SlaytheAmethystPlayerModCatalogue/main/mods/YuAiBloodMusic/%E6%AE%8B%E8%A1%80%E6%92%AD%E6%94%BE%E4%BF%AE%E5%A4%8D%E4%B8%8E%E9%9F%B3%E9%87%8F%E6%BB%91%E6%9D%A1-yanx/amethyst.ai.patch.yuaibloodmusic.patch-1795428133829-46b6c6c0.jar)
+
+---
+
 ## allcardsupgraded
 
 ### 开局遗物自选与三蛋修复
