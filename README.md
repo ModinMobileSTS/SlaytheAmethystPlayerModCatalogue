@@ -659,6 +659,19 @@ Fear And Hunger 模组原本无条件替换全部游戏音乐（主菜单、三�
 
 ---
 
+## intentgraph
+
+### 意图状态机选牌屏蔽
+
+按规则控制 Intent Graph 意图状态机的显示：未选中卡牌时鼠标悬停敌人才显示；卡牌处于选中、拖拽、瞄准或打出状态时悬停敌人不显示；另外一次悬停必须是从未选牌状态重新移入敌人，指针停在敌人身上（如触屏丢牌后指针残留）不会自动弹出状态机。
+
+- **补丁版本**：`1.1.0`
+- **作者**：溯夢
+- **适用版本**：`1.1.15`
+- **下载**：[下载](https://raw.githubusercontent.com/ModinMobileSTS/SlaytheAmethystPlayerModCatalogue/main/mods/intentgraph/%E6%84%8F%E5%9B%BE%E7%8A%B6%E6%80%81%E6%9C%BA%E9%80%89%E7%89%8C%E5%B1%8F%E8%94%BD-%E6%BA%AF%E5%A4%A2/amethyst.ai.patch.intentgraph.patch-1795861516797-ad3ecd81.jar)
+
+---
+
 ## invincible\-one
 
 ### Bingo UI 溢出修复
