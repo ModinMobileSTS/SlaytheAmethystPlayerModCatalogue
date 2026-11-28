@@ -1,0 +1,18 @@
+{
+  "schemaVersion": 1,
+  "name": "意图状态机选牌屏蔽",
+  "description": "按规则控制 Intent Graph 意图状态机的显示：未选中卡牌时鼠标悬停敌人才显示；卡牌处于选中、拖拽、瞄准或打出状态时悬停敌人不显示；另外一次悬停必须是从未选牌状态重新移入敌人，指针停在敌人身上（如触屏丢牌后指针残留）不会自动弹出状态机。",
+  "version": "1.1.0",
+  "author": {
+    "name": "溯夢",
+    "email": "tracedream2010@gmail.com"
+  },
+  "target": {
+    "modId": "intentgraph",
+    "workshopId": "2783861904",
+    "versions": [
+      "1.1.15"
+    ]
+  },
+  "jar": "amethyst.ai.patch.intentgraph.patch-1795861516797-ad3ecd81.jar"
+}
