@@ -1,0 +1,18 @@
+{
+  "schemaVersion": 1,
+  "name": "残血播放修复与音量滑条",
+  "description": "修复原版残血播放的四个缺陷：解码失败后永久停播、BGM 压低反射永久失效、新一局续播上一局进度、播放状态与实际音频不同步。\n.新增配置面板音量滑条。",
+  "version": "1.0.2",
+  "author": {
+    "name": "yanx",
+    "email": "yaninme@163.com"
+  },
+  "target": {
+    "modId": "YuAiBloodMusic",
+    "workshopId": "3807219764",
+    "versions": [
+      "1.2.0"
+    ]
+  },
+  "jar": "amethyst.ai.patch.yuaibloodmusic.patch-1795428133829-46b6c6c0.jar"
+}
